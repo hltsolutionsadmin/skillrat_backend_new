@@ -1,0 +1,6 @@
+com/skillrat/common/tenant/TenantAwareAuditor.class
+com/skillrat/common/tenant/TenantContext.class
+com/skillrat/common/tenant/TenantFilter.class
+com/skillrat/common/datasource/TenantRoutingDataSource.class
+com/skillrat/common/config/CommonOrmConfig.class
+com/skillrat/common/orm/BaseEntity.class

@@ -1,0 +1,76 @@
+version: '3.9'
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+    ports:
+      - "3306:3306"
+  redis:
+    image: redis:7
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+  discovery-service:
+    build: ../discovery-service
+    ports:
+      - "8761:8761"
+    depends_on:
+      - redis
+  config-service:
+    build: ../config-service
+    ports:
+      - "8888:8888"
+    depends_on:
+      - discovery-service
+  auth-service:
+    build: ../auth-service
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mysql
+      - redis
+      - discovery-service
+      - config-service
+  user-service:
+    build: ../user-service
+    ports:
+      - "8081:8081"
+    depends_on:
+      - mysql
+      - redis
+      - discovery-service
+  organisation-service:
+    build: ../organisation-service
+    ports:
+      - "8082:8082"
+    depends_on:
+      - mysql
+      - redis
+      - discovery-service
+  placement-service:
+    build: ../placement-service
+    ports:
+      - "8083:8083"
+    depends_on:
+      - mysql
+      - redis
+      - discovery-service
+  wallet-service:
+    build: ../wallet-service
+    ports:
+      - "8084:8084"
+    depends_on:
+      - mysql
+      - redis
+      - discovery-service
+  gateway-service:
+    build: ../gateway-service
+    ports:
+      - "8085:8085"
+    depends_on:
+      - auth-service
+      - user-service
+      - organisation-service
+      - placement-service
+      - wallet-service
