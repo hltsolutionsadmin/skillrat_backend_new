@@ -1,4 +1,9 @@
 com/skillrat/user/UserServiceApplication.class
+com/skillrat/user/service/UserService.class
+com/skillrat/user/repo/UserRepository.class
 com/skillrat/user/config/SecurityConfig.class
 com/skillrat/user/domain/User.class
+com/skillrat/user/web/UserController$LoginRequest.class
+com/skillrat/user/web/UserController.class
+com/skillrat/user/web/UserController$SignupRequest.class
 com/skillrat/user/domain/Employee.class

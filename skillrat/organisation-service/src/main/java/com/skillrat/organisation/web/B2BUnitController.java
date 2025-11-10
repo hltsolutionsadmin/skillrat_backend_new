@@ -9,6 +9,7 @@ import jakarta.validation.constraints.NotNull;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.List;
 import java.util.Map;
@@ -24,18 +25,21 @@ public class B2BUnitController {
     public B2BUnitController(B2BUnitService service) { this.service = service; }
 
     @PostMapping("/onboard/self")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<B2BUnit> selfOnboard(@RequestBody @Validated SelfOnboardRequest req) {
         B2BUnit unit = service.selfSignup(req.name, req.type, req.contactEmail, req.contactPhone, req.website, req.address);
         return ResponseEntity.ok(unit);
     }
 
     @PostMapping("/onboard/admin")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<B2BUnit> adminOnboard(@RequestBody @Validated AdminOnboardRequest req) {
         B2BUnit unit = service.adminOnboard(req.name, req.type, req.contactEmail, req.contactPhone, req.website, req.address, req.approver);
         return ResponseEntity.ok(unit);
     }
 
     @PostMapping("/{id}/approve")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> approve(@PathVariable("id") UUID id, @RequestBody Map<String, String> body) {
         String approver = body != null ? body.getOrDefault("approver", "skillrat-admin") : "skillrat-admin";
         return service.approve(id, approver)
@@ -44,6 +48,7 @@ public class B2BUnitController {
     }
 
     @GetMapping("/pending")
+    @PreAuthorize("hasRole('ADMIN')")
     public List<B2BUnit> pending() {
         return service.listPending();
     }

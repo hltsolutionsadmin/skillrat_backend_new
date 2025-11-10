@@ -1,9 +1,12 @@
 package com.skillrat.auth.config;
 
+import com.skillrat.auth.password.SkillratPasswordAuthenticationConverter;
+import com.skillrat.auth.password.SkillratPasswordAuthenticationProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.init.DataSourceInitializer;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
@@ -15,16 +18,16 @@ import org.springframework.security.oauth2.server.authorization.JdbcOAuth2Author
 import org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentService;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
+import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator;
 import org.springframework.security.oauth2.server.authorization.client.JdbcRegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
+import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
 import org.springframework.security.oauth2.server.authorization.settings.TokenSettings;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
-import org.springframework.util.StringUtils;
-import org.springframework.core.io.ClassPathResource;
 
 import javax.sql.DataSource;
 import java.time.Duration;
@@ -35,8 +38,16 @@ public class AuthorizationServerConfig {
 
     @Bean
     @Order(Ordered.HIGHEST_PRECEDENCE)
-    public SecurityFilterChain authServerSecurityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain authServerSecurityFilterChain(HttpSecurity http,
+                                                             OAuth2AuthorizationService authorizationService,
+                                                             RegisteredClientRepository registeredClientRepository,
+                                                             OAuth2TokenGenerator<?> tokenGenerator) throws Exception {
         OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
+        http.getConfigurer(OAuth2AuthorizationServerConfigurer.class)
+                .tokenEndpoint(tokenEndpoint -> tokenEndpoint
+                        .accessTokenRequestConverter(new SkillratPasswordAuthenticationConverter())
+                        .authenticationProvider(new SkillratPasswordAuthenticationProvider(authorizationService, registeredClientRepository, tokenGenerator))
+                );
         return http.build();
     }
 
@@ -98,6 +109,7 @@ public class AuthorizationServerConfig {
                         .clientSecret("{noop}gateway-secret")
                         .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
                         .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
+                        .authorizationGrantType(new AuthorizationGrantType("urn:ietf:params:oauth:grant-type:skillrat-password"))
                         .tokenSettings(TokenSettings.builder()
                                 .accessTokenTimeToLive(Duration.ofMinutes(30))
                                 .reuseRefreshTokens(false)

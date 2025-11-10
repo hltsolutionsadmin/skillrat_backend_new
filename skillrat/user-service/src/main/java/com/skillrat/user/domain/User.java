@@ -26,6 +26,9 @@ public class User extends BaseEntity {
     @Column(nullable = false, unique = true, length = 255)
     private String email;
 
+    @Column(unique = true, length = 20)
+    private String mobile;
+
     @Column(nullable = false, length = 100)
     private String firstName;
 
@@ -35,5 +38,7 @@ public class User extends BaseEntity {
     @Column(nullable = false)
     private boolean active = true;
 
+    @Column(name = "password_hash", nullable = false, length = 100)
+    private String passwordHash;
     
 }

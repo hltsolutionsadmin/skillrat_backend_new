@@ -4,5 +4,8 @@
 /Users/vamsich/Documents/skillrat_windsuft/skillrat/auth-service/src/main/java/com/skillrat/auth/config/RedisAuthorizationService.java
 /Users/vamsich/Documents/skillrat_windsuft/skillrat/auth-service/src/main/java/com/skillrat/auth/config/TokenClaimsCustomizer.java
 /Users/vamsich/Documents/skillrat_windsuft/skillrat/auth-service/src/main/java/com/skillrat/auth/config/TokenStoreConfig.java
+/Users/vamsich/Documents/skillrat_windsuft/skillrat/auth-service/src/main/java/com/skillrat/auth/password/SkillratPasswordAuthenticationConverter.java
+/Users/vamsich/Documents/skillrat_windsuft/skillrat/auth-service/src/main/java/com/skillrat/auth/password/SkillratPasswordAuthenticationProvider.java
+/Users/vamsich/Documents/skillrat_windsuft/skillrat/auth-service/src/main/java/com/skillrat/auth/password/SkillratPasswordAuthenticationToken.java
 /Users/vamsich/Documents/skillrat_windsuft/skillrat/auth-service/src/main/java/com/skillrat/auth/service/TokenRevocationService.java
 /Users/vamsich/Documents/skillrat_windsuft/skillrat/auth-service/src/main/java/com/skillrat/auth/web/CheckTokenController.java
