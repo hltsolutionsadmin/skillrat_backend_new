@@ -50,6 +50,18 @@ public class UserController {
         return ResponseEntity.ok(u);
     }
 
+    // Internal endpoint for cross-service user lookup by email
+    @GetMapping("/internal/by-email")
+    public ResponseEntity<?> getByEmail(@RequestParam("email") String email) {
+        return userService.findByEmail(email)
+                .<ResponseEntity<?>>map(u -> ResponseEntity.ok(Map.of(
+                        "id", u.getId(),
+                        "email", u.getEmail(),
+                        "b2bUnitId", u.getB2bUnitId()
+                )))
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
     // Business admin invites an employee and assigns roles
     @PostMapping("/{b2bUnitId}/employees/invite")
     @PreAuthorize("hasRole('ADMIN')")

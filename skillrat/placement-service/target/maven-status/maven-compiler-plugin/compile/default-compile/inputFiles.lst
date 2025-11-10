@@ -1,2 +1,14 @@
 /Users/vamsich/Documents/skillrat_windsuft/skillrat/placement-service/src/main/java/com/skillrat/placement/PlacementServiceApplication.java
+/Users/vamsich/Documents/skillrat_windsuft/skillrat/placement-service/src/main/java/com/skillrat/placement/config/RestClientConfig.java
+/Users/vamsich/Documents/skillrat_windsuft/skillrat/placement-service/src/main/java/com/skillrat/placement/config/SecurityConfig.java
+/Users/vamsich/Documents/skillrat_windsuft/skillrat/placement-service/src/main/java/com/skillrat/placement/domain/Application.java
+/Users/vamsich/Documents/skillrat_windsuft/skillrat/placement-service/src/main/java/com/skillrat/placement/domain/ApplicationStatus.java
+/Users/vamsich/Documents/skillrat_windsuft/skillrat/placement-service/src/main/java/com/skillrat/placement/domain/Opening.java
+/Users/vamsich/Documents/skillrat_windsuft/skillrat/placement-service/src/main/java/com/skillrat/placement/domain/OpeningStatus.java
+/Users/vamsich/Documents/skillrat_windsuft/skillrat/placement-service/src/main/java/com/skillrat/placement/domain/OpeningType.java
 /Users/vamsich/Documents/skillrat_windsuft/skillrat/placement-service/src/main/java/com/skillrat/placement/events/PlacementHirePublisher.java
+/Users/vamsich/Documents/skillrat_windsuft/skillrat/placement-service/src/main/java/com/skillrat/placement/repo/ApplicationRepository.java
+/Users/vamsich/Documents/skillrat_windsuft/skillrat/placement-service/src/main/java/com/skillrat/placement/repo/OpeningRepository.java
+/Users/vamsich/Documents/skillrat_windsuft/skillrat/placement-service/src/main/java/com/skillrat/placement/service/OpeningService.java
+/Users/vamsich/Documents/skillrat_windsuft/skillrat/placement-service/src/main/java/com/skillrat/placement/service/UserLookupClient.java
+/Users/vamsich/Documents/skillrat_windsuft/skillrat/placement-service/src/main/java/com/skillrat/placement/web/OpeningController.java
