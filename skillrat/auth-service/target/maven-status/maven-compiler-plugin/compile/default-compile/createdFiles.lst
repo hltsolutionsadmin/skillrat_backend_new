@@ -1,7 +1,7 @@
 com/skillrat/auth/config/AuthorizationServerConfig.class
-com/skillrat/auth/service/TokenRevocationService.class
 com/skillrat/auth/web/CheckTokenController.class
 com/skillrat/auth/AuthServiceApplication.class
+com/skillrat/auth/service/TokenRevocationService.class
 com/skillrat/auth/config/TokenStoreConfig.class
 com/skillrat/auth/config/AuthorizationServerConfig$CommandLineRegisteredClientLoader.class
 com/skillrat/auth/config/TokenClaimsCustomizer.class

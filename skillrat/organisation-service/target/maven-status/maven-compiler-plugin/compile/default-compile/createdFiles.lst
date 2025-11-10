@@ -1,2 +1,10 @@
+com/skillrat/organisation/web/B2BUnitController$AdminOnboardRequest.class
+com/skillrat/organisation/repo/B2BUnitRepository.class
+com/skillrat/organisation/domain/B2BUnitType.class
 com/skillrat/organisation/OrganisationServiceApplication.class
 com/skillrat/organisation/config/SecurityConfig.class
+com/skillrat/organisation/web/B2BUnitController$SelfOnboardRequest.class
+com/skillrat/organisation/service/B2BUnitService.class
+com/skillrat/organisation/domain/B2BUnitStatus.class
+com/skillrat/organisation/web/B2BUnitController.class
+com/skillrat/organisation/domain/B2BUnit.class

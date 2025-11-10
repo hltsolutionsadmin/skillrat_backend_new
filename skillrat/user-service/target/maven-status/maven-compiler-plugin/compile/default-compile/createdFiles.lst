@@ -1,2 +1,4 @@
 com/skillrat/user/UserServiceApplication.class
 com/skillrat/user/config/SecurityConfig.class
+com/skillrat/user/domain/User.class
+com/skillrat/user/domain/Employee.class
