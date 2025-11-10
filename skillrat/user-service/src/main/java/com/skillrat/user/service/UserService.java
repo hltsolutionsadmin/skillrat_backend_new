@@ -58,6 +58,11 @@ public class UserService {
                 .filter(u -> passwordEncoder.matches(rawPassword, u.getPasswordHash()));
     }
 
+    @Transactional(readOnly = true)
+    public Optional<User> findByEmail(String email) {
+        return userRepository.findByEmailIgnoreCase(email);
+    }
+
     @Transactional
     public User createBusinessAdmin(UUID b2bUnitId, String firstName, String lastName, String email, String mobile) {
         String tenantId = Optional.ofNullable(TenantContext.getTenantId()).orElse("default");
