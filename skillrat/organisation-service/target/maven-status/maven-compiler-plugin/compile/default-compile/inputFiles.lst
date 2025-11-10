@@ -1,4 +1,5 @@
 /Users/vamsich/Documents/skillrat_windsuft/skillrat/organisation-service/src/main/java/com/skillrat/organisation/OrganisationServiceApplication.java
+/Users/vamsich/Documents/skillrat_windsuft/skillrat/organisation-service/src/main/java/com/skillrat/organisation/config/RestClientConfig.java
 /Users/vamsich/Documents/skillrat_windsuft/skillrat/organisation-service/src/main/java/com/skillrat/organisation/config/SecurityConfig.java
 /Users/vamsich/Documents/skillrat_windsuft/skillrat/organisation-service/src/main/java/com/skillrat/organisation/domain/B2BUnit.java
 /Users/vamsich/Documents/skillrat_windsuft/skillrat/organisation-service/src/main/java/com/skillrat/organisation/domain/B2BUnitStatus.java
@@ -6,3 +7,4 @@
 /Users/vamsich/Documents/skillrat_windsuft/skillrat/organisation-service/src/main/java/com/skillrat/organisation/repo/B2BUnitRepository.java
 /Users/vamsich/Documents/skillrat_windsuft/skillrat/organisation-service/src/main/java/com/skillrat/organisation/service/B2BUnitService.java
 /Users/vamsich/Documents/skillrat_windsuft/skillrat/organisation-service/src/main/java/com/skillrat/organisation/web/B2BUnitController.java
+/Users/vamsich/Documents/skillrat_windsuft/skillrat/organisation-service/src/main/java/com/skillrat/organisation/web/GlobalExceptionHandler.java

@@ -83,8 +83,17 @@ public class SkillratPasswordAuthenticationProvider implements AuthenticationPro
         Object emailObj = userInfo != null ? userInfo.get("email") : null;
         String principalName = emailObj != null ? emailObj.toString() : username;
 
-        // Create an authenticated principal for token generation (assign ROLE_USER by default)
-        UsernamePasswordAuthenticationToken userPrincipal = new UsernamePasswordAuthenticationToken(principalName, "n/a", Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER")));
+        java.util.List<?> rolesList = userInfo != null ? (java.util.List<?>) userInfo.get("roles") : java.util.List.of();
+        java.util.List<SimpleGrantedAuthority> auths = new java.util.ArrayList<>();
+        if (rolesList != null) {
+            for (Object r : rolesList) {
+                if (r != null) auths.add(new SimpleGrantedAuthority("ROLE_" + r.toString()));
+            }
+        }
+        if (auths.isEmpty()) {
+            auths = java.util.List.of(new SimpleGrantedAuthority("ROLE_USER"));
+        }
+        UsernamePasswordAuthenticationToken userPrincipal = new UsernamePasswordAuthenticationToken(principalName, "n/a", auths);
 
         // Build authorization and generate access token
         Set<String> authorizedScopes = registeredClient.getScopes();

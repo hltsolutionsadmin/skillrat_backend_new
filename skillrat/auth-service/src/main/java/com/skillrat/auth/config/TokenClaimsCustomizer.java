@@ -22,6 +22,7 @@ public class TokenClaimsCustomizer {
                 Authentication principal = context.getPrincipal();
                 Set<String> roles = principal.getAuthorities().stream()
                         .map(GrantedAuthority::getAuthority)
+                        .map(a -> a != null && a.startsWith("ROLE_") ? a.substring(5) : a)
                         .collect(Collectors.toSet());
                 String tenantId = TenantContext.getTenantId();
                 context.getClaims().claim("tenant_id", tenantId);

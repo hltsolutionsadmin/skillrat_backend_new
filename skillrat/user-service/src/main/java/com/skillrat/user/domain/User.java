@@ -7,6 +7,11 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
 import jakarta.persistence.Table;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.JoinColumn;
+import java.time.Instant;
+import java.util.Set;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -40,5 +45,22 @@ public class User extends BaseEntity {
 
     @Column(name = "password_hash", nullable = false, length = 100)
     private String passwordHash;
+    
+    @Column(nullable = false)
+    private boolean passwordNeedsReset = false;
+
+    @Column(length = 120)
+    private String passwordSetupToken;
+
+    private Instant passwordSetupTokenExpires;
+
+    @ManyToMany
+    @JoinTable(name = "user_roles",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id"))
+    private Set<Role> roles;
+
+    @Column(name = "b2b_unit_id")
+    private java.util.UUID b2bUnitId;
     
 }

@@ -34,7 +34,9 @@ public class B2BUnitController {
     @PostMapping("/onboard/admin")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<B2BUnit> adminOnboard(@RequestBody @Validated AdminOnboardRequest req) {
-        B2BUnit unit = service.adminOnboard(req.name, req.type, req.contactEmail, req.contactPhone, req.website, req.address, req.approver);
+        B2BUnit unit = service.adminOnboard(
+                req.name, req.type, req.contactEmail, req.contactPhone, req.website, req.address, req.approver,
+                req.adminFirstName, req.adminLastName, req.adminEmail, req.adminMobile);
         return ResponseEntity.ok(unit);
     }
 
@@ -64,5 +66,9 @@ public class B2BUnitController {
 
     public static class AdminOnboardRequest extends SelfOnboardRequest {
         public String approver;
+        public String adminFirstName;
+        public String adminLastName;
+        @Email public String adminEmail;
+        public String adminMobile;
     }
 }
