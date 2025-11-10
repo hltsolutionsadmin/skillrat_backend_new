@@ -1,6 +1,9 @@
 package com.skillrat.auth.config;
 
-import com.skillrat.auth.config.RedisAuthorizationService;
+import java.time.Duration;
+
+import javax.sql.DataSource;
+
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -11,9 +14,6 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
-
-import javax.sql.DataSource;
-import java.time.Duration;
 
 @Configuration
 @EnableConfigurationProperties(AuthProperties.class)

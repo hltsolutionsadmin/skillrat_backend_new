@@ -1,1 +1,3 @@
 com/skillrat/wallet/WalletServiceApplication.class
+com/skillrat/wallet/events/WalletRedisConfig.class
+com/skillrat/wallet/events/WalletHireListener.class

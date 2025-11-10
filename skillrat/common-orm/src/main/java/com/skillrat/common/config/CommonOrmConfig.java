@@ -2,6 +2,7 @@ package com.skillrat.common.config;
 
 import com.skillrat.common.tenant.TenantAwareAuditor;
 import com.skillrat.common.tenant.TenantFilter;
+import com.skillrat.common.tenant.TenantTokenValidationFilter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -23,5 +24,11 @@ public class CommonOrmConfig {
     public OncePerRequestFilter tenantFilter() {
         // base domain fallback; override via property in services
         return new TenantFilter("skillrat.com");
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(name = "tenantTokenValidationFilter")
+    public OncePerRequestFilter tenantTokenValidationFilter() {
+        return new TenantTokenValidationFilter();
     }
 }
