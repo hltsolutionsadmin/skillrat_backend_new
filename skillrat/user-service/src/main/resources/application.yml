@@ -1,27 +1,34 @@
 server:
   port: 8081
+
 spring:
   application:
     name: user-service
+
   datasource:
     url: jdbc:mysql://localhost:3306/skillrat_user?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
-    username: skillrat
-    password: skillrat
+    username: root
+    password: root
+
   jpa:
     hibernate:
       ddl-auto: update
     properties:
       hibernate:
         format_sql: true
+        dialect: org.hibernate.dialect.MySQL8Dialect
+
   redis:
     host: localhost
     port: 6379
+
 security:
   oauth2:
     resource:
       token-info-uri: http://auth-service:8080/oauth/check_token
       client-id: gateway
       client-secret: gateway-secret
+
 skillrat:
   gateway:
     check-token-cache-ttl-seconds: 30
@@ -41,6 +48,7 @@ skillrat:
     title:
       perAction: 5
       maxPerCategory: 25
+
 management:
   endpoints:
     web:
