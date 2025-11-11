@@ -10,4 +10,5 @@ import java.util.UUID;
 public interface ProjectMemberRepository extends JpaRepository<ProjectMember, UUID> {
     List<ProjectMember> findByProject_Id(UUID projectId);
     Optional<ProjectMember> findByProject_IdAndEmployeeId(UUID projectId, UUID employeeId);
+    List<ProjectMember> findByEmployeeId(UUID employeeId);
 }

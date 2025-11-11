@@ -24,12 +24,11 @@ public class Project extends BaseEntity {
     @Column(length = 64, unique = true)
     private String code;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 32)
-    private ProjectCategory category = ProjectCategory.OTHER;
-
     @Column(nullable = false)
     private UUID b2bUnitId;
+
+    // Optional holiday calendar selected for this project
+    private UUID holidayCalendarId;
 
     private LocalDate startDate;
     private LocalDate endDate;

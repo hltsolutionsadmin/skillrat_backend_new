@@ -41,6 +41,10 @@ public class TimeEntry extends BaseEntity {
     private BigDecimal hours; // e.g., 7.50
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 16)
+    private TimeEntryType entryType = TimeEntryType.WORK;
+
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 32)
     private TimeEntryStatus status = TimeEntryStatus.DRAFT;
 
