@@ -18,7 +18,6 @@ import org.springframework.security.oauth2.server.authorization.JdbcOAuth2Author
 import org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentService;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
-import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator;
 import org.springframework.security.oauth2.server.authorization.client.JdbcRegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
@@ -26,14 +25,26 @@ import org.springframework.security.oauth2.server.authorization.config.annotatio
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
 import org.springframework.security.oauth2.server.authorization.settings.TokenSettings;
+import org.springframework.security.oauth2.server.authorization.settings.OAuth2TokenFormat;
+import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator;
+import org.springframework.security.oauth2.server.authorization.token.OAuth2AccessTokenGenerator;
+import org.springframework.security.oauth2.server.authorization.token.OAuth2RefreshTokenGenerator;
+import org.springframework.security.oauth2.server.authorization.token.DelegatingOAuth2TokenGenerator;
 import org.springframework.security.web.SecurityFilterChain;
 
-import javax.sql.DataSource;
-import java.time.Duration;
-import java.util.UUID;
+    import javax.sql.DataSource;
+    import java.time.Duration;
+    import java.util.UUID;
 
 @Configuration
 public class AuthorizationServerConfig {
+
+    @Bean
+    public OAuth2TokenGenerator<?> tokenGenerator() {
+        OAuth2AccessTokenGenerator accessTokenGenerator = new OAuth2AccessTokenGenerator();
+        OAuth2RefreshTokenGenerator refreshTokenGenerator = new OAuth2RefreshTokenGenerator();
+        return new DelegatingOAuth2TokenGenerator(accessTokenGenerator, refreshTokenGenerator);
+    }
 
     @Bean
     @Order(Ordered.HIGHEST_PRECEDENCE)
@@ -56,7 +67,6 @@ public class AuthorizationServerConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/actuator/**", "/oauth/check_token").permitAll()
                 .anyRequest().authenticated())
-            .oauth2ResourceServer(resource -> resource.opaqueToken(Customizer.withDefaults()))
             .formLogin(Customizer.withDefaults());
         return http.build();
     }
@@ -66,10 +76,7 @@ public class AuthorizationServerConfig {
         return new JdbcRegisteredClientRepository(new JdbcTemplate(dataSource));
     }
 
-    @Bean
-    public OAuth2AuthorizationService authorizationService(DataSource dataSource, RegisteredClientRepository clients) {
-        return new JdbcOAuth2AuthorizationService(new JdbcTemplate(dataSource), clients);
-    }
+    
 
     @Bean
     public OAuth2AuthorizationConsentService authorizationConsentService(DataSource dataSource, RegisteredClientRepository clients) {
@@ -79,6 +86,7 @@ public class AuthorizationServerConfig {
     @Bean
     public DataSourceInitializer authSchema(DataSource dataSource) {
         ResourceDatabasePopulator populator = new ResourceDatabasePopulator();
+        populator.setContinueOnError(true);
         populator.addScript(new ClassPathResource("org/springframework/security/oauth2/server/authorization/oauth2-authorization-schema.sql"));
         populator.addScript(new ClassPathResource("org/springframework/security/oauth2/server/authorization/oauth2-authorization-consent-schema.sql"));
         populator.addScript(new ClassPathResource("org/springframework/security/oauth2/server/authorization/client/oauth2-registered-client-schema.sql"));
@@ -101,21 +109,30 @@ public class AuthorizationServerConfig {
             // Ensure a default gateway client exists
             String clientId = "gateway";
             RegisteredClient existing = ((JdbcRegisteredClientRepository) repo).findByClientId(clientId);
-            if (existing == null) {
-                RegisteredClient client = RegisteredClient.withId(UUID.randomUUID().toString())
+            RegisteredClient desired = (existing == null)
+                    ? RegisteredClient.withId(UUID.randomUUID().toString())
                         .clientId(clientId)
                         .clientSecret("{noop}gateway-secret")
                         .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
                         .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
                         .authorizationGrantType(new AuthorizationGrantType("urn:ietf:params:oauth:grant-type:skillrat-password"))
+                        .scope("gateway")
                         .tokenSettings(TokenSettings.builder()
                                 .accessTokenTimeToLive(Duration.ofMinutes(30))
+                                .accessTokenFormat(OAuth2TokenFormat.REFERENCE)
                                 .reuseRefreshTokens(false)
                                 .build())
                         .clientSettings(ClientSettings.builder().requireProofKey(false).build())
+                        .build()
+                    : RegisteredClient.from(existing)
+                        .scope("gateway")
+                        .tokenSettings(TokenSettings.builder()
+                                .accessTokenTimeToLive(Duration.ofMinutes(30))
+                                .accessTokenFormat(OAuth2TokenFormat.REFERENCE)
+                                .reuseRefreshTokens(false)
+                                .build())
                         .build();
-                repo.save(client);
-            }
+            ((JdbcRegisteredClientRepository) repo).save(desired);
         }
     }
 }
