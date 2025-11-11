@@ -3,6 +3,7 @@ package com.skillrat.organisation.web;
 import com.skillrat.organisation.domain.B2BUnit;
 import com.skillrat.organisation.domain.B2BUnitType;
 import com.skillrat.organisation.service.B2BUnitService;
+import com.skillrat.organisation.domain.Address;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -27,15 +28,37 @@ public class B2BUnitController {
     @PostMapping("/onboard/self")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<B2BUnit> selfOnboard(@RequestBody @Validated SelfOnboardRequest req) {
-        B2BUnit unit = service.selfSignup(req.name, req.type, req.contactEmail, req.contactPhone, req.website, req.address);
+        Address addr = null;
+        if (req.address != null) {
+            addr = new Address();
+            addr.setLine1(req.address.line1);
+            addr.setLine2(req.address.line2);
+            addr.setCity(req.address.city);
+            addr.setState(req.address.state);
+            addr.setCountry(req.address.country);
+            addr.setPostalCode(req.address.postalCode);
+            addr.setFullText(req.address.fullText);
+        }
+        B2BUnit unit = service.selfSignup(req.name, req.type, req.contactEmail, req.contactPhone, req.website, addr, req.groupName);
         return ResponseEntity.ok(unit);
     }
 
     @PostMapping("/onboard/admin")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<B2BUnit> adminOnboard(@RequestBody @Validated AdminOnboardRequest req) {
+        Address addr = null;
+        if (req.address != null) {
+            addr = new Address();
+            addr.setLine1(req.address.line1);
+            addr.setLine2(req.address.line2);
+            addr.setCity(req.address.city);
+            addr.setState(req.address.state);
+            addr.setCountry(req.address.country);
+            addr.setPostalCode(req.address.postalCode);
+            addr.setFullText(req.address.fullText);
+        }
         B2BUnit unit = service.adminOnboard(
-                req.name, req.type, req.contactEmail, req.contactPhone, req.website, req.address, req.approver,
+                req.name, req.type, req.contactEmail, req.contactPhone, req.website, addr, req.groupName, req.approver,
                 req.adminFirstName, req.adminLastName, req.adminEmail, req.adminMobile);
         return ResponseEntity.ok(unit);
     }
@@ -61,7 +84,8 @@ public class B2BUnitController {
         @Email public String contactEmail;
         public String contactPhone;
         public String website;
-        public String address;
+        public AddressDTO address;
+        public String groupName; // optional: associate to a group by name
     }
 
     public static class AdminOnboardRequest extends SelfOnboardRequest {
@@ -70,5 +94,15 @@ public class B2BUnitController {
         public String adminLastName;
         @Email public String adminEmail;
         public String adminMobile;
+    }
+
+    public static class AddressDTO {
+        public String line1;
+        public String line2;
+        public String city;
+        public String state;
+        public String country;
+        public String postalCode;
+        public String fullText; // optional: server may derive this if not provided
     }
 }

@@ -1,0 +1,10 @@
+package com.skillrat.organisation.repo;
+
+import com.skillrat.organisation.domain.B2BGroup;
+import java.util.Optional;
+import java.util.UUID;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface B2BGroupRepository extends JpaRepository<B2BGroup, UUID> {
+    Optional<B2BGroup> findByNameIgnoreCaseAndTenantId(String name, String tenantId);
+}

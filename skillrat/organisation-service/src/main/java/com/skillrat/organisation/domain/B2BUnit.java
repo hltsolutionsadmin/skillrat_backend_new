@@ -10,6 +10,10 @@ import java.time.Instant;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.ManyToOne;
 
 @Entity
 @Table(name = "b2b_unit")
@@ -38,8 +42,13 @@ public class B2BUnit extends BaseEntity {
     @Column(length = 255)
     private String website;
 
-    @Column(length = 512)
-    private String address;
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "address_id", unique = true)
+    private Address address;
+
+    @ManyToOne
+    @JoinColumn(name = "group_id")
+    private B2BGroup group;
 
     @Column(length = 32)
     private String onboardedBy; // SELF or ADMIN

@@ -1,2 +1,13 @@
 /Users/vamsich/Documents/skillrat_windsuft/skillrat/wallet-service/src/main/java/com/skillrat/wallet/WalletServiceApplication.java
+/Users/vamsich/Documents/skillrat_windsuft/skillrat/wallet-service/src/main/java/com/skillrat/wallet/config/SecurityConfig.java
+/Users/vamsich/Documents/skillrat_windsuft/skillrat/wallet-service/src/main/java/com/skillrat/wallet/config/WalletPointsProperties.java
+/Users/vamsich/Documents/skillrat_windsuft/skillrat/wallet-service/src/main/java/com/skillrat/wallet/domain/PointsCategory.java
+/Users/vamsich/Documents/skillrat_windsuft/skillrat/wallet-service/src/main/java/com/skillrat/wallet/domain/WalletPoints.java
+/Users/vamsich/Documents/skillrat_windsuft/skillrat/wallet-service/src/main/java/com/skillrat/wallet/domain/WalletPointsCategoryProgress.java
+/Users/vamsich/Documents/skillrat_windsuft/skillrat/wallet-service/src/main/java/com/skillrat/wallet/domain/WalletPointsLedger.java
 /Users/vamsich/Documents/skillrat_windsuft/skillrat/wallet-service/src/main/java/com/skillrat/wallet/events/WalletHireSubscriber.java
+/Users/vamsich/Documents/skillrat_windsuft/skillrat/wallet-service/src/main/java/com/skillrat/wallet/repo/WalletPointsCategoryProgressRepository.java
+/Users/vamsich/Documents/skillrat_windsuft/skillrat/wallet-service/src/main/java/com/skillrat/wallet/repo/WalletPointsLedgerRepository.java
+/Users/vamsich/Documents/skillrat_windsuft/skillrat/wallet-service/src/main/java/com/skillrat/wallet/repo/WalletPointsRepository.java
+/Users/vamsich/Documents/skillrat_windsuft/skillrat/wallet-service/src/main/java/com/skillrat/wallet/service/WalletPointsService.java
+/Users/vamsich/Documents/skillrat_windsuft/skillrat/wallet-service/src/main/java/com/skillrat/wallet/web/WalletPointsController.java
