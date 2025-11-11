@@ -1,4 +1,0 @@
-com/skillrat/gateway/config/GatewayConfig.class
-com/skillrat/gateway/GatewayServiceApplication.class
-com/skillrat/gateway/filter/TokenIntrospectionCacheFilter.class
-com/skillrat/gateway/config/GatewayProperties.class

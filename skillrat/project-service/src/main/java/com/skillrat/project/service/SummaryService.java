@@ -50,7 +50,6 @@ public class SummaryService {
             List<DayBlock> days = new ArrayList<>();
             for (LocalDate d = from; !d.isAfter(to); d = d.plusDays(1)) {
                 List<TimeEntry> dayEntries = entriesByDate.getOrDefault(toKey(d), List.of()).stream()
-                        .stream()
                         .filter(te -> te.getProject().getId().equals(p.getId()))
                         .toList();
                 days.add(new DayBlock(d, holidayDates.contains(d), dayEntries));
