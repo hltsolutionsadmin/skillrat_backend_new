@@ -25,7 +25,7 @@ spring:
 security:
   oauth2:
     resource:
-      token-info-uri: http://auth-service:8080/oauth/check_token
+      token-info-uri: http://localhost:8080/oauth/check_token
       client-id: gateway
       client-secret: gateway-secret
 

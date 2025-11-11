@@ -15,7 +15,9 @@ import lombok.Setter;
 @NoArgsConstructor
 public class Employee extends User {
 
-    @Column(nullable = false, unique = true, length = 64)
+    // In SINGLE_TABLE inheritance this column exists for all rows, so it must be nullable
+    // to allow base User inserts where employeeCode is not applicable.
+    @Column(nullable = true, unique = true, length = 64)
     private String employeeCode;
 
     @Column(length = 128)

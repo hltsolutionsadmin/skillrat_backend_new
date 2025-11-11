@@ -75,7 +75,7 @@ public class SkillratPasswordAuthenticationProvider implements AuthenticationPro
         // Propagate tenant header if present in SecurityContext? Not readily available; default to 'default'
         String tenant = TenantContext.getTenantId() != null ? TenantContext.getTenantId() : "default";
         headers.add("X-Skillrat-Tenant", tenant);
-        ResponseEntity<Map> resp = restTemplate.exchange("http://user-service:8080/api/users/login", HttpMethod.POST, new HttpEntity<>(body, headers), Map.class);
+        ResponseEntity<Map> resp = restTemplate.exchange("http://localhost:8081/api/users/login", HttpMethod.POST, new HttpEntity<>(body, headers), Map.class);
         if (!resp.getStatusCode().is2xxSuccessful()) {
             throw new OAuth2AuthenticationException(new OAuth2Error("access_denied", "Invalid credentials", null));
         }
