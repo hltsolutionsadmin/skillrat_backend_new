@@ -4,17 +4,34 @@ spring:
   application:
     name: wallet-service
   datasource:
-    url: jdbc:mysql://mysql:3306/skillrat_wallet?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
-    username: root
-    password: root
+    url: jdbc:mysql://localhost:3306/skillrat_wallet?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+    username: skillrat
+    password: skillrat
   jpa:
     hibernate:
       ddl-auto: update
   redis:
-    host: redis
+    host: localhost
     port: 6379
 management:
   endpoints:
     web:
       exposure:
         include: "*"
+skillrat:
+  points:
+    education:
+      perAction: 10
+      maxPerCategory: 30
+    project:
+      perAction: 10
+      maxPerCategory: 50
+    internship:
+      perAction: 10
+      maxPerCategory: 50
+    skill:
+      perAction: 2
+      maxPerCategory: 40
+    title:
+      perAction: 5
+      maxPerCategory: 25

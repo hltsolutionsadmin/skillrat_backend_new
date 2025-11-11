@@ -27,7 +27,6 @@ import org.springframework.security.oauth2.server.authorization.config.annotatio
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
 import org.springframework.security.oauth2.server.authorization.settings.TokenSettings;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 import javax.sql.DataSource;
 import java.time.Duration;
@@ -55,8 +54,7 @@ public class AuthorizationServerConfig {
     public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
         http
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers(new AntPathRequestMatcher("/actuator/**"),
-                                 new AntPathRequestMatcher("/oauth/check_token")).permitAll()
+                .requestMatchers("/actuator/**", "/oauth/check_token").permitAll()
                 .anyRequest().authenticated())
             .oauth2ResourceServer(resource -> resource.opaqueToken(Customizer.withDefaults()))
             .formLogin(Customizer.withDefaults());

@@ -4,14 +4,19 @@ spring:
   application:
     name: organisation-service
   datasource:
-    url: jdbc:mysql://mysql:3306/skillrat_org?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
-    username: root
-    password: root
+    url: jdbc:mysql://localhost:3306/skillrat_org?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+    username: skillrat
+    password: skillrat
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: none
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: 1
+    locations: classpath:db/migration
   redis:
-    host: redis
+    host: localhost
     port: 6379
 management:
   endpoints:

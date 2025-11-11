@@ -18,17 +18,20 @@ public class ProfileService {
     private final UserSkillRepository skillRepository;
     private final EducationRepository educationRepository;
     private final TitleRecordRepository titleRepository;
+    private final WalletClient walletClient;
 
     public ProfileService(UserRepository userRepository,
                           ProfileExperienceRepository experienceRepository,
                           UserSkillRepository skillRepository,
                           EducationRepository educationRepository,
-                          TitleRecordRepository titleRepository) {
+                          TitleRecordRepository titleRepository,
+                          WalletClient walletClient) {
         this.userRepository = userRepository;
         this.experienceRepository = experienceRepository;
         this.skillRepository = skillRepository;
         this.educationRepository = educationRepository;
         this.titleRepository = titleRepository;
+        this.walletClient = walletClient;
     }
 
     // Utilities
@@ -58,7 +61,11 @@ public class ProfileService {
         e.setStartDate(start);
         e.setEndDate(end);
         e.setVerificationStatus(VerificationStatus.UNVERIFIED);
-        return experienceRepository.save(e);
+        e = experienceRepository.save(e);
+        // Award points based on experience type via wallet-service
+        String cat = (type == ExperienceType.PROJECT) ? "PROJECT" : "INTERNSHIP";
+        walletClient.award(userId, cat, type + " added", e.getId());
+        return e;
     }
 
     @Transactional(readOnly = true)
@@ -100,7 +107,9 @@ public class ProfileService {
         s.setUserId(userId);
         s.setName(name);
         s.setLevel(level);
-        return skillRepository.save(s);
+        s = skillRepository.save(s);
+        walletClient.award(userId, "SKILL", "Skill added", s.getId());
+        return s;
     }
 
     @Transactional(readOnly = true)
@@ -129,7 +138,9 @@ public class ProfileService {
         ed.setFieldOfStudy(fieldOfStudy);
         ed.setStartDate(start);
         ed.setEndDate(end);
-        return educationRepository.save(ed);
+        ed = educationRepository.save(ed);
+        walletClient.award(userId, "EDUCATION", "Education added", ed.getId());
+        return ed;
     }
 
     @Transactional(readOnly = true)
@@ -147,7 +158,9 @@ public class ProfileService {
         t.setTitle(title);
         t.setStartDate(start);
         t.setEndDate(end);
-        return titleRepository.save(t);
+        t = titleRepository.save(t);
+        walletClient.award(userId, "TITLE", "Title added", t.getId());
+        return t;
     }
 
     @Transactional(readOnly = true)

@@ -4,7 +4,10 @@ import com.skillrat.common.tenant.TenantContext;
 import com.skillrat.organisation.domain.B2BUnit;
 import com.skillrat.organisation.domain.B2BUnitStatus;
 import com.skillrat.organisation.domain.B2BUnitType;
+import com.skillrat.organisation.domain.Address;
+import com.skillrat.organisation.domain.B2BGroup;
 import com.skillrat.organisation.repo.B2BUnitRepository;
+import com.skillrat.organisation.repo.B2BGroupRepository;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -21,15 +24,17 @@ import java.util.UUID;
 public class B2BUnitService {
 
     private final B2BUnitRepository repository;
+    private final B2BGroupRepository groupRepository;
     private final RestTemplate restTemplate;
 
-    public B2BUnitService(B2BUnitRepository repository, RestTemplate restTemplate) {
+    public B2BUnitService(B2BUnitRepository repository, B2BGroupRepository groupRepository, RestTemplate restTemplate) {
         this.repository = repository;
+        this.groupRepository = groupRepository;
         this.restTemplate = restTemplate;
     }
 
     @Transactional
-    public B2BUnit selfSignup(String name, B2BUnitType type, String email, String phone, String website, String address) {
+    public B2BUnit selfSignup(String name, B2BUnitType type, String email, String phone, String website, Address address, String groupName) {
         String tenantId = TenantContext.getTenantId();
         if (repository.existsByNameIgnoreCaseAndTenantId(name, tenantId)) {
             throw new IllegalStateException("B2BUnit with name already exists for tenant");
@@ -40,14 +45,29 @@ public class B2BUnitService {
         unit.setContactEmail(email);
         unit.setContactPhone(phone);
         unit.setWebsite(website);
-        unit.setAddress(address);
+        if (address != null) {
+            address.setTenantId(tenantId);
+            unit.setAddress(address);
+        }
+        if (groupName != null && !groupName.isBlank()) {
+            B2BGroup group = groupRepository
+                    .findByNameIgnoreCaseAndTenantId(groupName, tenantId)
+                    .orElseGet(() -> {
+                        B2BGroup g = new B2BGroup();
+                        g.setName(groupName);
+                        g.setTenantId(tenantId);
+                        return groupRepository.save(g);
+                    });
+            unit.setGroup(group);
+        }
+        unit.setTenantId(tenantId);
         unit.setOnboardedBy("SELF");
         unit.setStatus(B2BUnitStatus.PENDING_APPROVAL);
         return repository.save(unit);
     }
 
     @Transactional
-    public B2BUnit adminOnboard(String name, B2BUnitType type, String email, String phone, String website, String address, String approver,
+    public B2BUnit adminOnboard(String name, B2BUnitType type, String email, String phone, String website, Address address, String groupName, String approver,
                                 String adminFirstName, String adminLastName, String adminEmail, String adminMobile) {
         String tenantId = TenantContext.getTenantId();
         if (repository.existsByNameIgnoreCaseAndTenantId(name, tenantId)) {
@@ -59,7 +79,22 @@ public class B2BUnitService {
         unit.setContactEmail(email);
         unit.setContactPhone(phone);
         unit.setWebsite(website);
-        unit.setAddress(address);
+        if (address != null) {
+            address.setTenantId(tenantId);
+            unit.setAddress(address);
+        }
+        if (groupName != null && !groupName.isBlank()) {
+            B2BGroup group = groupRepository
+                    .findByNameIgnoreCaseAndTenantId(groupName, tenantId)
+                    .orElseGet(() -> {
+                        B2BGroup g = new B2BGroup();
+                        g.setName(groupName);
+                        g.setTenantId(tenantId);
+                        return groupRepository.save(g);
+                    });
+            unit.setGroup(group);
+        }
+        unit.setTenantId(tenantId);
         unit.setOnboardedBy("ADMIN");
         unit.setStatus(B2BUnitStatus.APPROVED);
         unit.setApprovedBy(approver != null ? approver : "skillrat-admin");
