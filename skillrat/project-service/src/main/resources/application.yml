@@ -9,9 +9,9 @@ spring:
     password: skillrat
   jpa:
     hibernate:
-      ddl-auto: none
+      ddl-auto: update
   flyway:
-    enabled: true
+    enabled: false
     baseline-on-migrate: true
     baseline-version: 1
     locations: classpath:db/migration

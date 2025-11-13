@@ -12,6 +12,8 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
@@ -63,7 +65,34 @@ public class B2BUnitService {
         unit.setTenantId(tenantId);
         unit.setOnboardedBy("SELF");
         unit.setStatus(B2BUnitStatus.PENDING_APPROVAL);
-        return repository.save(unit);
+        unit = repository.save(unit);
+
+        try {
+            // Derive onboarding user identity and token from current JWT
+            String callerEmail = email;
+            String bearerToken = null;
+            var auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth instanceof JwtAuthenticationToken jwtAuth) {
+                bearerToken = jwtAuth.getToken().getTokenValue();
+                String sub = jwtAuth.getToken().getSubject();
+                if (sub != null && !sub.isBlank()) {
+                    callerEmail = sub;
+                }
+            }
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.add("X-Skillrat-Tenant", tenantId);
+            if (bearerToken != null) {
+                headers.add(HttpHeaders.AUTHORIZATION, "Bearer " + bearerToken);
+            }
+            java.util.Map<String, Object> payload = new java.util.HashMap<>();
+            payload.put("b2bUnitId", unit.getId());
+            payload.put("email", callerEmail);
+            restTemplate.postForEntity("http://localhost:8081/api/users/internal/business-admin/assign", new HttpEntity<>(payload, headers), Void.class);
+        } catch (Exception ignored) {
+        	System.out.println(ignored);
+        }
+        return unit;
     }
 
     @Transactional

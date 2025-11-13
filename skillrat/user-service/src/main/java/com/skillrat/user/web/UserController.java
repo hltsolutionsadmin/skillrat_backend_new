@@ -43,10 +43,12 @@ public class UserController {
                 .orElseGet(() -> ResponseEntity.status(401).body(Map.of("error", "Invalid credentials")));
     }
 
-    // Internal endpoint used by organisation-service during business onboarding
-    @PostMapping("/internal/business-admin")
-    public ResponseEntity<User> createBusinessAdmin(@RequestBody CreateBusinessAdminRequest req) {
-        User u = userService.createBusinessAdmin(req.b2bUnitId, req.firstName, req.lastName, req.email, req.mobile);
+    // Internal endpoint to assign existing user as business admin (unit-scoped)
+    // Security: only the authenticated end-user can assign themselves (JWT sub must match email)
+    @PostMapping("/internal/business-admin/assign")
+    @PreAuthorize("#req.email != null && #req.email.equalsIgnoreCase(authentication.token.subject)")
+    public ResponseEntity<User> assignBusinessAdmin(@RequestBody AssignBusinessAdminRequest req) {
+        User u = userService.assignBusinessAdmin(req.b2bUnitId, req.email);
         return ResponseEntity.ok(u);
     }
 
@@ -96,6 +98,11 @@ public class UserController {
         @NotBlank public String lastName;
         @NotBlank @Email public String email;
         public String mobile;
+        public java.util.UUID b2bUnitId;
+    }
+
+    public static class AssignBusinessAdminRequest {
+        @NotBlank @Email public String email;
         public java.util.UUID b2bUnitId;
     }
 

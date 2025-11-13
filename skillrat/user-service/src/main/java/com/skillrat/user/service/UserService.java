@@ -97,6 +97,29 @@ public class UserService {
     }
 
     @Transactional
+    public User assignBusinessAdmin(UUID b2bUnitId, String email) {
+        String tenantId = Optional.ofNullable(TenantContext.getTenantId()).orElse("default");
+        User user = userRepository.findByEmailIgnoreCase(email)
+                .orElseThrow(() -> new IllegalArgumentException("User not found for email"));
+
+        // Ensure ADMIN role exists for this business (scoped role)
+        Role adminRole = roleRepository.findByNameAndB2bUnitId("ADMIN", b2bUnitId)
+                .orElseGet(() -> {
+                    Role r = new Role();
+                    r.setName("BUSINESS_ADMIN");
+                    r.setB2bUnitId(b2bUnitId);
+                    r.setTenantId(tenantId);
+                    return roleRepository.save(r);
+                });
+
+        Set<Role> roles = new java.util.HashSet<>(Optional.ofNullable(user.getRoles()).orElseGet(java.util.HashSet::new));
+        roles.add(adminRole);
+        user.setRoles(roles);
+        user.setB2bUnitId(b2bUnitId);
+        return userRepository.save(user);
+    }
+
+    @Transactional
     public Employee inviteEmployee(UUID b2bUnitId, String firstName, String lastName, String email, String mobile, List<UUID> roleIds) {
         String tenantId = Optional.ofNullable(TenantContext.getTenantId()).orElse("default");
         userRepository.findByEmailIgnoreCase(email).ifPresent(u -> { throw new IllegalArgumentException("Email already in use"); });
