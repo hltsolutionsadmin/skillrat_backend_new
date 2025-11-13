@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.access.prepost.PreAuthorize;
+import com.skillrat.user.security.RequiresBusinessOrHrAdmin;
 
 import java.util.Map;
 
@@ -66,7 +67,7 @@ public class UserController {
 
     // Business admin invites an employee and assigns roles
     @PostMapping("/{b2bUnitId}/employees/invite")
-    @PreAuthorize("hasRole('ADMIN')")
+    @RequiresBusinessOrHrAdmin
     public ResponseEntity<Employee> inviteEmployee(@PathVariable("b2bUnitId") java.util.UUID b2bUnitId,
                                                    @RequestBody InviteEmployeeRequest req) {
         Employee e = userService.inviteEmployee(b2bUnitId, req.firstName, req.lastName, req.email, req.mobile, req.roleIds);

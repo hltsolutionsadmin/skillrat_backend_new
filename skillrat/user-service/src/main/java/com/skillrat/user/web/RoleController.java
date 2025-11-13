@@ -1,6 +1,7 @@
 package com.skillrat.user.web;
 
 import com.skillrat.user.domain.Role;
+import com.skillrat.user.security.RequiresBusinessOrHrAdmin;
 import com.skillrat.user.service.RoleService;
 import jakarta.validation.constraints.NotBlank;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +21,7 @@ public class RoleController {
     public RoleController(RoleService roleService) { this.roleService = roleService; }
 
     @PostMapping
+    @RequiresBusinessOrHrAdmin
     public ResponseEntity<Role> create(@RequestBody CreateRoleRequest req) {
     	Role role = new Role();
     	role.setName(req.name);
