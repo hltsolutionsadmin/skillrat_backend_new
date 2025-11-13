@@ -23,6 +23,9 @@ public class Project extends BaseEntity {
 
     @Column(length = 64, unique = true)
     private String code;
+    
+    @Column
+    private String description;
 
     @Column(nullable = false)
     private UUID b2bUnitId;
@@ -38,4 +41,8 @@ public class Project extends BaseEntity {
 
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProjectMember> members = new ArrayList<>();
+    
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "client_id", unique = true)
+    private ProjectClient client;
 }
