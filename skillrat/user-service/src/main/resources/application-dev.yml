@@ -20,10 +20,8 @@ spring:
   security:
     oauth2:
       resourceserver:
-        opaque-token:
-          introspection-uri: http://localhost:8080/oauth/check_token
-          client-id: gateway
-          client-secret: gateway-secret
+        jwt:
+          jwk-set-uri: http://localhost:8080/oauth2/jwks
   autoconfigure:
     exclude:
       - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration

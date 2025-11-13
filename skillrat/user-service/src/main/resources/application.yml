@@ -19,7 +19,7 @@ spring:
         dialect: org.hibernate.dialect.MySQL8Dialect
 
   flyway:
-    enabled: true
+    enabled: false
     baseline-on-migrate: true
     baseline-version: 0
     locations: classpath:db/migration
@@ -27,13 +27,11 @@ spring:
   redis:
     host: localhost
     port: 6379
-
-security:
-  oauth2:
-    resource:
-      token-info-uri: http://localhost:8080/oauth/check_token
-      client-id: gateway
-      client-secret: gateway-secret
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://localhost:8080/oauth2/jwks
 
 skillrat:
   gateway:
