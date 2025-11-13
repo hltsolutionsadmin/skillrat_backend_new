@@ -15,12 +15,8 @@ spring:
   redis:
     host: localhost
     port: 6379
-management:
-  endpoints:
-    web:
-      exposure:
-        include: "*"
-spring:
+  flyway:
+    enabled: false
   security:
     oauth2:
       resourceserver:
@@ -28,6 +24,21 @@ spring:
           introspection-uri: http://localhost:8080/oauth/check_token
           client-id: gateway
           client-secret: gateway-secret
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  health:
+    redis:
+      enabled: false
+eureka:
+  client:
+    enabled: false
 skillrat:
   wallet:
     base-url: http://localhost:8084

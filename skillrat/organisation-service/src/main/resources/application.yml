@@ -5,8 +5,8 @@ spring:
     name: organisation-service
   datasource:
     url: jdbc:mysql://localhost:3306/skillrat_org?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
-    username: skillrat
-    password: skillrat
+    username: root
+    password: 
   jpa:
     hibernate:
       ddl-auto: none
@@ -15,6 +15,12 @@ spring:
     baseline-on-migrate: true
     baseline-version: 1
     locations: classpath:db/migration
+    repair-on-migrate: true
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://localhost:8080/oauth2/jwks
   redis:
     host: localhost
     port: 6379

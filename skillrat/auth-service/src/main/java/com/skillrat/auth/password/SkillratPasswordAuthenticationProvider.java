@@ -22,30 +22,40 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.security.oauth2.server.authorization.token.DefaultOAuth2TokenContext;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenContext;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator;
+import org.springframework.security.oauth2.jwt.JwtClaimsSet;
+import org.springframework.security.oauth2.jwt.JwtEncoder;
+import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
+import org.springframework.security.oauth2.jwt.JwsHeader;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AccessTokenAuthenticationToken;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.Instant;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
 public class SkillratPasswordAuthenticationProvider implements AuthenticationProvider {
+    private static final Logger log = LoggerFactory.getLogger(SkillratPasswordAuthenticationProvider.class);
     private final OAuth2AuthorizationService authorizationService;
     private final RegisteredClientRepository clientRepository;
-    private final OAuth2TokenGenerator<? extends OAuth2Token> tokenGenerator;
+    private final OAuth2TokenGenerator<? extends OAuth2Token> tokenGenerator; // kept for future; not used now
+    private final JwtEncoder jwtEncoder;
     private final RestTemplate restTemplate = new RestTemplate();
 
     public static final AuthorizationGrantType GRANT_TYPE = new AuthorizationGrantType("urn:ietf:params:oauth:grant-type:skillrat-password");
 
     public SkillratPasswordAuthenticationProvider(OAuth2AuthorizationService authorizationService,
                                                   RegisteredClientRepository clientRepository,
-                                                  OAuth2TokenGenerator<? extends OAuth2Token> tokenGenerator) {
+                                                  OAuth2TokenGenerator<? extends OAuth2Token> tokenGenerator,
+                                                  JwtEncoder jwtEncoder) {
         this.authorizationService = authorizationService;
         this.clientRepository = clientRepository;
         this.tokenGenerator = tokenGenerator;
+        this.jwtEncoder = jwtEncoder;
     }
 
     @Override
@@ -97,28 +107,50 @@ public class SkillratPasswordAuthenticationProvider implements AuthenticationPro
 
         // Build authorization and generate access token
         Set<String> authorizedScopes = registeredClient.getScopes();
-        OAuth2TokenContext tokenContext = DefaultOAuth2TokenContext.builder()
-                .registeredClient(registeredClient)
-                .principal(userPrincipal)
-                .authorizationServerContext(org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContextHolder.getContext())
-                .tokenType(org.springframework.security.oauth2.server.authorization.OAuth2TokenType.ACCESS_TOKEN)
-                .authorizationGrantType(GRANT_TYPE)
-                .authorizationGrant(tokenRequest)
-                .authorizedScopes(authorizedScopes)
-                .build();
-        OAuth2Token generatedToken = this.tokenGenerator.generate(tokenContext);
-        if (generatedToken == null || !(generatedToken instanceof OAuth2AccessToken)) {
-            throw new OAuth2AuthenticationException(new OAuth2Error("server_error", "Token generation failed", null));
+        Instant issuedAt = Instant.now();
+        Instant expiresAt = issuedAt.plus(java.time.Duration.ofMinutes(30));
+        JwtClaimsSet.Builder claims = JwtClaimsSet.builder()
+                .subject(principalName)
+                .issuedAt(issuedAt)
+                .expiresAt(expiresAt)
+                .claim("scope", String.join(" ", authorizedScopes));
+        // propagate roles
+        if (!auths.isEmpty()) {
+            java.util.List<String> roleNames = auths.stream()
+                    .map(a -> a.getAuthority())
+                    .filter(a -> a != null && a.startsWith("ROLE_"))
+                    .map(a -> a.substring(5))
+                    .toList();
+            claims.claim("roles", roleNames);
         }
-        OAuth2AccessToken accessToken = (OAuth2AccessToken) generatedToken;
+        // tenant claim
+        String tenantId = TenantContext.getTenantId() != null ? TenantContext.getTenantId() : "default";
+        claims.claim("tenant_id", tenantId);
+
+        var jwt = jwtEncoder.encode(JwtEncoderParameters.from(
+                JwsHeader.with(org.springframework.security.oauth2.jose.jws.SignatureAlgorithm.RS256).build(),
+                claims.build()));
+
+        OAuth2AccessToken accessToken = new OAuth2AccessToken(
+                OAuth2AccessToken.TokenType.BEARER,
+                jwt.getTokenValue(),
+                issuedAt,
+                expiresAt,
+                authorizedScopes);
 
         OAuth2Authorization authorization = OAuth2Authorization.withRegisteredClient(registeredClient)
                 .principalName(principalName)
                 .authorizationGrantType(GRANT_TYPE)
+                .authorizedScopes(authorizedScopes)
                 .attribute(OAuth2ParameterNames.USERNAME, principalName)
-                .accessToken(accessToken)
+                .token(accessToken)
                 .build();
-        authorizationService.save(authorization);
+        try {
+            authorizationService.save(authorization);
+            log.info("Saved password-grant JWT for principal={} tokenId={}", principalName, accessToken.getTokenValue().substring(0, Math.min(8, accessToken.getTokenValue().length())));
+        } catch (Exception ex) {
+            log.error("Failed to save authorization for principal={}", principalName, ex);
+        }
 
         Map<String, Object> additionalParameters = new HashMap<>();
         additionalParameters.put("scope", String.join(" ", authorizedScopes));

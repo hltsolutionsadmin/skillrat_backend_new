@@ -19,6 +19,13 @@ public class RoleService {
     }
 
     @Transactional
+    public Role createRole(Role role) {
+        String tenantId = Optional.ofNullable(TenantContext.getTenantId()).orElse("default");
+        role.setTenantId(tenantId);
+        return roleRepository.save(role);
+    }
+    
+    @Transactional
     public Role createRole(UUID b2bUnitId, String name) {
         String tenantId = Optional.ofNullable(TenantContext.getTenantId()).orElse("default");
         roleRepository.findByNameAndB2bUnitId(name, b2bUnitId).ifPresent(r -> { throw new IllegalArgumentException("Role already exists"); });

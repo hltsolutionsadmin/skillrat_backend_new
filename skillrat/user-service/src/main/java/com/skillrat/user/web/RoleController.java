@@ -9,6 +9,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 @RestController
@@ -19,9 +20,11 @@ public class RoleController {
     public RoleController(RoleService roleService) { this.roleService = roleService; }
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Role> create(@RequestBody CreateRoleRequest req) {
-        Role r = roleService.createRole(req.b2bUnitId, req.name);
+    	Role role = new Role();
+    	role.setName(req.name);
+    	role.setId(req.uid);
+        Role r = Objects.nonNull(req.b2bUnitId) ? roleService.createRole(req.b2bUnitId, req.name) : roleService.createRole(role);
         return ResponseEntity.ok(r);
     }
 
@@ -32,6 +35,7 @@ public class RoleController {
     }
 
     public static class CreateRoleRequest {
+    	private UUID uid;
         public UUID b2bUnitId;
         @NotBlank public String name;
     }

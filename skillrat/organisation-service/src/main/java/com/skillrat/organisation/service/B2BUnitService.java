@@ -35,7 +35,7 @@ public class B2BUnitService {
 
     @Transactional
     public B2BUnit selfSignup(String name, B2BUnitType type, String email, String phone, String website, Address address, String groupName) {
-        String tenantId = TenantContext.getTenantId();
+        String tenantId = java.util.Optional.ofNullable(TenantContext.getTenantId()).orElse("default");
         if (repository.existsByNameIgnoreCaseAndTenantId(name, tenantId)) {
             throw new IllegalStateException("B2BUnit with name already exists for tenant");
         }
@@ -69,7 +69,7 @@ public class B2BUnitService {
     @Transactional
     public B2BUnit adminOnboard(String name, B2BUnitType type, String email, String phone, String website, Address address, String groupName, String approver,
                                 String adminFirstName, String adminLastName, String adminEmail, String adminMobile) {
-        String tenantId = TenantContext.getTenantId();
+        String tenantId = java.util.Optional.ofNullable(TenantContext.getTenantId()).orElse("default");
         if (repository.existsByNameIgnoreCaseAndTenantId(name, tenantId)) {
             throw new IllegalStateException("B2BUnit with name already exists for tenant");
         }

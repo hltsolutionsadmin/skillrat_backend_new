@@ -35,6 +35,7 @@ public class SecurityConfig {
         http.authorizeHttpRequests(auth -> auth
                         .requestMatchers("/actuator/**").permitAll()
                         .requestMatchers("/api/users/signup", "/api/users/login").permitAll()
+                        .requestMatchers("/api/roles/**").permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth -> oauth.opaqueToken(opaque ->
                         opaque.introspector(introspector())))
