@@ -17,6 +17,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
 
 @Service
 public class UserService {
@@ -140,6 +143,22 @@ public class UserService {
         if (roleIds != null && !roleIds.isEmpty()) {
             Set<Role> roles = new HashSet<>(roleRepository.findAllById(roleIds));
             emp.setRoles(roles);
+        }
+        // Populate createdBy/updatedBy from current authenticated user
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null) {
+            String actor = auth.getName();
+            Object principal = auth.getPrincipal();
+            if (principal instanceof Jwt jwt) {
+                String emailClaim = jwt.getClaimAsString("email");
+                if (emailClaim != null && !emailClaim.isBlank()) {
+                    actor = emailClaim;
+                }
+            }
+            if (actor != null && !actor.isBlank()) {
+                emp.setCreatedBy(actor);
+                emp.setUpdatedBy(actor);
+            }
         }
         return userRepository.save(emp);
     }

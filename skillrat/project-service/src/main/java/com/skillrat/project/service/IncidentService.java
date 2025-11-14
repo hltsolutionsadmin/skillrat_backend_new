@@ -4,22 +4,31 @@ import com.skillrat.common.tenant.TenantContext;
 import com.skillrat.project.domain.*;
 import com.skillrat.project.repo.IncidentRepository;
 import com.skillrat.project.repo.ProjectRepository;
+import com.skillrat.project.client.UserClient;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
+import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
 
 @Service
 public class IncidentService {
 
     private final ProjectRepository projectRepository;
     private final IncidentRepository incidentRepository;
+    private final UserClient userClient;
 
-    public IncidentService(ProjectRepository projectRepository, IncidentRepository incidentRepository) {
+    public IncidentService(ProjectRepository projectRepository, IncidentRepository incidentRepository, UserClient userClient) {
         this.projectRepository = projectRepository;
         this.incidentRepository = incidentRepository;
+        this.userClient = userClient;
     }
 
     @Transactional
@@ -33,6 +42,8 @@ public class IncidentService {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new IllegalArgumentException("Project not found"));
         Incident incident = new Incident();
+        incident.setCreatedDate(Instant.now());
+        incident.setUpdatedDate(Instant.now());
         incident.setProject(project);
         incident.setIncidentNumber(generateIncidentNumber(project));
         incident.setTitle(title);
@@ -43,6 +54,39 @@ public class IncidentService {
         incident.setCategory(category == null ? IncidentCategory.OTHER : category);
         incident.setSubCategory(subCategory);
         incident.setStatus(IncidentStatus.OPEN);
+        try {
+            Map<String, Object> me = userClient.me();
+            if (me != null) {
+                Object email = me.get("email");
+                if (email != null) {
+                    incident.setCreatedBy(Objects.toString(email, null));
+                }
+                Object id = me.get("id");
+                if (id != null) {
+                    // Optionally set reporter as current user by default
+                    try { incident.setReporterId(UUID.fromString(id.toString())); } catch (Exception ignored) {}
+                }
+            }
+        } catch (Exception ignored) {}
+        // Fallback to SecurityContext if Feign is unavailable or did not provide email
+        if (incident.getCreatedBy() == null) {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null) {
+                String name = auth.getName();
+                if (name != null && !name.isBlank()) {
+                    incident.setCreatedBy(name);
+                    incident.setUpdatedBy(name);
+                }
+                Object principal = auth.getPrincipal();
+                if (principal instanceof Jwt jwt) {
+                    String email = jwt.getClaimAsString("email");
+                    if (email != null && !email.isBlank()) {
+                        incident.setCreatedBy(email);
+                        incident.setUpdatedBy(email);
+                    }
+                }
+            }
+        }
         incident.setTenantId(TenantContext.getTenantId());
         return incidentRepository.save(incident);
     }

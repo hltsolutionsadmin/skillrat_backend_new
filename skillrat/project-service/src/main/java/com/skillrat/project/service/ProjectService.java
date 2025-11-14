@@ -3,12 +3,18 @@ package com.skillrat.project.service;
 import com.skillrat.common.tenant.TenantContext;
 import com.skillrat.project.domain.*;
 import com.skillrat.project.repo.*;
+import com.skillrat.project.client.UserClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.Objects;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
 
 @Service
 public class ProjectService {
@@ -17,15 +23,18 @@ public class ProjectService {
     private final WBSElementRepository wbsRepository;
     private final ProjectMemberRepository memberRepository;
     private final WBSAllocationRepository allocationRepository;
+    private final UserClient userClient;
 
     public ProjectService(ProjectRepository projectRepository,
                           WBSElementRepository wbsRepository,
                           ProjectMemberRepository memberRepository,
-                          WBSAllocationRepository allocationRepository) {
+                          WBSAllocationRepository allocationRepository,
+                          UserClient userClient) {
         this.projectRepository = projectRepository;
         this.wbsRepository = wbsRepository;
         this.memberRepository = memberRepository;
         this.allocationRepository = allocationRepository;
+        this.userClient = userClient;
     }
 
     @Transactional(readOnly = true)
@@ -65,8 +74,11 @@ public class ProjectService {
             if (clientSecondaryEmail != null && !clientSecondaryEmail.isBlank()) {
                 client.setSecondaryContactEmail(clientSecondaryEmail);
             }
+            client.setTenantId(tenant);
+            applyAuditFromCurrentUser(client);
             p.setClient(client);
         }
+        applyAuditFromCurrentUser(p);
         return projectRepository.save(p);
     }
 
@@ -111,6 +123,7 @@ public class ProjectService {
         member.setStartDate(start);
         member.setEndDate(end);
         member.setActive(active);
+        applyAuditFromCurrentUser(member);
         return memberRepository.save(member);
     }
 
@@ -140,6 +153,38 @@ public class ProjectService {
         alloc.setActive(true);
         alloc.setTenantId(tenant);
         return allocationRepository.save(alloc);
+    }
+
+    private void applyAuditFromCurrentUser(com.skillrat.common.orm.BaseEntity entity) {
+        try {
+            Map<String, Object> me = userClient.me();
+            if (me != null) {
+                Object email = me.get("email");
+                if (email != null) {
+                    String v = Objects.toString(email, null);
+                    entity.setCreatedBy(v);
+                    entity.setUpdatedBy(v);
+                }
+            }
+        } catch (Exception ignored) {}
+        if (entity.getCreatedBy() == null || entity.getUpdatedBy() == null) {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null) {
+                String name = auth.getName();
+                if (name != null && !name.isBlank()) {
+                    if (entity.getCreatedBy() == null) entity.setCreatedBy(name);
+                    if (entity.getUpdatedBy() == null) entity.setUpdatedBy(name);
+                }
+                Object principal = auth.getPrincipal();
+                if (principal instanceof Jwt jwt) {
+                    String email = jwt.getClaimAsString("email");
+                    if (email != null && !email.isBlank()) {
+                        entity.setCreatedBy(email);
+                        entity.setUpdatedBy(email);
+                    }
+                }
+            }
+        }
     }
 
 }
