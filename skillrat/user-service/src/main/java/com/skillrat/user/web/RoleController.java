@@ -31,7 +31,7 @@ public class RoleController {
     }
 
     @GetMapping("/{b2bUnitId}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('BUSINESS_ADMIN')")
     public List<Role> list(@PathVariable("b2bUnitId") UUID b2bUnitId) {
         return roleService.list(b2bUnitId);
     }

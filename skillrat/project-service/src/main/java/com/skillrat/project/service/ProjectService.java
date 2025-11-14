@@ -28,6 +28,12 @@ public class ProjectService {
         this.allocationRepository = allocationRepository;
     }
 
+    @Transactional(readOnly = true)
+    public Project getProject(UUID id) {
+        return projectRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Project not found"));
+    }
+
     @Transactional
     public Project createProject(String name,
                                  String code,
@@ -110,7 +116,7 @@ public class ProjectService {
 
     @Transactional
     public WBSAllocation allocateMemberToWbs(UUID memberId, UUID wbsId, LocalDate start, LocalDate end) {
-        ProjectMember member = memberRepository.findById(memberId)
+        ProjectMember member = memberRepository.findByEmployeeId(memberId).stream().findAny()
                 .orElseThrow(() -> new IllegalArgumentException("Project member not found"));
         WBSElement wbs = wbsRepository.findById(wbsId)
                 .orElseThrow(() -> new IllegalArgumentException("WBS not found"));
