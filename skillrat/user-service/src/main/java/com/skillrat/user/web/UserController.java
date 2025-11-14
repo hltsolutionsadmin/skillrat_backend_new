@@ -14,6 +14,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import com.skillrat.user.security.RequiresBusinessOrHrAdmin;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @RestController
@@ -54,13 +55,19 @@ public class UserController {
                     if (b2bUnitId != null) {
                         businessDetails = organisationClient.getB2BUnit(b2bUnitId);
                     }
-                    return ResponseEntity.ok(Map.of(
-                            "id", u.getId(),
-                            "email", u.getEmail(),
-                            "b2bUnitId", b2bUnitId,
-                            "roles", (u.getRoles() == null ? java.util.List.of() : u.getRoles().stream().map(r -> r.getName()).toList()),
-                            "business", businessDetails
-                    ));
+                    Map<String, Object> resp = new HashMap<>();
+                    resp.put("id", u.getId());
+                    resp.put("email", u.getEmail());
+                    resp.put("roles", (u.getRoles() == null
+                            ? java.util.List.of()
+                            : u.getRoles().stream()
+                                .filter(r -> r != null)
+                                .map(r -> r.getName())
+                                .filter(n -> n != null)
+                                .toList()));
+                    if (b2bUnitId != null) resp.put("b2bUnitId", b2bUnitId);
+                    if (businessDetails != null) resp.put("business", businessDetails);
+                    return ResponseEntity.ok(resp);
                 })
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
