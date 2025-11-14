@@ -40,6 +40,7 @@
     <module>discovery-service</module>
     <module>infra</module>
     <module>project-service</module>
+    <module>audit-service</module>
   </modules>
 
   <dependencyManagement>

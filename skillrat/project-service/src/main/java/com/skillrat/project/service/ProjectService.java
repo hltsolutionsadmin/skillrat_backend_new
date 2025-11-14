@@ -32,7 +32,7 @@ public class ProjectService {
     public Project createProject(String name,
                                  String code,
                                  String description,
-                                 UUID b2bUnitId,
+                                 String b2bUnitId,
                                  LocalDate start,
                                  LocalDate end,
                                  String clientName,
@@ -45,7 +45,7 @@ public class ProjectService {
         Project p = new Project();
         p.setName(name);
         p.setCode(code);
-        p.setB2bUnitId(b2bUnitId);
+        p.setB2bUnitId(UUID.fromString(b2bUnitId));
         p.setStartDate(start);
         p.setEndDate(end);
         p.setTenantId(tenant);

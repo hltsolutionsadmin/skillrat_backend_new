@@ -8,7 +8,6 @@ public class TenantAwareAuditor implements AuditorAware<String> {
     @Override
     public Optional<String> getCurrentAuditor() {
         String tenant = TenantContext.getTenantId();
-        // In real impl, combine tenant and user principal. For scaffold, use tenant or "system".
         return Optional.ofNullable(tenant != null ? tenant + ":system" : "system");
     }
 }

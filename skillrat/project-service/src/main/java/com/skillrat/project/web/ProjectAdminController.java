@@ -74,7 +74,7 @@ public class ProjectAdminController {
     public static class CreateProjectRequest {
         @NotBlank public String name;
         public String code;
-        @NotNull public UUID b2bUnitId;
+        @NotNull public String b2bUnitId;
         public LocalDate startDate;
         public LocalDate endDate;
         public String description;

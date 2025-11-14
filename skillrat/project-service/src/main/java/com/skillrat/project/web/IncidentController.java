@@ -71,6 +71,12 @@ public class IncidentController {
         return ResponseEntity.ok(updated);
     }
 
+    @GetMapping("/incidents/{incidentId}/history")
+    @PreAuthorize("hasAnyRole('BUSINESS_ADMIN','PMO')")
+    public ResponseEntity<java.util.List<Incident>> history(@PathVariable("incidentId") UUID incidentId) {
+        return ResponseEntity.ok(incidentService.history(incidentId));
+    }
+
     public static class CreateIncidentRequest {
         @NotBlank public String title;
         @NotBlank public String shortDescription;

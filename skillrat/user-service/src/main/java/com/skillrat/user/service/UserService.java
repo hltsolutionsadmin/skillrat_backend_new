@@ -6,6 +6,8 @@ import com.skillrat.user.domain.Role;
 import com.skillrat.user.domain.User;
 import com.skillrat.user.repo.RoleRepository;
 import com.skillrat.user.repo.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,6 +22,8 @@ import java.util.UUID;
 
 @Service
 public class UserService {
+
+    private static final Logger log = LoggerFactory.getLogger(UserService.class);
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
@@ -47,15 +51,23 @@ public class UserService {
         u.setPasswordHash(passwordEncoder.encode(rawPassword));
         u.setActive(true);
         u.setTenantId(tenantId);
-        return userRepository.save(u);
+        User saved = userRepository.save(u);
+        log.info("User signup successful id={}, email={}, tenantId={}", saved.getId(), saved.getEmail(), tenantId);
+        return saved;
     }
 
     @Transactional(readOnly = true)
     public Optional<User> authenticate(String emailOrMobile, String rawPassword) {
         Optional<User> byEmail = userRepository.findByEmailIgnoreCase(emailOrMobile);
         Optional<User> byMobile = byEmail.isPresent() ? byEmail : userRepository.findByMobile(emailOrMobile);
-        return byMobile.filter(User::isActive)
+        Optional<User> result = byMobile.filter(User::isActive)
                 .filter(u -> passwordEncoder.matches(rawPassword, u.getPasswordHash()));
+        if (result.isEmpty()) {
+            log.warn("User authentication failed for identifier={}", emailOrMobile);
+        } else {
+            log.info("User authentication successful id={}, email={}", result.get().getId(), result.get().getEmail());
+        }
+        return result;
     }
 
     @Transactional(readOnly = true)
@@ -93,7 +105,10 @@ public class UserService {
         Set<Role> roles = new HashSet<>();
         roles.add(adminRole);
         admin.setRoles(roles);
-        return userRepository.save(admin);
+        User saved = userRepository.save(admin);
+        log.info("Business admin user created id={}, email={}, b2bUnitId={}, tenantId={}",
+                saved.getId(), saved.getEmail(), b2bUnitId, tenantId);
+        return saved;
     }
 
     @Transactional
@@ -116,7 +131,10 @@ public class UserService {
         roles.add(adminRole);
         user.setRoles(roles);
         user.setB2bUnitId(b2bUnitId);
-        return userRepository.save(user);
+        User saved = userRepository.save(user);
+        log.info("Assigned BUSINESS_ADMIN role to user id={}, email={}, b2bUnitId={}, tenantId={}",
+                saved.getId(), saved.getEmail(), b2bUnitId, tenantId);
+        return saved;
     }
 
     @Transactional
@@ -141,7 +159,10 @@ public class UserService {
             Set<Role> roles = new HashSet<>(roleRepository.findAllById(roleIds));
             emp.setRoles(roles);
         }
-        return userRepository.save(emp);
+        Employee saved = userRepository.save(emp);
+        log.info("Employee invited id={}, email={}, b2bUnitId={}, tenantId={}",
+                saved.getId(), saved.getEmail(), b2bUnitId, tenantId);
+        return saved;
     }
 
     @Transactional
@@ -157,6 +178,7 @@ public class UserService {
         u.setPasswordSetupToken(null);
         u.setPasswordSetupTokenExpires(null);
         userRepository.save(u);
+        log.info("Password setup completed for user id={}, email={}", u.getId(), u.getEmail());
         return true;
     }
 }
