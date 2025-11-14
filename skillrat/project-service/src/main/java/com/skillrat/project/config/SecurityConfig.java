@@ -15,6 +15,7 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtGra
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.config.http.SessionCreationPolicy;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -36,32 +37,36 @@ public class SecurityConfig {
     }
 
     @Bean
-    public JwtDecoder jwtDecoder(@Value("${spring.security.oauth2.resourceserver.jwt.jwk-set-uri:http://localhost:8080/oauth2/jwks}") String jwkSetUri) {
+    public JwtDecoder jwtDecoder(@org.springframework.beans.factory.annotation.Value("${spring.security.oauth2.resourceserver.jwt.jwk-set-uri}") String jwkSetUri) {
         return NimbusJwtDecoder.withJwkSetUri(jwkSetUri).build();
     }
 
     @Bean
     public JwtAuthenticationConverter jwtAuthConverter() {
         JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
-        // retain scope authorities if present
         JwtGrantedAuthoritiesConverter scopes = new JwtGrantedAuthoritiesConverter();
         converter.setJwtGrantedAuthoritiesConverter(jwt -> {
-            Collection<GrantedAuthority> scopeAuth = scopes.convert(jwt);
-            Collection<GrantedAuthority> roleAuth = rolesFromClaim(jwt, "roles");
-            return new java.util.ArrayList<GrantedAuthority>() {{
-                addAll(scopeAuth);
-                addAll(roleAuth);
-            }};
+            Collection<GrantedAuthority> authorities = new ArrayList<>(scopes.convert(jwt));
+            List<String> roles = rolesFromClaim(jwt, "roles");
+            if (roles != null) {
+                for (String r : roles) {
+                    if (r != null && !r.isBlank()) {
+                        authorities.add(new SimpleGrantedAuthority("ROLE_" + r));
+                    }
+                }
+            }
+            return authorities;
         });
         return converter;
     }
 
-    private Collection<GrantedAuthority> rolesFromClaim(Jwt jwt, String claim) {
-        List<String> roles = jwt.getClaim(claim);
-        if (roles == null) return java.util.List.of();
-        return roles.stream()
-                .filter(r -> r != null && !r.isBlank())
-                .map(r -> new SimpleGrantedAuthority("ROLE_" + r))
-                .collect(Collectors.toList());
+    private List<String> rolesFromClaim(Jwt jwt, String claim) {
+        Object val = jwt.getClaim(claim);
+        if (val instanceof List<?> list) {
+            List<String> out = new ArrayList<>();
+            for (Object o : list) if (o != null) out.add(o.toString());
+            return out;
+        }
+        return java.util.Collections.emptyList();
     }
 }
