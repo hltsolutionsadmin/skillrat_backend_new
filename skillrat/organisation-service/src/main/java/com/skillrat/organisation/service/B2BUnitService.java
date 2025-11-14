@@ -8,6 +8,8 @@ import com.skillrat.organisation.domain.Address;
 import com.skillrat.organisation.domain.B2BGroup;
 import com.skillrat.organisation.repo.B2BUnitRepository;
 import com.skillrat.organisation.repo.B2BGroupRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -24,6 +26,8 @@ import java.util.UUID;
 
 @Service
 public class B2BUnitService {
+
+    private static final Logger log = LoggerFactory.getLogger(B2BUnitService.class);
 
     private final B2BUnitRepository repository;
     private final B2BGroupRepository groupRepository;
@@ -66,6 +70,7 @@ public class B2BUnitService {
         unit.setOnboardedBy("SELF");
         unit.setStatus(B2BUnitStatus.PENDING_APPROVAL);
         unit = repository.save(unit);
+        log.info("B2BUnit self signup created id={}, name={}, tenantId={}", unit.getId(), unit.getName(), tenantId);
 
         try {
             // Derive onboarding user identity and token from current JWT
@@ -89,8 +94,9 @@ public class B2BUnitService {
             payload.put("b2bUnitId", unit.getId());
             payload.put("email", callerEmail);
             restTemplate.postForEntity("http://localhost:8081/api/users/internal/business-admin/assign", new HttpEntity<>(payload, headers), Void.class);
-        } catch (Exception ignored) {
-        	System.out.println(ignored);
+            log.info("Requested business-admin assignment for unitId={}, email={}", unit.getId(), callerEmail);
+        } catch (Exception ex) {
+            log.warn("Failed to notify user-service for business-admin assignment unitId={}, email={}", unit.getId(), email, ex);
         }
         return unit;
     }
@@ -129,6 +135,7 @@ public class B2BUnitService {
         unit.setApprovedBy(approver != null ? approver : "skillrat-admin");
         unit.setApprovedAt(Instant.now());
         unit = repository.save(unit);
+        log.info("B2BUnit admin onboarded id={}, name={}, tenantId={}, approvedBy={}", unit.getId(), unit.getName(), tenantId, unit.getApprovedBy());
 
         if (adminEmail != null && !adminEmail.isBlank()) {
             HttpHeaders headers = new HttpHeaders();
@@ -144,6 +151,7 @@ public class B2BUnitService {
                 restTemplate.postForEntity("http://user-service:8080/api/users/internal/business-admin", new HttpEntity<>(payload, headers), Void.class);
             } catch (Exception ex) {
                 // Intentionally not failing org onboarding; admin creation can be retried separately
+                log.warn("Failed to create admin user for unitId={}, adminEmail={}", unit.getId(), adminEmail, ex);
             }
         }
         return unit;
@@ -155,7 +163,9 @@ public class B2BUnitService {
             unit.setStatus(B2BUnitStatus.APPROVED);
             unit.setApprovedBy(approver);
             unit.setApprovedAt(Instant.now());
-            return repository.save(unit);
+            B2BUnit saved = repository.save(unit);
+            log.info("B2BUnit approved id={}, name={}, approver={}", saved.getId(), saved.getName(), saved.getApprovedBy());
+            return saved;
         });
     }
 

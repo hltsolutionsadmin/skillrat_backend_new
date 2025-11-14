@@ -5,8 +5,8 @@ spring:
     name: project-service
   datasource:
     url: jdbc:mysql://localhost:3306/skillrat_project?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
-    username: skillrat
-    password: skillrat
+    username: root
+    password: 
   jpa:
     hibernate:
       ddl-auto: update
