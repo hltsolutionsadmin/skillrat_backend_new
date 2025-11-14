@@ -14,7 +14,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import com.skillrat.user.security.RequiresBusinessOrHrAdmin;
 
+import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/users")
@@ -54,13 +56,19 @@ public class UserController {
                     if (b2bUnitId != null) {
                         businessDetails = organisationClient.getB2BUnit(b2bUnitId);
                     }
-                    return ResponseEntity.ok(Map.of(
-                            "id", u.getId(),
-                            "email", u.getEmail(),
-                            "b2bUnitId", b2bUnitId,
-                            "roles", (u.getRoles() == null ? java.util.List.of() : u.getRoles().stream().map(r -> r.getName()).toList()),
-                            "business", businessDetails
-                    ));
+                    Map<String, Object> resp = new HashMap<>();
+                    resp.put("id", u.getId());
+                    resp.put("email", u.getEmail());
+                    resp.put("roles", (u.getRoles() == null
+                            ? java.util.List.of()
+                            : u.getRoles().stream()
+                                .filter(r -> r != null)
+                                .map(r -> r.getName())
+                                .filter(n -> n != null)
+                                .toList()));
+                    if (b2bUnitId != null) resp.put("b2bUnitId", b2bUnitId);
+                    if (businessDetails != null) resp.put("business", businessDetails);
+                    return ResponseEntity.ok(resp);
                 })
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
@@ -108,7 +116,7 @@ public class UserController {
     // Business admin invites an employee and assigns roles
     @PostMapping("/{b2bUnitId}/employees/invite")
     @RequiresBusinessOrHrAdmin
-    public ResponseEntity<Employee> inviteEmployee(@PathVariable("b2bUnitId") java.util.UUID b2bUnitId,
+    public ResponseEntity<Employee> inviteEmployee(@PathVariable("b2bUnitId") UUID b2bUnitId,
                                                    @RequestBody InviteEmployeeRequest req) {
         Employee e = userService.inviteEmployee(b2bUnitId, req.firstName, req.lastName, req.email, req.mobile, req.roleIds);
         return ResponseEntity.ok(e);
