@@ -16,6 +16,7 @@ import com.skillrat.user.security.RequiresBusinessOrHrAdmin;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/users")
@@ -115,7 +116,7 @@ public class UserController {
     // Business admin invites an employee and assigns roles
     @PostMapping("/{b2bUnitId}/employees/invite")
     @RequiresBusinessOrHrAdmin
-    public ResponseEntity<Employee> inviteEmployee(@PathVariable("b2bUnitId") java.util.UUID b2bUnitId,
+    public ResponseEntity<Employee> inviteEmployee(@PathVariable("b2bUnitId") UUID b2bUnitId,
                                                    @RequestBody InviteEmployeeRequest req) {
         Employee e = userService.inviteEmployee(b2bUnitId, req.firstName, req.lastName, req.email, req.mobile, req.roleIds);
         return ResponseEntity.ok(e);
