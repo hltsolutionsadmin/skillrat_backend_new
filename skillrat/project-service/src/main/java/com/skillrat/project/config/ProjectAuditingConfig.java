@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.domain.AuditorAware;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 
 import java.util.Optional;
 
@@ -18,8 +19,17 @@ public class ProjectAuditingConfig {
             if (auth == null || !auth.isAuthenticated()) {
                 return Optional.of("system");
             }
-            String name = auth.getName();
-            return Optional.ofNullable(name != null && !name.isBlank() ? name : "system");
+            String userId = null;
+            if (auth instanceof JwtAuthenticationToken jwtAuth) {
+                String sub = jwtAuth.getToken().getSubject();
+                if (sub != null && !sub.isBlank()) {
+                    userId = sub;
+                }
+            }
+            if (userId == null || userId.isBlank()) {
+                userId = auth.getName();
+            }
+            return Optional.ofNullable(userId != null && !userId.isBlank() ? userId : "system");
         };
     }
 }
