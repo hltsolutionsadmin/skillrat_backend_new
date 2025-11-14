@@ -34,6 +34,7 @@ public class B2BSecurity {
         Set<Role> roles = user.getRoles();
         if (roles == null || roles.isEmpty()) return false;
         return roles.stream()
+                .filter(r -> r != null && r.getName() != null)
                 .anyMatch(r ->
                     Objects.equals(b2bUnitId, r.getB2bUnitId()) &&
                     ("BUSINESS_ADMIN".equalsIgnoreCase(r.getName()) ||
