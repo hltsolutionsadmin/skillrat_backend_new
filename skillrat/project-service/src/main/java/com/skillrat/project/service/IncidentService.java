@@ -112,6 +112,22 @@ public class IncidentService {
         return incidentRepository.findByProject_Id(projectId, pageable);
     }
 
+    @Transactional(readOnly = true)
+    public Incident getById(UUID incidentId) {
+        return incidentRepository.findById(incidentId)
+                .orElseThrow(() -> new IllegalArgumentException("Incident not found"));
+    }
+
+    @Transactional(readOnly = true)
+    public Page<Incident> listByAssignee(UUID assigneeId, Pageable pageable) {
+        return incidentRepository.findByAssigneeId(assigneeId, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<Incident> listByReporter(UUID reporterId, Pageable pageable) {
+        return incidentRepository.findByReporterId(reporterId, pageable);
+    }
+
     @Transactional
     public Incident assignAssignee(UUID incidentId, UUID assigneeId) {
         Incident incident = incidentRepository.findById(incidentId)
