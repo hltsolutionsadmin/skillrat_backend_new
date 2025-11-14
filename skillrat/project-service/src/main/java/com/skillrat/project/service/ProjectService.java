@@ -38,14 +38,16 @@ public class ProjectService {
                                  String clientName,
                                  String clientPrimaryEmail,
                                  String clientSecondaryEmail) {
-        String tenant = TenantContext.getTenantId();
+    	String tenant = Optional.ofNullable(TenantContext.getTenantId())
+                .filter(t -> !t.isBlank())
+                .orElse("default");
         if (code != null && !code.isBlank() && projectRepository.findByCodeAndTenantId(code, tenant).isPresent()) {
             throw new IllegalStateException("Project code already exists for tenant");
         }
         Project p = new Project();
         p.setName(name);
         p.setCode(code);
-        p.setB2bUnitId(UUID.fromString(b2bUnitId));
+        p.setB2bUnitId(UUID.fromString(normalizeUuidString(b2bUnitId)));
         p.setStartDate(start);
         p.setEndDate(end);
         p.setTenantId(tenant);
@@ -59,9 +61,35 @@ public class ProjectService {
             if (clientSecondaryEmail != null && !clientSecondaryEmail.isBlank()) {
                 client.setSecondaryContactEmail(clientSecondaryEmail);
             }
+            client.setTenantId(tenant);
             p.setClient(client);
         }
         return projectRepository.save(p);
+    }
+
+    private String normalizeUuidString(String raw) {
+        if (raw == null) {
+            throw new IllegalArgumentException("b2bUnitId is required");
+        }
+        String s = raw.trim();
+        if (s.startsWith("0x") || s.startsWith("0X")) {
+            s = s.substring(2);
+        }
+        // if already in canonical UUID format, just return
+        if (s.contains("-")) {
+            return s;
+        }
+        // handle 32 hex chars without dashes
+        if (s.length() == 32) {
+            StringBuilder sb = new StringBuilder();
+            sb.append(s, 0, 8).append('-')
+              .append(s, 8, 12).append('-')
+              .append(s, 12, 16).append('-')
+              .append(s, 16, 20).append('-')
+              .append(s, 20, 32);
+            return sb.toString();
+        }
+        return s;
     }
 
     @Transactional

@@ -30,22 +30,22 @@ public abstract class BaseEntity {
     private UUID id;
 
     @CreatedDate
-    @Column(name = "createdDate", nullable = true, updatable = false)
+    @Column(name = "created_date", nullable = true, updatable = false)
     private Instant createdDate;
 
     @LastModifiedDate
-    @Column(name = "updatedDate", nullable = true)
+    @Column(name = "updated_date", nullable = true)
     private Instant updatedDate;
 
     @CreatedBy
-    @Column(name = "createdBy", nullable = true, updatable = false)
+    @Column(name = "created_by", nullable = true, updatable = false)
     private String createdBy;
 
     @LastModifiedBy
-    @Column(name = "updatedBy", nullable = true)
+    @Column(name = "updated_by", nullable = true)
     private String updatedBy;
 
-    @Column(name = "tenantId", nullable = true)
+    @Column(name = "tenant_id", nullable = true)
     private String tenantId;
 
     @PrePersist

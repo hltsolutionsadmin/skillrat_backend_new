@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.envers.Audited;
+import org.hibernate.envers.RelationTargetAuditMode;
 
 @Entity
 @Table(name = "incident")
@@ -20,6 +21,7 @@ public class Incident extends BaseEntity {
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "project_id")
+    @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     private Project project;
 
     @Column(nullable = false, length = 200)
