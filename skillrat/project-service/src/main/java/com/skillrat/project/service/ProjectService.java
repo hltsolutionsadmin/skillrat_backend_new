@@ -29,7 +29,15 @@ public class ProjectService {
     }
 
     @Transactional
-    public Project createProject(String name, String code, UUID b2bUnitId, LocalDate start, LocalDate end) {
+    public Project createProject(String name,
+                                 String code,
+                                 String description,
+                                 UUID b2bUnitId,
+                                 LocalDate start,
+                                 LocalDate end,
+                                 String clientName,
+                                 String clientPrimaryEmail,
+                                 String clientSecondaryEmail) {
         String tenant = TenantContext.getTenantId();
         if (code != null && !code.isBlank() && projectRepository.findByCodeAndTenantId(code, tenant).isPresent()) {
             throw new IllegalStateException("Project code already exists for tenant");
@@ -41,6 +49,18 @@ public class ProjectService {
         p.setStartDate(start);
         p.setEndDate(end);
         p.setTenantId(tenant);
+        p.setDescription(description);
+        if (clientName != null && !clientName.isBlank()) {
+            ProjectClient client = new ProjectClient();
+            client.setName(clientName);
+            if (clientPrimaryEmail != null && !clientPrimaryEmail.isBlank()) {
+                client.setPrimaryContactEmail(clientPrimaryEmail);
+            }
+            if (clientSecondaryEmail != null && !clientSecondaryEmail.isBlank()) {
+                client.setSecondaryContactEmail(clientSecondaryEmail);
+            }
+            p.setClient(client);
+        }
         return projectRepository.save(p);
     }
 
@@ -115,4 +135,5 @@ public class ProjectService {
         alloc.setTenantId(tenant);
         return allocationRepository.save(alloc);
     }
+
 }

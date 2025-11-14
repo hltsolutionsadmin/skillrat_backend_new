@@ -3,6 +3,7 @@ package com.skillrat.user.web;
 import com.skillrat.user.domain.User;
 import com.skillrat.user.domain.Employee;
 import com.skillrat.user.service.UserService;
+import com.skillrat.user.service.OrganisationClient;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
@@ -10,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import com.skillrat.user.security.RequiresBusinessOrHrAdmin;
 
 import java.util.Map;
@@ -20,9 +22,47 @@ import java.util.Map;
 public class UserController {
 
     private final UserService userService;
+    private final OrganisationClient organisationClient;
 
-    public UserController(UserService userService) {
+    public UserController(UserService userService, OrganisationClient organisationClient) {
         this.userService = userService;
+        this.organisationClient = organisationClient;
+    }
+
+    @GetMapping("/me")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> me(Authentication auth) {
+        return userService.findByEmail(auth.getName())
+                .<ResponseEntity<?>>map(u -> ResponseEntity.ok(Map.of(
+                        "id", u.getId(),
+                        "username", u.getUsername(),
+                        "email", u.getEmail(),
+                        "mobile", u.getMobile(),
+                        "firstName", u.getFirstName(),
+                        "lastName", u.getLastName()
+                )))
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/me/business")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> myBusiness(Authentication auth) {
+        return userService.findByEmail(auth.getName())
+                .<ResponseEntity<?>>map(u -> {
+                    java.util.UUID b2bUnitId = u.getB2bUnitId();
+                    Object businessDetails = null;
+                    if (b2bUnitId != null) {
+                        businessDetails = organisationClient.getB2BUnit(b2bUnitId);
+                    }
+                    return ResponseEntity.ok(Map.of(
+                            "id", u.getId(),
+                            "email", u.getEmail(),
+                            "b2bUnitId", b2bUnitId,
+                            "roles", (u.getRoles() == null ? java.util.List.of() : u.getRoles().stream().map(r -> r.getName()).toList()),
+                            "business", businessDetails
+                    ));
+                })
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PostMapping("/signup")

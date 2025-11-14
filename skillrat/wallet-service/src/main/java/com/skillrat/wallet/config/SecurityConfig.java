@@ -21,7 +21,7 @@ import java.util.List;
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    @Value("${spring.security.oauth2.resourceserver.opaque-token.introspection-uri:http://auth-service:8080/oauth/check_token}")
+    @Value("${spring.security.oauth2.resourceserver.opaque-token.introspection-uri:http://localhost:8080/oauth/check_token}")
     private String introspectionUri;
     @Value("${spring.security.oauth2.resourceserver.opaque-token.client-id:gateway}")
     private String clientId;

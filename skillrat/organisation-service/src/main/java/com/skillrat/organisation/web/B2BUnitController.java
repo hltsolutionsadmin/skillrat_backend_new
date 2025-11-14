@@ -78,6 +78,14 @@ public class B2BUnitController {
         return service.listPending();
     }
 
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('BUSINESS_ADMIN','HR_ADMIN','ADMIN')")
+    public ResponseEntity<?> getById(@PathVariable("id") UUID id) {
+        return service.findById(id)
+                .<ResponseEntity<?>>map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
     public static class SelfOnboardRequest {
         @NotBlank public String name;
         @NotNull public B2BUnitType type;

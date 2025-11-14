@@ -26,15 +26,25 @@ public class ProjectAdminController {
 
     // Create Project
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN','PMO')")
+    @PreAuthorize("hasAnyRole('BUSINESS_ADMIN','PMO')")
     public ResponseEntity<Project> createProject(@RequestBody @Valid CreateProjectRequest req) {
-        Project p = service.createProject(req.name, req.code, req.b2bUnitId, req.startDate, req.endDate);
+        Project p = service.createProject(
+                req.name,
+                req.code,
+                req.description,
+                req.b2bUnitId,
+                req.startDate,
+                req.endDate,
+                req.client != null ? req.client.name : null,
+                req.client != null ? req.client.primaryContactEmail : null,
+                req.client != null ? req.client.secondaryContactEmail : null
+        );
         return ResponseEntity.ok(p);
     }
 
     // Create WBS under a project
     @PostMapping("/{projectId}/wbs")
-    @PreAuthorize("hasAnyRole('ADMIN','PMO')")
+    @PreAuthorize("hasAnyRole('BUSINESS_ADMIN','PMO')")
     public ResponseEntity<WBSElement> createWbs(@PathVariable("projectId") UUID projectId,
                                                 @RequestBody @Valid CreateWbsRequest req) {
         WBSElement w = service.createWbs(projectId, req.name, req.code, req.category, req.startDate, req.endDate);
@@ -60,12 +70,15 @@ public class ProjectAdminController {
         return ResponseEntity.ok(a);
     }
 
+
     public static class CreateProjectRequest {
         @NotBlank public String name;
         public String code;
         @NotNull public UUID b2bUnitId;
         public LocalDate startDate;
         public LocalDate endDate;
+        public String description;
+        public ProjectClientRequest client;
     }
 
     public static class CreateWbsRequest {
@@ -90,4 +103,11 @@ public class ProjectAdminController {
         public LocalDate startDate;
         public LocalDate endDate;
     }
+
+    public static class ProjectClientRequest {
+        @NotBlank public String name;
+        public String primaryContactEmail;
+        public String secondaryContactEmail;
+    }
+
 }
