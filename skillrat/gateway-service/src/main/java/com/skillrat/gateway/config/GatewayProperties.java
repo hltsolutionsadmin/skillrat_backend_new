@@ -6,7 +6,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public class GatewayProperties {
     private int checkTokenCacheTtlSeconds = 30;
     private boolean strictRevocation = false;
-    private String introspectionUrl = "http://auth-service:8080/oauth/check_token";
+    private String introspectionUrl = "http://localhost:8080/oauth/check_token";
     private String clientId = "gateway";
     private String clientSecret = "gateway-secret";
     private String baseDomain = "skillrat.com";

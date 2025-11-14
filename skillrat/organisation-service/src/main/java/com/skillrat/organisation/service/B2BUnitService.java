@@ -159,6 +159,11 @@ public class B2BUnitService {
         });
     }
 
+    @Transactional(readOnly = true)
+    public Optional<B2BUnit> findById(UUID id) {
+        return repository.findById(id);
+    }
+
     public List<B2BUnit> listPending() {
         return repository.findByStatus(B2BUnitStatus.PENDING_APPROVAL);
     }

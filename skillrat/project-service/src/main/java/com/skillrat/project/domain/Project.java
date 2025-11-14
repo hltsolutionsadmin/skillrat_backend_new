@@ -45,4 +45,8 @@ public class Project extends BaseEntity {
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "client_id", unique = true)
     private ProjectClient client;
+    
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 32)
+    private ProjectSLAType status = ProjectSLAType.STANDARD;
 }
