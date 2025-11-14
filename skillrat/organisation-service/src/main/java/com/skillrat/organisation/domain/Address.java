@@ -24,7 +24,7 @@ public class Address extends BaseEntity {
     @Column(length = 64)
     private String city;
 
-    @Column(length = 64)
+    @Column(name = "state_name", length = 64)
     private String state;
 
     @Column(length = 64)
@@ -33,6 +33,6 @@ public class Address extends BaseEntity {
     @Column(length = 16)
     private String postalCode;
 
-    @Column(length = 512)
+    @Column(name = "full_text", length = 512)
     private String fullText;
 }
