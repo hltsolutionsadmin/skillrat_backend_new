@@ -20,6 +20,13 @@ public class HolidayCalendar extends BaseEntity {
     @Column(nullable = false, length = 150)
     private String name;
 
+    @Column(length = 64)
+    private String code;
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 50)
+    private IndiaCity city;
+
     // Optional: calendar scoped to a B2B unit
     private UUID b2bUnitId;
 
