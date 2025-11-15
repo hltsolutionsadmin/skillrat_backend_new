@@ -42,6 +42,10 @@ import java.security.KeyPairGenerator;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.http.HttpMethod;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import com.skillrat.auth.password.SkillratPasswordAuthenticationConverter;
 import com.skillrat.auth.password.SkillratPasswordAuthenticationProvider;
@@ -87,6 +91,7 @@ public class AuthorizationServerConfig {
                                                              OAuth2TokenGenerator<?> tokenGenerator,
                                                              org.springframework.security.oauth2.jwt.JwtEncoder jwtEncoder) throws Exception {
         OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
+        http.cors(cors -> {});
         http.getConfigurer(OAuth2AuthorizationServerConfigurer.class)
                 .tokenEndpoint(tokenEndpoint -> tokenEndpoint
                         .accessTokenRequestConverter(new SkillratPasswordAuthenticationConverter())
@@ -98,7 +103,9 @@ public class AuthorizationServerConfig {
     @Bean
     public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
         http
+                .cors(cors -> {})
             .authorizeHttpRequests(auth -> auth
+                    .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/actuator/**", "/oauth/check_token", "/oauth/dev/**").permitAll()
                 .anyRequest().authenticated())
             .csrf(csrf -> csrf.ignoringRequestMatchers("/oauth/check_token", "/oauth/dev/**"))
@@ -184,5 +191,18 @@ public class AuthorizationServerConfig {
                         .build();
             ((JdbcRegisteredClientRepository) repo).save(desired);
         }
+    }
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOrigins(java.util.List.of("http://localhost:4200"));
+        config.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        config.setAllowedHeaders(java.util.List.of("Authorization", "Content-Type", "Accept"));
+        config.setAllowCredentials(true);
+        config.setMaxAge(3600L);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
     }
 }
