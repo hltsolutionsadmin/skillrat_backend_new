@@ -164,4 +164,9 @@ public class ProjectService {
         return allocationRepository.save(alloc);
     }
 
+    @Transactional(readOnly = true)
+    public Project getProject(UUID id) {
+        return projectRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Project not found"));
+    }
 }

@@ -1,5 +1,7 @@
 package com.skillrat.project.domain;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.skillrat.common.orm.BaseEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -37,9 +39,11 @@ public class Project extends BaseEntity {
     private LocalDate endDate;
 
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonBackReference
     private List<WBSElement> wbsElements = new ArrayList<>();
 
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
     private List<ProjectMember> members = new ArrayList<>();
     
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
