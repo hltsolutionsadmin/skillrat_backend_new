@@ -70,6 +70,13 @@ public class ProjectAdminController {
         return ResponseEntity.ok(a);
     }
 
+    @GetMapping("/{projectId}")
+    @PreAuthorize("hasAnyRole('BUSINESS_ADMIN','PMO')")
+    public ResponseEntity<Project> getProject(@PathVariable("projectId") UUID projectId) {
+        Project p = service.getProject(projectId);
+        return ResponseEntity.ok(p);
+    }
+
 
     public static class CreateProjectRequest {
         @NotBlank public String name;
