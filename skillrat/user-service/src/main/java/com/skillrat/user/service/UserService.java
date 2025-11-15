@@ -6,6 +6,8 @@ import com.skillrat.user.domain.Role;
 import com.skillrat.user.domain.User;
 import com.skillrat.user.repo.RoleRepository;
 import com.skillrat.user.repo.UserRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -199,5 +201,146 @@ public class UserService {
         userRepository.save(u);
         log.info("Password setup completed for user id={}, email={}", u.getId(), u.getEmail());
         return true;
+    }
+    
+    // Employee CRUD Operations
+    
+    @Transactional(readOnly = true)
+    public Page<Employee> getAllEmployees(UUID b2bUnitId, String searchTerm, Pageable pageable) {
+        if (searchTerm != null && !searchTerm.trim().isEmpty()) {
+            String searchPattern = "%" + searchTerm.toLowerCase() + "%";
+            return userRepository.findEmployeesByB2bUnitIdAndSearch(
+                b2bUnitId, searchPattern, pageable);
+        }
+        return userRepository.findByB2bUnitId(b2bUnitId, pageable);
+    }
+    
+    @Transactional(readOnly = true)
+    public Employee getEmployeeById(UUID id) {
+        return (Employee) userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Employee not found with id: " + id));
+    }
+    
+//    @Transactional
+//    public Employee createEmployee(UUID b2bUnitId, String firstName, String lastName, String email,
+//                                 String mobile, String designation, String department, List<UUID> roleIds) {
+//        // Check if email already exists
+//        userRepository.findByEmailIgnoreCase(email)
+//                .ifPresent(u -> { throw new IllegalArgumentException("Email already in use"); });
+//
+//        Employee emp = new Employee();
+//        emp.setFirstName(firstName);
+//        emp.setLastName(lastName);
+//        emp.setUsername(email.toLowerCase());
+//        emp.setEmail(email.toLowerCase());
+//        emp.setMobile(mobile);
+//        emp.setEmployeeCode("EMP-" + UUID.randomUUID().toString().substring(0, 8));
+//        emp.setDesignation(designation);
+//        emp.setDepartment(department);
+//        emp.setPasswordHash(passwordEncoder.encode(UUID.randomUUID().toString()));
+//        emp.setActive(true);
+//        emp.setB2bUnitId(b2bUnitId);
+//        emp.setPasswordNeedsReset(true);
+//        emp.setPasswordSetupToken(UUID.randomUUID().toString());
+//        emp.setPasswordSetupTokenExpires(Instant.now().plus(7, ChronoUnit.DAYS));
+//
+//        // Set roles if provided
+//        if (roleIds != null && !roleIds.isEmpty()) {
+//            Set<Role> roles = new HashSet<>(roleRepository.findAllById(roleIds));
+//            emp.setRoles(roles);
+//        }
+//
+//        // Set audit fields
+//        String actor = getCurrentUserEmail();
+//        if (actor != null) {
+//            emp.setCreatedBy(actor);
+//            emp.setUpdatedBy(actor);
+//        }
+//
+//        return (Employee) userRepository.save(emp);
+//    }
+    
+    @Transactional
+    public Employee updateEmployee(UUID employeeId, UUID b2bUnitId, String firstName, String lastName, 
+                                 String email, String mobile, String designation, String department, 
+                                 Boolean active, List<UUID> roleIds) {
+        Employee emp = (Employee) userRepository.findById(employeeId)
+                .orElseThrow(() -> new IllegalArgumentException("Employee not found"));
+                
+        // Verify the employee belongs to the specified b2bUnit
+        if (!emp.getB2bUnitId().equals(b2bUnitId)) {
+            throw new IllegalArgumentException("Employee does not belong to the specified business unit");
+        }
+        
+        // Check if email is being changed and if the new email is already in use
+        if (!emp.getEmail().equalsIgnoreCase(email)) {
+            userRepository.findByEmailIgnoreCase(email)
+                    .ifPresent(u -> { throw new IllegalArgumentException("Email already in use"); });
+        }
+        
+        // Update fields
+        emp.setFirstName(firstName);
+        emp.setLastName(lastName);
+        emp.setEmail(email.toLowerCase());
+        emp.setUsername(email.toLowerCase());
+        emp.setMobile(mobile);
+        emp.setDesignation(designation);
+        emp.setDepartment(department);
+        
+        if (active != null) {
+            emp.setActive(active);
+        }
+        
+        // Update roles if provided
+        if (roleIds != null) {
+            Set<Role> roles = new HashSet<>(roleRepository.findAllById(roleIds));
+            emp.setRoles(roles);
+        }
+        
+        // Update audit field
+        String actor = getCurrentUserEmail();
+        if (actor != null) {
+            emp.setUpdatedBy(actor);
+        }
+        
+        return (Employee) userRepository.save(emp);
+    }
+    
+    @Transactional
+    public void deleteEmployee(UUID employeeId, UUID b2bUnitId) {
+        Employee emp = (Employee) userRepository.findById(employeeId)
+                .orElseThrow(() -> new IllegalArgumentException("Employee not found"));
+                
+        // Verify the employee belongs to the specified b2bUnit
+        if (!emp.getB2bUnitId().equals(b2bUnitId)) {
+            throw new IllegalArgumentException("Employee does not belong to the specified business unit");
+        }
+        
+        // Soft delete by setting active to false
+        emp.setActive(false);
+        
+        // Update audit field
+        String actor = getCurrentUserEmail();
+        if (actor != null) {
+            emp.setUpdatedBy(actor);
+        }
+        
+        userRepository.save(emp);
+    }
+    
+    private String getCurrentUserEmail() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null) {
+            String email = auth.getName();
+            Object principal = auth.getPrincipal();
+            if (principal instanceof Jwt jwt) {
+                String emailClaim = jwt.getClaimAsString("email");
+                if (emailClaim != null && !emailClaim.isBlank()) {
+                    email = emailClaim;
+                }
+            }
+            return email;
+        }
+        return null;
     }
 }
