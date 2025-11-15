@@ -127,6 +127,11 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
+    public Optional<User> getById(UUID id) {
+        return userRepository.findById(id);
+    }
+
+    @Transactional(readOnly = true)
     public Page<User> searchUsers(String q, String role, Pageable pageable) {
         String query = (q == null || q.isBlank()) ? null : q.trim();
         String roleName = (role == null || role.isBlank() || "All".equalsIgnoreCase(role)) ? null : role.trim();

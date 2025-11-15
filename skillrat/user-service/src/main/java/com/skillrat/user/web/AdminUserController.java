@@ -2,13 +2,13 @@ package com.skillrat.user.web;
 
 import com.skillrat.user.domain.User;
 import com.skillrat.user.service.UserService;
-import com.skillrat.user.security.RequiresBusinessOrHrAdmin;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,22 +25,29 @@ public class AdminUserController {
     public AdminUserController(UserService userService) { this.userService = userService; }
 
     @GetMapping
-    @RequiresBusinessOrHrAdmin
+    @PreAuthorize("hasAnyRole('ADMIN','HR')")
     public Page<User> search(@RequestParam(value = "q", required = false) String q,
-                             @RequestParam(value = "role", required = false) String role,
                              Pageable pageable) {
-        return userService.searchUsers(q, role, pageable);
+        return userService.searchUsers(q, null, pageable);
+    }
+
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN','HR')")
+    public ResponseEntity<User> get(@PathVariable("id") UUID id) {
+        return userService.getById(id)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PostMapping
-    @RequiresBusinessOrHrAdmin
+    @PreAuthorize("hasAnyRole('ADMIN','HR')")
     public ResponseEntity<User> create(@RequestBody CreateUserRequest req) {
         User u = userService.adminCreateUser(req.b2bUnitId, req.firstName, req.lastName, req.email, req.mobile, req.roleIds);
         return ResponseEntity.ok(u);
     }
 
     @PutMapping("/{id}")
-    @RequiresBusinessOrHrAdmin
+    @PreAuthorize("hasAnyRole('ADMIN','HR')")
     public ResponseEntity<User> update(@PathVariable("id") UUID id, @RequestBody UpdateUserRequest req) {
         User u = userService.adminUpdateUser(id, req.firstName, req.lastName, req.mobile, req.active, req.roleIds);
         return ResponseEntity.ok(u);
