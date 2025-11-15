@@ -30,26 +30,22 @@ public interface HolidayCalendarRepository extends JpaRepository<HolidayCalendar
                    c.name as name,
                    c.city as city,
                    count(d.id) as holidayCount,
-                   coalesce(max(p.name), '') as sampleProjectName
+                   '' as sampleProjectName
             from HolidayCalendar c
-            left join HolidayDay d on d.calendar = c
-            left join Project p on p.holidayCalendarId = c.id
+            left join c.days d
             where c.tenantId = :tenant
               and (:city is null or c.city = :city)
               and (:q is null or lower(c.code) like lower(concat('%', :q, '%'))
-                              or lower(c.name) like lower(concat('%', :q, '%'))
-                              or lower(p.name) like lower(concat('%', :q, '%')))
+                              or lower(c.name) like lower(concat('%', :q, '%')))
             group by c.id, c.code, c.name, c.city
             """,
             countQuery = """
             select count(distinct c.id)
             from HolidayCalendar c
-            left join Project p on p.holidayCalendarId = c.id
             where c.tenantId = :tenant
               and (:city is null or c.city = :city)
               and (:q is null or lower(c.code) like lower(concat('%', :q, '%'))
-                              or lower(c.name) like lower(concat('%', :q, '%'))
-                              or lower(p.name) like lower(concat('%', :q, '%')))
+                              or lower(c.name) like lower(concat('%', :q, '%')))
             """)
     Page<HolidayCalendarSummary> searchCalendars(@Param("tenant") String tenant,
                                                  @Param("q") String q,

@@ -8,6 +8,8 @@ import com.skillrat.user.repo.RoleRepository;
 import com.skillrat.user.repo.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -59,6 +61,52 @@ public class UserService {
         return saved;
     }
 
+    @Transactional
+    public User adminCreateUser(UUID b2bUnitId, String firstName, String lastName, String email, String mobile, List<UUID> roleIds) {
+        String tenantId = Optional.ofNullable(TenantContext.getTenantId()).orElse("default");
+        userRepository.findByEmailIgnoreCase(email).ifPresent(u -> { throw new IllegalArgumentException("Email already in use"); });
+        if (mobile != null && !mobile.isBlank()) {
+            userRepository.findByMobile(mobile).ifPresent(u -> { throw new IllegalArgumentException("Mobile already in use"); });
+        }
+        User u = new User();
+        u.setFirstName(firstName);
+        u.setLastName(lastName);
+        u.setUsername(email.toLowerCase());
+        u.setEmail(email.toLowerCase());
+        u.setMobile(mobile);
+        u.setPasswordHash(passwordEncoder.encode(UUID.randomUUID().toString()));
+        u.setActive(true);
+        u.setTenantId(tenantId);
+        u.setB2bUnitId(b2bUnitId);
+        u.setPasswordNeedsReset(true);
+        u.setPasswordSetupToken(UUID.randomUUID().toString());
+        u.setPasswordSetupTokenExpires(Instant.now().plus(7, ChronoUnit.DAYS));
+        if (roleIds != null && !roleIds.isEmpty()) {
+            Set<Role> roles = new HashSet<>(roleRepository.findAllById(roleIds));
+            u.setRoles(roles);
+        }
+        return userRepository.save(u);
+    }
+
+    @Transactional
+    public User adminUpdateUser(UUID id, String firstName, String lastName, String mobile, Boolean active, List<UUID> roleIds) {
+        User u = userRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("User not found"));
+        if (firstName != null && !firstName.isBlank()) u.setFirstName(firstName.trim());
+        if (lastName != null && !lastName.isBlank()) u.setLastName(lastName.trim());
+        if (mobile != null && !mobile.isBlank()) {
+            userRepository.findByMobile(mobile)
+                    .filter(x -> !x.getId().equals(id))
+                    .ifPresent(x -> { throw new IllegalArgumentException("Mobile already in use"); });
+            u.setMobile(mobile);
+        }
+        if (active != null) u.setActive(active);
+        if (roleIds != null) {
+            Set<Role> roles = new HashSet<>(roleRepository.findAllById(roleIds));
+            u.setRoles(roles);
+        }
+        return userRepository.save(u);
+    }
+
     @Transactional(readOnly = true)
     public Optional<User> authenticate(String emailOrMobile, String rawPassword) {
         Optional<User> byEmail = userRepository.findByEmailIgnoreCase(emailOrMobile);
@@ -76,6 +124,13 @@ public class UserService {
     @Transactional(readOnly = true)
     public Optional<User> findByEmail(String email) {
         return userRepository.findByEmailIgnoreCase(email);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<User> searchUsers(String q, String role, Pageable pageable) {
+        String query = (q == null || q.isBlank()) ? null : q.trim();
+        String roleName = (role == null || role.isBlank() || "All".equalsIgnoreCase(role)) ? null : role.trim();
+        return userRepository.search(query, roleName, pageable);
     }
 
     @Transactional
