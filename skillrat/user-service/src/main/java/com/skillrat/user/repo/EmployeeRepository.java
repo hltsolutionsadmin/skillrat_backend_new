@@ -24,7 +24,6 @@ public interface EmployeeRepository extends JpaRepository<Employee, UUID> {
                            or (rm is not null and lower(rm.firstName) like lower(concat('%', :q, '%')))
                  )
               and (:etype is null or e.employmentType = :etype)
-              and (:desig is null or lower(e.designation) = lower(:desig))
             """,
             countQuery = """
             select count(e) from Employee e
@@ -38,10 +37,8 @@ public interface EmployeeRepository extends JpaRepository<Employee, UUID> {
                            or (rm is not null and lower(rm.firstName) like lower(concat('%', :q, '%')))
                  )
               and (:etype is null or e.employmentType = :etype)
-              and (:desig is null or lower(e.designation) = lower(:desig))
             """)
     Page<Employee> search(@Param("q") String q,
                           @Param("etype") EmploymentType employmentType,
-                          @Param("desig") String designation,
                           Pageable pageable);
 }
