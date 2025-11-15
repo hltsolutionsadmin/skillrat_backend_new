@@ -6,6 +6,8 @@ import com.skillrat.project.repo.*;
 import com.skillrat.project.client.UserClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
 import java.util.Map;
@@ -41,6 +43,11 @@ public class ProjectService {
     public Project getProject(UUID id) {
         return projectRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Project not found"));
+    }
+
+    @Transactional(readOnly = true)
+    public Page<Project> listByBusiness(UUID b2bUnitId, Pageable pageable) {
+        return projectRepository.findByB2bUnitId(b2bUnitId, pageable);
     }
 
     @Transactional

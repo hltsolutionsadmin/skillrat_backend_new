@@ -9,6 +9,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
 import java.util.UUID;
@@ -30,6 +32,13 @@ public class ProjectAdminController {
     public ResponseEntity<Project> getProject(@PathVariable("projectId") UUID projectId) {
         Project p = service.getProject(projectId);
         return ResponseEntity.ok(p);
+    }
+
+    // List Projects by Business (b2bUnitId)
+    @GetMapping
+    @PreAuthorize("hasAnyRole('BUSINESS_ADMIN','PMO')")
+    public Page<Project> listProjects(@RequestParam("b2bUnitId") UUID b2bUnitId, Pageable pageable) {
+        return service.listByBusiness(b2bUnitId, pageable);
     }
 
     // Create Project
