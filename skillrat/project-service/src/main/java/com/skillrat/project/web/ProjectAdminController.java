@@ -96,7 +96,10 @@ public class ProjectAdminController {
     public Page<Project> listByClient(@PathVariable("clientId") UUID clientId, Pageable pageable) {
         return service.listProjectsByClient(clientId, pageable);
     }
-
+    @GetMapping("/byB2BUnit/{b2bUnitId}")
+    public Page<Project> listByB2BUnit(@PathVariable("b2bUnitId") UUID b2bUnitId, Pageable pageable) {
+        return service.listProjectsByB2bUnit(b2bUnitId, pageable);
+    }
 
     public static class CreateProjectRequest {
         @NotBlank public String name;

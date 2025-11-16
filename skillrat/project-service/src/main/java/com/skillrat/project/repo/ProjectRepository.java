@@ -13,4 +13,5 @@ public interface ProjectRepository extends JpaRepository<Project, UUID> {
     Optional<Project> findByCodeAndTenantId(String code, String tenantId);
     Page<Project> findDistinctByMembers_EmployeeId(UUID employeeId, Pageable pageable);
     Page<Project> findByClient_Id(UUID clientId, Pageable pageable);
+    Page<Project> findByB2bUnitId(UUID b2bUnitId, Pageable pageable);
 }
