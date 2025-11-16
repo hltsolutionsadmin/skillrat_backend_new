@@ -40,4 +40,9 @@ public class RoleService {
     public List<Role> list(UUID b2bUnitId) {
         return roleRepository.findByB2bUnitId(b2bUnitId);
     }
+
+    @Transactional(readOnly = true)
+    public List<Role> listAll() {
+        return roleRepository.findAll();
+    }
 }

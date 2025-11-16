@@ -24,6 +24,9 @@ spring:
       resourceserver:
         jwt:
           jwk-set-uri: http://localhost:8080/oauth2/jwks
+          services:
+            user:
+              base-url: http://localhost:8081
 management:
   endpoints:
     web:

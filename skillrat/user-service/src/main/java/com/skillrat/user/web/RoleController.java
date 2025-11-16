@@ -36,6 +36,11 @@ public class RoleController {
         return roleService.list(b2bUnitId);
     }
 
+    @GetMapping("/all")
+    public List<Role> listAll() {
+        return roleService.listAll();
+    }
+
     public static class CreateRoleRequest {
     	private UUID uid;
         public UUID b2bUnitId;
