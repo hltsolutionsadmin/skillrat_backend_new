@@ -44,6 +44,11 @@
       <artifactId>spring-cloud-starter-openfeign</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.hibernate.orm</groupId>
+      <artifactId>hibernate-envers</artifactId>
+      <version>6.4.4.Final</version>
+    </dependency>
+    <dependency>
       <groupId>com.skillrat</groupId>
       <artifactId>common-orm</artifactId>
       <version>${project.version}</version>
