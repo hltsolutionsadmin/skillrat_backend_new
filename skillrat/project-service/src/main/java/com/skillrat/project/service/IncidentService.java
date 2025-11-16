@@ -197,4 +197,20 @@ public class IncidentService {
             default: return 0;
         }
     }
+
+    @Transactional(readOnly = true)
+    public Incident getById(UUID incidentId) {
+        return incidentRepository.findById(incidentId)
+                .orElseThrow(() -> new IllegalArgumentException("Incident not found"));
+    }
+
+    @Transactional(readOnly = true)
+    public Page<Incident> listByAssignee(UUID assigneeId, Pageable pageable) {
+        return incidentRepository.findByAssigneeId(assigneeId, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<Incident> listByReporter(UUID reporterId, Pageable pageable) {
+        return incidentRepository.findByReporterId(reporterId, pageable);
+    }
 }

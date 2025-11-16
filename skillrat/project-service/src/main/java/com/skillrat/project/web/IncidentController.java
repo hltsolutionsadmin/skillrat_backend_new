@@ -77,6 +77,23 @@ public class IncidentController {
         return ResponseEntity.ok(incidentService.history(incidentId));
     }
 
+    @GetMapping("/incidents/{incidentId}")
+    @PreAuthorize("hasAnyRole('BUSINESS_ADMIN','PMO')")
+    public ResponseEntity<Incident> getById(@PathVariable("incidentId") UUID incidentId) {
+        return ResponseEntity.ok(incidentService.getById(incidentId));
+    }
+
+    @GetMapping("/incidents/assignee/{assigneeId}")
+    @PreAuthorize("hasAnyRole('BUSINESS_ADMIN','PMO')")
+    public Page<Incident> listByAssignee(@PathVariable("assigneeId") UUID assigneeId, Pageable pageable) {
+        return incidentService.listByAssignee(assigneeId, pageable);
+    }
+
+    @GetMapping("/incidents/reporter/{reporterId}")
+    @PreAuthorize("hasAnyRole('BUSINESS_ADMIN','PMO')")
+    public Page<Incident> listByReporter(@PathVariable("reporterId") UUID reporterId, Pageable pageable) {
+        return incidentService.listByReporter(reporterId, pageable);
+    }
     public static class CreateIncidentRequest {
         @NotBlank public String title;
         @NotBlank public String shortDescription;
