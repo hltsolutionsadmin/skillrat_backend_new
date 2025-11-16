@@ -201,6 +201,11 @@ public class ProjectService {
         return projectRepository.findByClient_Id(clientId, pageable);
     }
 
+    @Transactional(readOnly = true)
+    public Page<Project> listProjectsByB2bUnit(UUID b2bUnitId, Pageable pageable) {
+        return projectRepository.findByB2bUnitId(b2bUnitId, pageable);
+    }
+
     private void applyAuditFromCurrentUser(com.skillrat.common.orm.BaseEntity entity) {
         try {
             Map<String, Object> me = userClient.me();
