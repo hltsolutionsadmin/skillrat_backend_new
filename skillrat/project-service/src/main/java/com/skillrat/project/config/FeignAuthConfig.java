@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.server.resource.authentication.BearerTokenAuthentication;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 
 @Configuration
 public class FeignAuthConfig {
@@ -21,6 +22,14 @@ public class FeignAuthConfig {
                     String token = bta.getToken().getTokenValue();
                     if (token != null && !token.isBlank()) {
                         template.header("Authorization", "Bearer " + token);
+                        return;
+                    }
+                }
+                if (auth instanceof JwtAuthenticationToken jwtAuth) {
+                    String token = jwtAuth.getToken().getTokenValue();
+                    if (token != null && !token.isBlank()) {
+                        template.header("Authorization", "Bearer " + token);
+                        return;
                     }
                 }
             }
