@@ -221,44 +221,7 @@ public class UserService {
                 .orElseThrow(() -> new IllegalArgumentException("Employee not found with id: " + id));
     }
     
-//    @Transactional
-//    public Employee createEmployee(UUID b2bUnitId, String firstName, String lastName, String email,
-//                                 String mobile, String designation, String department, List<UUID> roleIds) {
-//        // Check if email already exists
-//        userRepository.findByEmailIgnoreCase(email)
-//                .ifPresent(u -> { throw new IllegalArgumentException("Email already in use"); });
-//
-//        Employee emp = new Employee();
-//        emp.setFirstName(firstName);
-//        emp.setLastName(lastName);
-//        emp.setUsername(email.toLowerCase());
-//        emp.setEmail(email.toLowerCase());
-//        emp.setMobile(mobile);
-//        emp.setEmployeeCode("EMP-" + UUID.randomUUID().toString().substring(0, 8));
-//        emp.setDesignation(designation);
-//        emp.setDepartment(department);
-//        emp.setPasswordHash(passwordEncoder.encode(UUID.randomUUID().toString()));
-//        emp.setActive(true);
-//        emp.setB2bUnitId(b2bUnitId);
-//        emp.setPasswordNeedsReset(true);
-//        emp.setPasswordSetupToken(UUID.randomUUID().toString());
-//        emp.setPasswordSetupTokenExpires(Instant.now().plus(7, ChronoUnit.DAYS));
-//
-//        // Set roles if provided
-//        if (roleIds != null && !roleIds.isEmpty()) {
-//            Set<Role> roles = new HashSet<>(roleRepository.findAllById(roleIds));
-//            emp.setRoles(roles);
-//        }
-//
-//        // Set audit fields
-//        String actor = getCurrentUserEmail();
-//        if (actor != null) {
-//            emp.setCreatedBy(actor);
-//            emp.setUpdatedBy(actor);
-//        }
-//
-//        return (Employee) userRepository.save(emp);
-//    }
+
     
     @Transactional
     public Employee updateEmployee(UUID employeeId, UUID b2bUnitId, String firstName, String lastName, 

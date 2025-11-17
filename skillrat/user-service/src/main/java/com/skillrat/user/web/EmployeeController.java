@@ -26,7 +26,7 @@ public class EmployeeController {
     private final UserService userService;
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('BUSINESS_ADMIN', 'HR_ADMIN')")
+    //@PreAuthorize("hasAnyRole('BUSINESS_ADMIN', 'HR_ADMIN')")
     public ResponseEntity<Page<Employee>> getAllEmployees(
             @PathVariable UUID b2bUnitId,
             @RequestParam(required = false) String search,
@@ -46,31 +46,6 @@ public class EmployeeController {
         return ResponseEntity.ok(employee);
     }
 
-    @PostMapping
-    //@PreAuthorize("hasAnyRole('BUSINESS_ADMIN', 'HR_ADMIN')")
-    public ResponseEntity<Employee> createEmployee(
-            @PathVariable UUID b2bUnitId,
-            @Valid @RequestBody CreateEmployeeRequest request) {
-        
-        Employee employee = userService.inviteEmployee(
-            b2bUnitId,
-            request.getFirstName(),
-            request.getLastName(),
-            request.getEmail(),
-            request.getMobile(),
-            //request.getDesignation(),
-            //request.getDepartment(),
-            request.getRoleIds()
-        );
-        
-        URI location = ServletUriComponentsBuilder
-                .fromCurrentRequest()
-                .path("/{id}")
-                .buildAndExpand(employee.getId())
-                .toUri();
-                
-        return ResponseEntity.created(location).body(employee);
-    }
 
     @PutMapping("/{employeeId}")
     @PreAuthorize("hasAnyRole('BUSINESS_ADMIN', 'HR_ADMIN')")
