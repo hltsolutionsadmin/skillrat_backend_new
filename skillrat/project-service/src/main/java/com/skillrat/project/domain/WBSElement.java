@@ -9,7 +9,14 @@ import lombok.Setter;
 import java.time.LocalDate;
 
 @Entity
-@Table(name = "wbs_element")
+@Table(
+        name = "wbs_element",
+        indexes = {
+                @Index(name = "idx_wbs_project", columnList = "project_id"),
+                @Index(name = "idx_wbs_tenant", columnList = "tenant_id"),
+                @Index(name = "idx_wbs_code_tenant", columnList = "code, tenant_id")
+        }
+)
 @Getter
 @Setter
 @NoArgsConstructor

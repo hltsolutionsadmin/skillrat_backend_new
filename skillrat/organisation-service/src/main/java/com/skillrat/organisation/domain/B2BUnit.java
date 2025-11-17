@@ -5,6 +5,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.EnumType;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import java.time.Instant;
 import lombok.Getter;
@@ -16,7 +17,14 @@ import jakarta.persistence.CascadeType;
 import jakarta.persistence.ManyToOne;
 
 @Entity
-@Table(name = "b2b_unit")
+@Table(
+        name = "b2b_unit",
+        indexes = {
+                @Index(name = "idx_b2b_name_tenant", columnList = "name, tenant_id"),
+                @Index(name = "idx_b2b_status", columnList = "status"),
+                @Index(name = "idx_b2b_tenant", columnList = "tenant_id")
+        }
+)
 @Getter
 @Setter
 @NoArgsConstructor

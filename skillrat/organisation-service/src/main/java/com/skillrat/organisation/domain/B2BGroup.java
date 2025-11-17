@@ -4,6 +4,7 @@ import com.skillrat.common.orm.BaseEntity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Index;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.util.ArrayList;
@@ -13,7 +14,12 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "b2b_group")
+@Table(
+        name = "b2b_group",
+        indexes = {
+                @Index(name = "idx_b2b_group_name_tenant", columnList = "name, tenant_id")
+        }
+)
 @Getter
 @Setter
 @NoArgsConstructor
