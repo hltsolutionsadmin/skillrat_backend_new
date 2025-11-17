@@ -12,4 +12,8 @@ public interface IncidentRepository extends JpaRepository<Incident, UUID> {
     Page<Incident> findByProject_Id(UUID projectId, Pageable pageable);
 
     Incident findTopByProjectAndIncidentNumberStartingWithOrderByIncidentNumberDesc(Project project, String incidentNumberPrefix);
+
+    Page<Incident> findByAssigneeId(UUID assigneeId, Pageable pageable);
+
+    Page<Incident> findByReporterId(UUID reporterId, Pageable pageable);
 }

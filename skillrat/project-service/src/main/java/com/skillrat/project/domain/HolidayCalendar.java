@@ -1,5 +1,6 @@
 package com.skillrat.project.domain;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.skillrat.common.orm.BaseEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -20,9 +21,17 @@ public class HolidayCalendar extends BaseEntity {
     @Column(nullable = false, length = 150)
     private String name;
 
+    @Column(length = 64)
+    private String code;
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 50)
+    private IndiaCity city;
+
     // Optional: calendar scoped to a B2B unit
     private UUID b2bUnitId;
 
     @OneToMany(mappedBy = "calendar", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
     private List<HolidayDay> days = new ArrayList<>();
 }

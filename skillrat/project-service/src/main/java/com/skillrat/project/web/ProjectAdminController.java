@@ -9,6 +9,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
 import java.util.UUID;
@@ -53,7 +55,7 @@ public class ProjectAdminController {
 
     // Add or update project member (with project role and reporting manager)
     @PutMapping("/{projectId}/members")
-    @PreAuthorize("hasAnyRole('ADMIN','PMO')")
+    @PreAuthorize("hasAnyRole('BUSINESS_ADMIN','PMO')")
     public ResponseEntity<ProjectMember> upsertMember(@PathVariable("projectId") UUID projectId,
                                                       @RequestBody @Valid UpsertMemberRequest req) {
         ProjectMember m = service.addOrUpdateMember(projectId, req.employeeId, req.role, req.reportingManagerId,
@@ -70,6 +72,34 @@ public class ProjectAdminController {
         return ResponseEntity.ok(a);
     }
 
+    @GetMapping("/{projectId}")
+    public ResponseEntity<Project> getProject(@PathVariable("projectId") UUID projectId) {
+        Project p = service.getProject(projectId);
+        return ResponseEntity.ok(p);
+    }
+
+    // Get WBS element by ID
+    @GetMapping("/wbs/{wbsId}")
+    public ResponseEntity<WBSElement> getWbs(@PathVariable("wbsId") UUID wbsId) {
+        WBSElement w = service.getWbs(wbsId);
+        return ResponseEntity.ok(w);
+    }
+
+    // List projects for a member (employee) ID
+    @GetMapping("/byMember/{employeeId}")
+    public Page<Project> listByMember(@PathVariable("employeeId") UUID employeeId, Pageable pageable) {
+        return service.listProjectsByMember(employeeId, pageable);
+    }
+
+    // List projects for a client ID
+    @GetMapping("/byClient/{clientId}")
+    public Page<Project> listByClient(@PathVariable("clientId") UUID clientId, Pageable pageable) {
+        return service.listProjectsByClient(clientId, pageable);
+    }
+    @GetMapping("/byB2BUnit/{b2bUnitId}")
+    public Page<Project> listByB2BUnit(@PathVariable("b2bUnitId") UUID b2bUnitId, Pageable pageable) {
+        return service.listProjectsByB2bUnit(b2bUnitId, pageable);
+    }
 
     public static class CreateProjectRequest {
         @NotBlank public String name;

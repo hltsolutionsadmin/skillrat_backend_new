@@ -7,6 +7,7 @@ import com.skillrat.user.service.OrganisationClient;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -14,22 +15,16 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import com.skillrat.user.security.RequiresBusinessOrHrAdmin;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 @RestController
 @RequestMapping("/api/users")
 @Validated
+@RequiredArgsConstructor
 public class UserController {
 
     private final UserService userService;
     private final OrganisationClient organisationClient;
-
-    public UserController(UserService userService, OrganisationClient organisationClient) {
-        this.userService = userService;
-        this.organisationClient = organisationClient;
-    }
 
     @GetMapping("/me")
     @PreAuthorize("isAuthenticated()")
@@ -102,15 +97,43 @@ public class UserController {
     }
 
     // Internal endpoint for cross-service user lookup by email
-    @GetMapping("/internal/by-email")
-    public ResponseEntity<?> getByEmail(@RequestParam("email") String email) {
+    @GetMapping("/internal/byEmail/{email}")
+    public ResponseEntity<?> getByEmail(@PathVariable("email") String email) {
         return userService.findByEmail(email)
-                .<ResponseEntity<?>>map(u -> ResponseEntity.ok(Map.of(
-                        "id", u.getId(),
-                        "email", u.getEmail(),
-                        "b2bUnitId", u.getB2bUnitId()
-                )))
-                .orElseGet(() -> ResponseEntity.notFound().build());
+                .map(u -> {
+                    UUID b2bUnitId = u.getB2bUnitId();
+                    Object businessDetails = null;
+
+                    if (b2bUnitId != null) {
+                        businessDetails = organisationClient.getB2BUnit(b2bUnitId);
+                    }
+
+                    Map<String, Object> resp = new HashMap<>();
+                    resp.put("id", u.getId());
+                    resp.put("email", u.getEmail());
+
+                    // Roles list (null-safe)
+                    List<String> roles = (u.getRoles() == null)
+                            ? List.of()
+                            : u.getRoles().stream()
+                            .filter(Objects::nonNull)
+                            .map(r -> r.getName())
+                            .filter(Objects::nonNull)
+                            .toList();
+
+                    resp.put("roles", roles);
+
+                    if (b2bUnitId != null) {
+                        resp.put("b2bUnitId", b2bUnitId);
+                    }
+
+                    if (businessDetails != null) {
+                        resp.put("business", businessDetails);
+                    }
+
+                    return ResponseEntity.ok(resp);
+                })
+                .orElse(ResponseEntity.notFound().build());
     }
 
     // Business admin invites an employee and assigns roles

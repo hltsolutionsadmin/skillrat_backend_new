@@ -1,0 +1,31 @@
+package com.skillrat.project.domain;
+
+public enum IndiaCity {
+    BENGALURU,
+    HYDERABAD,
+    PUNE,
+    MUMBAI,
+    DELHI,
+    CHENNAI,
+    KOLKATA,
+    AHMEDABAD,
+    JAIPUR,
+    LUCKNOW,
+    KOCHI,
+    NOIDA,
+    GURUGRAM,
+    CHANDIGARH,
+    INDORE,
+    SURAT,
+    NAGPUR,
+    PATNA,
+    BHOPAL,
+    BHUBANESWAR,
+    VISAKHAPATNAM,
+    COIMBATORE,
+    TRIVANDRUM,
+    VADODARA,
+    RANCHI,
+    GUWAHATI,
+    OTHER
+}
