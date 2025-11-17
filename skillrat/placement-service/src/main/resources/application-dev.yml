@@ -1,0 +1,24 @@
+server:
+  port: 8083
+spring:
+  application:
+    name: placement-service
+  datasource:
+    url: jdbc:mysql://localhost:3306/skillrat_place?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+    username: root
+    password: Juvarya@2020
+  jpa:
+    hibernate:
+      ddl-auto: update
+  redis:
+    host: localhost
+    port: 6379
+skillrat:
+  placement:
+    events:
+      channel: tenant:${TENANT_ID:default}:placement
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
