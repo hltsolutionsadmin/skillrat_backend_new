@@ -1,5 +1,6 @@
 package com.skillrat.project.domain;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.skillrat.common.orm.BaseEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -26,6 +27,7 @@ public class ProjectMember extends BaseEntity {
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "project_id")
+    @JsonBackReference
     private Project project;
 
     @Column(nullable = false)

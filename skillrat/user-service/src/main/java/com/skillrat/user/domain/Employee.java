@@ -3,6 +3,10 @@ package com.skillrat.user.domain;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import java.time.LocalDate;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -27,4 +31,12 @@ public class Employee extends User {
     private String department;
 
     private LocalDate hireDate;
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 32)
+    private EmploymentType employmentType;
+
+    @ManyToOne
+    @JoinColumn(name = "reporting_manager_id")
+    private User reportingManager;
 }

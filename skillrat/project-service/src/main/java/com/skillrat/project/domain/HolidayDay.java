@@ -1,5 +1,6 @@
 package com.skillrat.project.domain;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.skillrat.common.orm.BaseEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -17,6 +18,7 @@ public class HolidayDay extends BaseEntity {
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "calendar_id")
+    @JsonBackReference
     private HolidayCalendar calendar;
 
     @Column(nullable = false)

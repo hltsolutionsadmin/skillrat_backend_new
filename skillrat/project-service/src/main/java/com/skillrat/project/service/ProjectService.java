@@ -1,14 +1,23 @@
 package com.skillrat.project.service;
 
 import com.skillrat.common.tenant.TenantContext;
+import com.skillrat.project.client.UserClient;
 import com.skillrat.project.domain.*;
 import com.skillrat.project.repo.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+
+import java.util.Objects;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
 
 @Service
 public class ProjectService {
@@ -17,15 +26,18 @@ public class ProjectService {
     private final WBSElementRepository wbsRepository;
     private final ProjectMemberRepository memberRepository;
     private final WBSAllocationRepository allocationRepository;
+    private final UserClient userClient;
 
     public ProjectService(ProjectRepository projectRepository,
                           WBSElementRepository wbsRepository,
                           ProjectMemberRepository memberRepository,
-                          WBSAllocationRepository allocationRepository) {
+                          WBSAllocationRepository allocationRepository,
+                          UserClient userClient) {
         this.projectRepository = projectRepository;
         this.wbsRepository = wbsRepository;
         this.memberRepository = memberRepository;
         this.allocationRepository = allocationRepository;
+        this.userClient = userClient;
     }
 
     @Transactional
@@ -62,8 +74,10 @@ public class ProjectService {
                 client.setSecondaryContactEmail(clientSecondaryEmail);
             }
             client.setTenantId(tenant);
+            applyAuditFromCurrentUser(client);
             p.setClient(client);
         }
+        applyAuditFromCurrentUser(p);
         return projectRepository.save(p);
     }
 
@@ -133,6 +147,7 @@ public class ProjectService {
         member.setStartDate(start);
         member.setEndDate(end);
         member.setActive(active);
+        applyAuditFromCurrentUser(member);
         return memberRepository.save(member);
     }
 
@@ -164,4 +179,62 @@ public class ProjectService {
         return allocationRepository.save(alloc);
     }
 
+    @Transactional(readOnly = true)
+    public Project getProject(UUID id) {
+        return projectRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Project not found"));
+    }
+
+    @Transactional(readOnly = true)
+    public WBSElement getWbs(UUID id) {
+        return wbsRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("WBS not found"));
+    }
+
+    @Transactional(readOnly = true)
+    public Page<Project> listProjectsByMember(UUID employeeId, Pageable pageable) {
+        return projectRepository.findDistinctByMembers_EmployeeId(employeeId, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<Project> listProjectsByClient(UUID clientId, Pageable pageable) {
+        return projectRepository.findByClient_Id(clientId, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<Project> listProjectsByB2bUnit(UUID b2bUnitId, Pageable pageable) {
+        return projectRepository.findByB2bUnitId(b2bUnitId, pageable);
+    }
+
+    private void applyAuditFromCurrentUser(com.skillrat.common.orm.BaseEntity entity) {
+        try {
+            Map<String, Object> me = userClient.me();
+            if (me != null) {
+                Object email = me.get("email");
+                if (email != null) {
+                    String v = Objects.toString(email, null);
+                    entity.setCreatedBy(v);
+                    entity.setUpdatedBy(v);
+                }
+            }
+        } catch (Exception ignored) {}
+        if (entity.getCreatedBy() == null || entity.getUpdatedBy() == null) {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null) {
+                String name = auth.getName();
+                if (name != null && !name.isBlank()) {
+                    if (entity.getCreatedBy() == null) entity.setCreatedBy(name);
+                    if (entity.getUpdatedBy() == null) entity.setUpdatedBy(name);
+                }
+                Object principal = auth.getPrincipal();
+                if (principal instanceof Jwt jwt) {
+                    String email = jwt.getClaimAsString("email");
+                    if (email != null && !email.isBlank()) {
+                        entity.setCreatedBy(email);
+                        entity.setUpdatedBy(email);
+                    }
+                }
+            }
+        }
+    }
 }
