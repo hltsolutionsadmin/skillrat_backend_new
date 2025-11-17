@@ -4,13 +4,19 @@ import com.skillrat.common.orm.BaseEntity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "project_client")
+@Table(
+    name = "project_client",
+    indexes = {
+        @Index(name = "idx_project_client_tenant", columnList = "tenant_id")
+    }
+)
 @Getter
 @Setter
 @NoArgsConstructor

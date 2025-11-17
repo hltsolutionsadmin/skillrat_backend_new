@@ -10,7 +10,15 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 @Entity
-@Table(name = "project_member")
+@Table(
+        name = "project_member",
+        indexes = {
+                @Index(name = "idx_pm_project", columnList = "project_id"),
+                @Index(name = "idx_pm_employee", columnList = "employee_id"),
+                @Index(name = "idx_pm_project_employee", columnList = "project_id, employee_id"),
+                @Index(name = "idx_pm_tenant", columnList = "tenant_id")
+        }
+)
 @Getter
 @Setter
 @NoArgsConstructor
