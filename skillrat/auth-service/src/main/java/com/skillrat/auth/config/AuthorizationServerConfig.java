@@ -181,7 +181,7 @@ public class AuthorizationServerConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(java.util.List.of("http://localhost:4200"));
+        config.setAllowedOrigins(java.util.List.of("*"));
         config.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(java.util.List.of("Authorization", "Content-Type", "Accept"));
         config.setAllowCredentials(true);
