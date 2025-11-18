@@ -1,6 +1,7 @@
 package com.skillrat.auth.config;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.UUID;
 
 import javax.sql.DataSource;
@@ -181,9 +182,10 @@ public class AuthorizationServerConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(java.util.List.of("*"));
-        config.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(java.util.List.of("Authorization", "Content-Type", "Accept"));
+
+        config.setAllowedOriginPatterns(List.of("*")); // <-- FIXED
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
         config.setMaxAge(3600L);
 
@@ -191,4 +193,5 @@ public class AuthorizationServerConfig {
         source.registerCorsConfiguration("/**", config);
         return source;
     }
+
 }
