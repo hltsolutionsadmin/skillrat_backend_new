@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import javax.sql.DataSource;
 
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
@@ -143,52 +144,37 @@ public class AuthorizationServerConfig {
         return new CommandLineRegisteredClientLoader(repo, dataSource);
     }
 
-    public static class CommandLineRegisteredClientLoader implements org.springframework.boot.CommandLineRunner {
+    public static class CommandLineRegisteredClientLoader implements CommandLineRunner {
         private final RegisteredClientRepository repo;
-        private final org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
+        private final JdbcTemplate jdbcTemplate;
 
-        public CommandLineRegisteredClientLoader(RegisteredClientRepository repo) {
+        public CommandLineRegisteredClientLoader(RegisteredClientRepository repo, DataSource dataSource) {
             this.repo = repo;
-            this.jdbcTemplate = null;
-        }
-
-        public CommandLineRegisteredClientLoader(RegisteredClientRepository repo, javax.sql.DataSource dataSource) {
-            this.repo = repo;
-            this.jdbcTemplate = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+            this.jdbcTemplate = new JdbcTemplate(dataSource);
         }
 
         @Override
         public void run(String... args) {
             String clientId = "gateway";
-            RegisteredClient existing = ((JdbcRegisteredClientRepository) repo).findByClientId(clientId);
-            // Force replace to ensure SELF_CONTAINED tokens
-            if (existing != null && jdbcTemplate != null) {
-                try { jdbcTemplate.update("delete from oauth2_registered_client where client_id = ?", clientId); } catch (Exception ignored) {}
-                existing = null;
-            }
-            RegisteredClient desired = (existing == null)
-                    ? RegisteredClient.withId(UUID.randomUUID().toString())
-                        .clientId(clientId)
-                        .clientSecret("{noop}gateway-secret")
-                        .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
-                        .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
-                        .authorizationGrantType(new AuthorizationGrantType("urn:ietf:params:oauth:grant-type:skillrat-password"))
-                        .scope("gateway")
-                        .tokenSettings(TokenSettings.builder()
-                                .accessTokenTimeToLive(Duration.ofMinutes(30))
-                                .accessTokenFormat(OAuth2TokenFormat.SELF_CONTAINED)
-                                .reuseRefreshTokens(false)
-                                .build())
-                        .clientSettings(ClientSettings.builder().requireProofKey(false).build())
-                        .build()
-                    : RegisteredClient.from(existing)
-                        .scope("gateway")
-                        .tokenSettings(TokenSettings.builder()
-                                .accessTokenTimeToLive(Duration.ofMinutes(30))
-                                .accessTokenFormat(OAuth2TokenFormat.SELF_CONTAINED)
-                                .reuseRefreshTokens(false)
-                                .build())
-                        .build();
+
+            // Delete existing
+            jdbcTemplate.update("delete from oauth2_registered_client where client_id = ?", clientId);
+
+            RegisteredClient desired = RegisteredClient.withId(UUID.randomUUID().toString())
+                    .clientId(clientId)
+                    .clientSecret("{noop}gateway-secret")
+                    .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+                    .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
+                    .authorizationGrantType(new AuthorizationGrantType("urn:ietf:params:oauth:grant-type:skillrat-password"))
+                    .scope("gateway")
+                    .tokenSettings(TokenSettings.builder()
+                            .accessTokenTimeToLive(Duration.ofMinutes(30))
+                            .accessTokenFormat(OAuth2TokenFormat.SELF_CONTAINED)
+                            .reuseRefreshTokens(false)
+                            .build())
+                    .clientSettings(ClientSettings.builder().requireProofKey(false).build())
+                    .build();
+
             ((JdbcRegisteredClientRepository) repo).save(desired);
         }
     }
