@@ -86,6 +86,10 @@ public class B2BUnitController {
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
+    @GetMapping("/test")
+    public String secureTest() {
+        return " b2bunit working!";
+    }
     public static class SelfOnboardRequest {
         @NotBlank public String name;
         @NotNull public B2BUnitType type;
