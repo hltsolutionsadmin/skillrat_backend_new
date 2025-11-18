@@ -101,6 +101,11 @@ public class ProjectAdminController {
         return service.listProjectsByB2bUnit(b2bUnitId, pageable);
     }
 
+    @GetMapping("/test")
+    public String publicTest() {
+        return "project working!";
+    }
+
     public static class CreateProjectRequest {
         @NotBlank public String name;
         public String code;
