@@ -32,7 +32,7 @@ public class AdminUserController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN','HR')")
+    @PreAuthorize("hasAnyRole('ADMIN',BUSINESS_ADMIN,'HR')")
     public ResponseEntity<User> get(@PathVariable("id") UUID id) {
         return userService.getById(id)
                 .map(ResponseEntity::ok)
@@ -40,14 +40,14 @@ public class AdminUserController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN','HR')")
+    @PreAuthorize("hasAnyRole('ADMIN','BUSINESS_ADMIN','HR')")
     public ResponseEntity<User> create(@RequestBody CreateUserRequest req) {
         User u = userService.adminCreateUser(req.b2bUnitId, req.firstName, req.lastName, req.email, req.mobile, req.roleIds);
         return ResponseEntity.ok(u);
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN','HR')")
+    @PreAuthorize("hasAnyRole('ADMIN','BUSINESS_ADMIN','HR')")
     public ResponseEntity<User> update(@PathVariable("id") UUID id, @RequestBody UpdateUserRequest req) {
         User u = userService.adminUpdateUser(id, req.firstName, req.lastName, req.mobile, req.active, req.roleIds);
         return ResponseEntity.ok(u);
