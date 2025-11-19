@@ -6,6 +6,7 @@ import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+import org.springframework.cloud.openfeign.EnableFeignClients;
 
 import com.skillrat.user.domain.User;
 import com.skillrat.user.domain.Employee;
@@ -22,6 +23,7 @@ import com.skillrat.user.repo.EducationRepository;
 import com.skillrat.user.repo.TitleRecordRepository;
 
 @EnableDiscoveryClient
+@EnableFeignClients(basePackages = "com.skillrat.user.client")
 @SpringBootApplication
 @ConfigurationPropertiesScan
 @EntityScan(basePackageClasses = {
