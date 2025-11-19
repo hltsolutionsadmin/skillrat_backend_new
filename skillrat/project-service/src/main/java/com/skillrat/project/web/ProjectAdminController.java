@@ -65,7 +65,7 @@ public class ProjectAdminController {
 
     // Allocate member to a WBS (assignment that controls time entry eligibility)
     @PostMapping("/members/{memberId}/allocations")
-    @PreAuthorize("hasAnyRole('ADMIN','PMO')")
+    @PreAuthorize("hasAnyRole('ADMIN','BUSINESS_ADMIN','PMO')")
     public ResponseEntity<WBSAllocation> allocate(@PathVariable("memberId") UUID memberId,
                                                   @RequestBody @Valid AllocateRequest req) {
         WBSAllocation a = service.allocateMemberToWbs(memberId, req.wbsId, req.startDate, req.endDate);
