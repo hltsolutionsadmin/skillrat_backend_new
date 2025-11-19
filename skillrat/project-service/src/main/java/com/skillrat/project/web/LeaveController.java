@@ -2,6 +2,7 @@ package com.skillrat.project.web;
 
 import com.skillrat.project.domain.LeaveRequest;
 import com.skillrat.project.domain.LeaveType;
+import com.skillrat.project.domain.LeaveStatus;
 import com.skillrat.project.service.LeaveService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -13,6 +14,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.YearMonth;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -50,6 +53,23 @@ public class LeaveController {
         String note = body != null ? body.get("note") : null;
         return ResponseEntity.ok(service.reject(id, approverId, note));
     }
+
+    @GetMapping("/approved/{employeeId}/{month}/{year}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<ApprovedLeaveDTO>> approvedOverlapping(@PathVariable("employeeId") UUID employeeId,
+                                                                      @PathVariable("month") int month,
+                                                                      @PathVariable("year") int year) {
+        YearMonth ym = YearMonth.of(year, month);
+        LocalDate from = ym.atDay(1);
+        LocalDate to = ym.atEndOfMonth();
+        List<LeaveRequest> overlapApproved = service.findApprovedOverlapping(employeeId, from, to);
+        List<ApprovedLeaveDTO> resp = overlapApproved.stream()
+                .map(lr -> new ApprovedLeaveDTO(lr.getType(), lr.getFromDate(), lr.getToDate(), lr.getStatus()))
+                .toList();
+        return ResponseEntity.ok(resp);
+    }
+
+    public record ApprovedLeaveDTO(LeaveType leaveType, LocalDate startDate, LocalDate endDate, LeaveStatus status) {}
 
     public static class LeaveRequestDTO {
         @NotNull public UUID employeeId;
