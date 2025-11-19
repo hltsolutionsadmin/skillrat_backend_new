@@ -26,7 +26,7 @@ public class IncidentController {
     }
 
     @PostMapping("/projects/{projectId}/incidents")
-    @PreAuthorize("hasAnyRole('BUSINESS_ADMIN','PMO')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Incident> create(@PathVariable("projectId") UUID projectId,
                                            @RequestBody @Valid CreateIncidentRequest req) {
         Incident incident = incidentService.create(
@@ -42,13 +42,13 @@ public class IncidentController {
     }
 
     @GetMapping("/projects/{projectId}/incidents")
-    @PreAuthorize("hasAnyRole('BUSINESS_ADMIN','PMO')")
+    @PreAuthorize("isAuthenticated()")
     public Page<Incident> listByProject(@PathVariable("projectId") UUID projectId, Pageable pageable) {
         return incidentService.listByProject(projectId, pageable);
     }
 
     @PutMapping("/incidents/{incidentId}/assignee")
-    @PreAuthorize("hasAnyRole('BUSINESS_ADMIN','PMO')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Incident> assignAssignee(@PathVariable("incidentId") UUID incidentId,
                                                    @RequestBody @Valid AssignUserRequest req) {
         Incident updated = incidentService.assignAssignee(incidentId, req.userId);
@@ -56,7 +56,7 @@ public class IncidentController {
     }
 
     @PutMapping("/incidents/{incidentId}/reporter")
-    @PreAuthorize("hasAnyRole('BUSINESS_ADMIN','PMO')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Incident> assignReporter(@PathVariable("incidentId") UUID incidentId,
                                                    @RequestBody @Valid AssignUserRequest req) {
         Incident updated = incidentService.assignReporter(incidentId, req.userId);
@@ -64,7 +64,7 @@ public class IncidentController {
     }
 
     @PutMapping("/incidents/{incidentId}/status")
-    @PreAuthorize("hasAnyRole('BUSINESS_ADMIN','PMO')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Incident> updateStatus(@PathVariable("incidentId") UUID incidentId,
                                                  @RequestBody @Valid UpdateStatusRequest req) {
         Incident updated = incidentService.updateStatus(incidentId, req.status);
@@ -72,25 +72,25 @@ public class IncidentController {
     }
 
     @GetMapping("/incidents/{incidentId}/history")
-    @PreAuthorize("hasAnyRole('BUSINESS_ADMIN','PMO')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<java.util.List<Incident>> history(@PathVariable("incidentId") UUID incidentId) {
         return ResponseEntity.ok(incidentService.history(incidentId));
     }
 
     @GetMapping("/incidents/{incidentId}")
-    @PreAuthorize("hasAnyRole('BUSINESS_ADMIN','PMO')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Incident> getById(@PathVariable("incidentId") UUID incidentId) {
         return ResponseEntity.ok(incidentService.getById(incidentId));
     }
 
     @GetMapping("/incidents/assignee/{assigneeId}")
-    @PreAuthorize("hasAnyRole('BUSINESS_ADMIN','PMO')")
+    @PreAuthorize("isAuthenticated()")
     public Page<Incident> listByAssignee(@PathVariable("assigneeId") UUID assigneeId, Pageable pageable) {
         return incidentService.listByAssignee(assigneeId, pageable);
     }
 
     @GetMapping("/incidents/reporter/{reporterId}")
-    @PreAuthorize("hasAnyRole('BUSINESS_ADMIN','PMO')")
+    @PreAuthorize("isAuthenticated()")
     public Page<Incident> listByReporter(@PathVariable("reporterId") UUID reporterId, Pageable pageable) {
         return incidentService.listByReporter(reporterId, pageable);
     }
