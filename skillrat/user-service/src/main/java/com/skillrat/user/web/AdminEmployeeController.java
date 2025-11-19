@@ -31,7 +31,7 @@ public class AdminEmployeeController {
 
     // List employees with filters and pagination
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN''BUSINESS_ADMIN','HR')")
+    @PreAuthorize("isAuthenticated()")
     public Page<Employee> search(@RequestParam(value = "q", required = false) String q,
                                  @RequestParam(value = "employmentType", required = false) EmploymentType employmentType,
                                  Pageable pageable) {
@@ -40,7 +40,7 @@ public class AdminEmployeeController {
 
     // Employee details
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN','BUSINESS_ADMIN','HR')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Employee> get(@PathVariable("id") UUID id) {
         return employeeService.getById(id)
                 .map(ResponseEntity::ok)
@@ -49,7 +49,7 @@ public class AdminEmployeeController {
 
     // Create employee
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN','BUSINESS_ADMIN','HR')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Employee> create(@RequestBody CreateEmployeeRequest req) {
         Employee e = employeeService.create(
                 req.b2bUnitId,
@@ -69,7 +69,7 @@ public class AdminEmployeeController {
 
     // Update employee
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN','BUSINESS_ADMIN','HR')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Employee> update(@PathVariable("id") UUID id, @RequestBody UpdateEmployeeRequest req) {
         Employee e = employeeService.update(
                 id,
