@@ -39,7 +39,7 @@ public class HolidayController {
     }
 
     @PostMapping("/calendars")
-    @PreAuthorize("hasAnyRole('ADMIN','BUSINESS_ADMIN','HR')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<HolidayCalendar> createCalendar(@RequestBody @Valid CreateCalReq req) {
         return ResponseEntity.ok(service.createCalendar(req.name, req.code, req.city, req.b2bUnitId));
     }
@@ -51,28 +51,28 @@ public class HolidayController {
     }
 
     @PutMapping("/calendars/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN','BUSINESS_ADMIN','HR')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<HolidayCalendar> updateCalendar(@PathVariable("id") UUID id,
                                                           @RequestBody @Valid UpdateCalReq req) {
         return ResponseEntity.ok(service.updateCalendar(id, req.name, req.code, req.city));
     }
 
     @DeleteMapping("/calendars/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN','BUSINESS_ADMIN','HR')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> deleteCalendar(@PathVariable("id") UUID id) {
         service.deleteCalendar(id);
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/calendars/{calendarId}/days")
-    @PreAuthorize("hasAnyRole('ADMIN','BUSINESS_ADMIN','HR')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<HolidayDay> addHoliday(@PathVariable("calendarId") UUID calendarId,
                                                  @RequestBody @Valid AddHolidayReq req) {
         return ResponseEntity.ok(service.addHoliday(calendarId, req.date, req.name, req.optional));
     }
 
     @PutMapping("/projects/{projectId}/calendar/{calendarId}")
-    @PreAuthorize("hasAnyRole('ADMIN','PMO','PROJECT_MANAGER')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> assignToProject(@PathVariable UUID projectId, @PathVariable UUID calendarId) {
         return ResponseEntity.ok(service.assignCalendarToProject(projectId, calendarId));
     }

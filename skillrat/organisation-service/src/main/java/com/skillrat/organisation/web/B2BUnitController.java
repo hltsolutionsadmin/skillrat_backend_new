@@ -79,7 +79,7 @@ public class B2BUnitController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('BUSINESS_ADMIN','HR_ADMIN','ADMIN')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> getById(@PathVariable("id") UUID id) {
         return service.findById(id)
                 .<ResponseEntity<?>>map(ResponseEntity::ok)
