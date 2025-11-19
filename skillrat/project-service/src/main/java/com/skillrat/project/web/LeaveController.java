@@ -35,7 +35,7 @@ public class LeaveController {
 
     // Approve by reporting manager/HR/PMO/ADMIN
     @PostMapping("/requests/{id}/approve")
-    @PreAuthorize("hasAnyRole('ADMIN','HR','PMO','PROJECT_MANAGER','TEAM_LEAD')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<LeaveRequest> approve(@PathVariable("id") UUID id, @RequestBody(required = false) Map<String, String> body) {
         UUID approverId = body != null && body.get("approverId") != null ? UUID.fromString(body.get("approverId")) : null;
         String note = body != null ? body.get("note") : null;
@@ -44,7 +44,7 @@ public class LeaveController {
 
     // Reject by reporting manager/HR/PMO/ADMIN
     @PostMapping("/requests/{id}/reject")
-    @PreAuthorize("hasAnyRole('ADMIN','HR','PMO','PROJECT_MANAGER','TEAM_LEAD')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<LeaveRequest> reject(@PathVariable("id") UUID id, @RequestBody(required = false) Map<String, String> body) {
         UUID approverId = body != null && body.get("approverId") != null ? UUID.fromString(body.get("approverId")) : null;
         String note = body != null ? body.get("note") : null;

@@ -28,7 +28,7 @@ public class ProjectAdminController {
 
     // Create Project
     @PostMapping
-    @PreAuthorize("hasAnyRole('BUSINESS_ADMIN','PMO')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Project> createProject(@RequestBody @Valid CreateProjectRequest req) {
         Project p = service.createProject(
                 req.name,
@@ -46,7 +46,7 @@ public class ProjectAdminController {
 
     // Create WBS under a project
     @PostMapping("/{projectId}/wbs")
-    @PreAuthorize("hasAnyRole('BUSINESS_ADMIN','PMO')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<WBSElement> createWbs(@PathVariable("projectId") UUID projectId,
                                                 @RequestBody @Valid CreateWbsRequest req) {
         WBSElement w = service.createWbs(projectId, req.name, req.code, req.category, req.startDate, req.endDate);
@@ -55,7 +55,7 @@ public class ProjectAdminController {
 
     // Add or update project member (with project role and reporting manager)
     @PutMapping("/{projectId}/members")
-    @PreAuthorize("hasAnyRole('BUSINESS_ADMIN','PMO')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ProjectMember> upsertMember(@PathVariable("projectId") UUID projectId,
                                                       @RequestBody @Valid UpsertMemberRequest req) {
         ProjectMember m = service.addOrUpdateMember(projectId, req.employeeId, req.role, req.reportingManagerId,
@@ -65,7 +65,7 @@ public class ProjectAdminController {
 
     // Allocate member to a WBS (assignment that controls time entry eligibility)
     @PostMapping("/members/{memberId}/allocations")
-    @PreAuthorize("hasAnyRole('ADMIN','BUSINESS_ADMIN','PMO')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<WBSAllocation> allocate(@PathVariable("memberId") UUID memberId,
                                                   @RequestBody @Valid AllocateRequest req) {
         WBSAllocation a = service.allocateMemberToWbs(memberId, req.wbsId, req.startDate, req.endDate);
