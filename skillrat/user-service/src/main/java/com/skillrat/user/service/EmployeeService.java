@@ -42,9 +42,9 @@ public class EmployeeService {
     }
 
     @Transactional(readOnly = true)
-    public Page<Employee> search(String q, EmploymentType type, Pageable pageable) {
+    public Page<Employee> search(UUID b2bUnitId, String q, EmploymentType type, Pageable pageable) {
         String query = (q == null || q.isBlank()) ? null : q.trim();
-        return employeeRepository.search(query, type, pageable);
+        return employeeRepository.search(b2bUnitId, query, type, pageable);
     }
 
     @Transactional(readOnly = true)

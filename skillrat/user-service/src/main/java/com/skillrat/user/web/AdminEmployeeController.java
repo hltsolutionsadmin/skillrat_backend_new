@@ -3,6 +3,7 @@ package com.skillrat.user.web;
 import com.skillrat.user.domain.Employee;
 import com.skillrat.user.domain.EmploymentType;
 import org.springframework.security.access.prepost.PreAuthorize;
+import com.skillrat.user.security.B2BUnitAccessValidator;
 import com.skillrat.user.service.EmployeeService;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -24,18 +25,23 @@ import java.util.UUID;
 public class AdminEmployeeController {
 
     private final EmployeeService employeeService;
+    private final B2BUnitAccessValidator b2bUnitAccessValidator;
 
-    public AdminEmployeeController(EmployeeService employeeService) {
+    public AdminEmployeeController(EmployeeService employeeService,
+                                   B2BUnitAccessValidator b2bUnitAccessValidator) {
         this.employeeService = employeeService;
+        this.b2bUnitAccessValidator = b2bUnitAccessValidator;
     }
 
-    // List employees with filters and pagination
+    // List employees with filters and pagination, scoped to a B2B unit
     @GetMapping
-    @PreAuthorize("isAuthenticated()")
-    public Page<Employee> search(@RequestParam(value = "q", required = false) String q,
+    @PreAuthorize("hasAnyRole('ADMIN','BUSINESS_ADMIN','HR_ADMIN')")
+    public Page<Employee> search(@RequestParam("b2bUnitId") UUID b2bUnitId,
+                                 @RequestParam(value = "q", required = false) String q,
                                  @RequestParam(value = "employmentType", required = false) EmploymentType employmentType,
                                  Pageable pageable) {
-        return employeeService.search(q, employmentType, pageable);
+        b2bUnitAccessValidator.validateCurrentUserBelongsTo(b2bUnitId);
+        return employeeService.search(b2bUnitId, q, employmentType, pageable);
     }
 
     // Employee details
