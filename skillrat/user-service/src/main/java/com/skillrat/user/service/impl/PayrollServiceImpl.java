@@ -67,9 +67,9 @@ public class PayrollServiceImpl implements PayrollService {
 
         // Check if already generated
         Optional<EmployeePayslip> existing = payslipDao.findByEmployeeIdAndMonthAndYear(req.getEmployeeId(), month, year);
-//        if (existing.isPresent()) {
-//            return toDto(existing.get(), payslipComponentDao.findByPayslipId(existing.get().getId()));
-//        }
+        if (existing.isPresent()) {
+            return toDto(existing.get(), payslipComponentDao.findByPayslipId(existing.get().getId()));
+        }
 
         // 1) Fetch latest structure effective on or before month end
         EmployeeSalaryStructure structure = structureDao

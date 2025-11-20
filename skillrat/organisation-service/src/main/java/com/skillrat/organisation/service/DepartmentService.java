@@ -78,8 +78,7 @@ public class DepartmentService {
     @Transactional
     public void deleteDepartment(UUID id) {
         Department department = getDepartmentById(id);
-        department.setActive(false);
-        departmentRepository.save(department);
+        departmentRepository.delete(department);
         log.info("Department deactivated id={}, name={}", department.getId(), department.getName());
     }
 

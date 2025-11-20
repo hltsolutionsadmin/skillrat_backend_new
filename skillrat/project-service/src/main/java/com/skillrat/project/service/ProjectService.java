@@ -84,6 +84,53 @@ public class ProjectService {
         return projectRepository.save(p);
     }
 
+    @Transactional
+    public Project updateProject(UUID projectId,
+                                 String name,
+                                 String code,
+                                 String description,
+                                 LocalDate start,
+                                 LocalDate end,
+                                 String clientName,
+                                 String clientPrimaryEmail,
+                                 String clientSecondaryEmail,
+                                 String updatedBy) {
+        Project p = projectRepository.findById(projectId)
+                .orElseThrow(() -> new IllegalArgumentException("Project not found"));
+
+        String tenant = Optional.ofNullable(TenantContext.getTenantId()).filter(t -> !t.isBlank()).orElse("default");
+        if (code != null && !code.isBlank()) {
+            Optional<Project> dup = projectRepository.findByCodeAndTenantId(code, tenant);
+            if (dup.isPresent() && !dup.get().getId().equals(projectId)) {
+                throw new IllegalStateException("Project code already exists for tenant");
+            }
+            p.setCode(code);
+        }
+
+        if (name != null && !name.isBlank()) p.setName(name);
+        if (description != null) p.setDescription(description);
+        if (start != null) p.setStartDate(start);
+        if (end != null) p.setEndDate(end);
+
+        if (clientName != null || clientPrimaryEmail != null || clientSecondaryEmail != null) {
+            ProjectClient client = p.getClient();
+            if (client == null && (clientName != null && !clientName.isBlank())) {
+                client = new ProjectClient();
+                client.setTenantId(tenant);
+                p.setClient(client);
+            }
+            if (client != null) {
+                if (clientName != null && !clientName.isBlank()) client.setName(clientName);
+                if (clientPrimaryEmail != null) client.setPrimaryContactEmail(clientPrimaryEmail);
+                if (clientSecondaryEmail != null) client.setSecondaryContactEmail(clientSecondaryEmail);
+            }
+        }
+
+        if (updatedBy != null && !updatedBy.isBlank()) p.setUpdatedBy(updatedBy);
+
+        return projectRepository.save(p);
+    }
+
     private String normalizeUuidString(String raw) {
         if (raw == null) {
             throw new IllegalArgumentException("b2bUnitId is required");
