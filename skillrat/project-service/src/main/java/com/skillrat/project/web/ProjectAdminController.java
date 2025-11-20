@@ -3,17 +3,24 @@ package com.skillrat.project.web;
 import com.skillrat.project.domain.*;
 import com.skillrat.project.service.ProjectService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/projects")
@@ -26,10 +33,11 @@ public class ProjectAdminController {
         this.service = service;
     }
 
-    // Create Project
+    // Create Project - Only organization admin can create projects
     @PostMapping
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasRole('BUSINESS_ADMIN')")
     public ResponseEntity<Project> createProject(@RequestBody @Valid CreateProjectRequest req) {
+        String userId = getCurrentUserId();
         Project p = service.createProject(
                 req.name,
                 req.code,
@@ -39,7 +47,8 @@ public class ProjectAdminController {
                 req.endDate,
                 req.client != null ? req.client.name : null,
                 req.client != null ? req.client.primaryContactEmail : null,
-                req.client != null ? req.client.secondaryContactEmail : null
+                req.client != null ? req.client.secondaryContactEmail : null,
+                userId
         );
         return ResponseEntity.ok(p);
     }
@@ -85,25 +94,47 @@ public class ProjectAdminController {
         return ResponseEntity.ok(w);
     }
 
-    // List projects for a member (employee) ID
-    @GetMapping("/byMember/{employeeId}")
-    public Page<Project> listByMember(@PathVariable("employeeId") UUID employeeId, Pageable pageable) {
-        return service.listProjectsByMember(employeeId, pageable);
+    // List projects with pagination
+    @GetMapping
+    public ResponseEntity<Page<Project>> listProjects(
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "10") @Min(1) int size) {
+        
+        String email = getCurrentUserId();
+        List<String> roles = getCurrentUserRoles();
+        boolean isAdmin = roles.contains("BUSINESS_ADMIN");
+        
+        PageRequest pageRequest = PageRequest.of(page, size, Sort.by("createdDate").descending());
+        
+        Page<Project> projects;
+        if (isAdmin) {
+            projects = service.listProjectsForAdmin(pageRequest);
+        } else {
+            // For regular users, get only their assigned projects
+            projects = service.listProjectsForUser(email, pageRequest);
+        }
+        
+        return ResponseEntity.ok(projects);
     }
 
-    // List projects for a client ID
-    @GetMapping("/byClient/{clientId}")
-    public Page<Project> listByClient(@PathVariable("clientId") UUID clientId, Pageable pageable) {
-        return service.listProjectsByClient(clientId, pageable);
+    // Helper methods to get current user info
+    private String getCurrentUserId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.getPrincipal() != null) {
+            return authentication.getName();
+        }
+        throw new SecurityException("User not authenticated");
     }
-    @GetMapping("/byB2BUnit/{b2bUnitId}")
-    public Page<Project> listByB2BUnit(@PathVariable("b2bUnitId") UUID b2bUnitId, Pageable pageable) {
-        return service.listProjectsByB2bUnit(b2bUnitId, pageable);
-    }
-
-    @GetMapping("/test")
-    public String publicTest() {
-        return "project working!";
+    
+    private List<String> getCurrentUserRoles() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.getAuthorities() != null) {
+            return authentication.getAuthorities().stream()
+                    .map(GrantedAuthority::getAuthority)
+                    .map(auth -> auth.replace("ROLE_", ""))
+                    .collect(Collectors.toList());
+        }
+        return List.of();
     }
 
     public static class CreateProjectRequest {
