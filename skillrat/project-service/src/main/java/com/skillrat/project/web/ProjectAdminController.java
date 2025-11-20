@@ -100,19 +100,18 @@ public class ProjectAdminController {
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(defaultValue = "10") @Min(1) int size) {
         
-        String userId = getCurrentUserId();
+        String email = getCurrentUserId();
         List<String> roles = getCurrentUserRoles();
         boolean isAdmin = roles.contains("BUSINESS_ADMIN");
         
-        PageRequest pageRequest = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        PageRequest pageRequest = PageRequest.of(page, size, Sort.by("createdDate").descending());
         
         Page<Project> projects;
         if (isAdmin) {
-            // For admin, get all projects in their organizations
-            projects = service.listProjectsForAdmin(userId, pageRequest);
+            projects = service.listProjectsForAdmin(pageRequest);
         } else {
             // For regular users, get only their assigned projects
-            projects = service.listProjectsForUser(userId, pageRequest);
+            projects = service.listProjectsForUser(email, pageRequest);
         }
         
         return ResponseEntity.ok(projects);
