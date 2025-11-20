@@ -13,6 +13,8 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
+import java.util.Arrays;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api")
@@ -109,5 +111,23 @@ public class IncidentController {
 
     public static class UpdateStatusRequest {
         @NotNull public IncidentStatus status;
+    }
+
+    @GetMapping("/incidents/categories")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<IncidentCategory>> listCategories() {
+        return ResponseEntity.ok(Arrays.asList(IncidentCategory.values()));
+    }
+
+    @GetMapping("/incidents/impacts")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<IncidentImpact>> listImpacts() {
+        return ResponseEntity.ok(Arrays.asList(IncidentImpact.values()));
+    }
+
+    @GetMapping("/incidents/urgencies")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<IncidentUrgency>> listUrgencies() {
+        return ResponseEntity.ok(Arrays.asList(IncidentUrgency.values()));
     }
 }
