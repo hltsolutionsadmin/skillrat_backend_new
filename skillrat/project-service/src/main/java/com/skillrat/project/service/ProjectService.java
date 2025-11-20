@@ -4,20 +4,21 @@ import com.skillrat.common.tenant.TenantContext;
 import com.skillrat.project.client.UserClient;
 import com.skillrat.project.domain.*;
 import com.skillrat.project.repo.*;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-
-import java.time.LocalDate;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
-
-import java.util.Objects;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDate;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.Predicate;
 
 @Service
 public class ProjectService {
@@ -42,14 +43,15 @@ public class ProjectService {
 
     @Transactional
     public Project createProject(String name,
-                                 String code,
-                                 String description,
-                                 String b2bUnitId,
-                                 LocalDate start,
-                                 LocalDate end,
-                                 String clientName,
-                                 String clientPrimaryEmail,
-                                 String clientSecondaryEmail) {
+                               String code,
+                               String description,
+                               String b2bUnitId,
+                               LocalDate start,
+                               LocalDate end,
+                               String clientName,
+                               String clientPrimaryEmail,
+                               String clientSecondaryEmail,
+                               String createdBy) {
     	String tenant = Optional.ofNullable(TenantContext.getTenantId())
                 .filter(t -> !t.isBlank())
                 .orElse("default");
@@ -77,7 +79,8 @@ public class ProjectService {
             applyAuditFromCurrentUser(client);
             p.setClient(client);
         }
-        applyAuditFromCurrentUser(p);
+        p.setCreatedBy(createdBy);
+        p.setUpdatedBy(createdBy);
         return projectRepository.save(p);
     }
 
@@ -192,15 +195,54 @@ public class ProjectService {
     }
 
     @Transactional(readOnly = true)
+    public Page<Project> listProjectsForUser(String userId, Pageable pageable) {
+        // For regular users, return only projects they are a member of
+        return projectRepository.findByMembers_EmployeeId(UUID.fromString(userId), pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<Project> listProjectsForAdmin(String userId, Pageable pageable) {
+        // For admins, return all projects in their organization
+        // This assumes the user's organization is stored in the JWT or can be fetched
+        // You may need to adjust this based on your actual user-organization mapping
+        
+        // Get user's organization (simplified - adjust according to your auth setup)
+        String userOrgId = getCurrentUserOrganization();
+        
+        // If we can't determine the organization, return empty page
+        if (userOrgId == null) {
+            return Page.empty();
+        }
+        
+        // Return projects filtered by organization
+        return projectRepository.findByB2bUnitId(UUID.fromString(userOrgId), pageable);
+    }
+    
+    private String getCurrentUserOrganization() {
+        // This is a simplified example - implement according to your auth system
+        // You might need to fetch this from the JWT claims or make a request to the user service
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.getPrincipal() instanceof Jwt) {
+            Jwt jwt = (Jwt) authentication.getPrincipal();
+            return jwt.getClaimAsString("org_id"); // Adjust claim name as per your JWT
+        }
+        return null;
+    }
+    
+    // Keep existing methods for backward compatibility
+    @Deprecated
+    @Transactional(readOnly = true)
     public Page<Project> listProjectsByMember(UUID employeeId, Pageable pageable) {
         return projectRepository.findDistinctByMembers_EmployeeId(employeeId, pageable);
     }
 
+    @Deprecated
     @Transactional(readOnly = true)
     public Page<Project> listProjectsByClient(UUID clientId, Pageable pageable) {
         return projectRepository.findByClient_Id(clientId, pageable);
     }
 
+    @Deprecated
     @Transactional(readOnly = true)
     public Page<Project> listProjectsByB2bUnit(UUID b2bUnitId, Pageable pageable) {
         return projectRepository.findByB2bUnitId(b2bUnitId, pageable);
