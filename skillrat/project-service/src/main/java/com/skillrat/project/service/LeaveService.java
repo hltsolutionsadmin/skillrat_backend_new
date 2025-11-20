@@ -183,4 +183,14 @@ public class LeaveService {
         alloc.setTenantId(Optional.ofNullable(TenantContext.getTenantId()).orElse("default"));
         allocationRepository.save(alloc);
     }
+
+    @Transactional(readOnly = true)
+    public List<LeaveRequest> findApprovedOverlapping(UUID employeeId, LocalDate from, LocalDate to) {
+        List<LeaveRequest> overlap = requestRepository
+                .findByEmployeeIdAndFromDateLessThanEqualAndToDateGreaterThanEqual(employeeId, to, from);
+        return overlap.stream().filter(lr -> lr.getStatus() == LeaveStatus.APPROVED).toList();
+    }
+
+    // Expose repository only internally via service method
+    LeaveRequestRepository requestRepository() { return this.requestRepository; }
 }
