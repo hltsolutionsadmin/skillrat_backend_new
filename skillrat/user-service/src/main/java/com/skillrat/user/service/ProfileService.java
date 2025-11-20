@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -47,13 +48,44 @@ public class ProfileService {
                 .orElse(null);
     }
 
-    // Experiences
+//    // Experiences
+//    @Transactional
+//    public ProfileExperience addExperience(String email, ExperienceType type, String title, String description, String orgName,
+//                                           java.time.LocalDate start, java.time.LocalDate end) {
+//        UUID userId = currentUserIdByEmail(email);
+//        ProfileExperience e = new ProfileExperience();
+//        e.setUserId(userId);
+//        e.setType(type);
+//        e.setTitle(title);
+//        e.setDescription(description);
+//        e.setOrganizationName(orgName);
+//        e.setStartDate(start);
+//        e.setEndDate(end);
+//        e.setVerificationStatus(VerificationStatus.UNVERIFIED);
+//        e = experienceRepository.save(e);
+//        // Award points based on experience type via wallet-service
+//        String cat = (type == ExperienceType.PROJECT) ? "PROJECT" : "INTERNSHIP";
+//        walletClient.award(userId, cat, type + " added", e.getId());
+//        return e;
+//    }
+//
+
     @Transactional
-    public ProfileExperience addExperience(String email, ExperienceType type, String title, String description, String orgName,
-                                           java.time.LocalDate start, java.time.LocalDate end) {
-        UUID userId = currentUserIdByEmail(email);
+    public ProfileExperience addExperience(String email, ExperienceType type, String title, String description,
+                                           String orgName, java.time.LocalDate start, java.time.LocalDate end) {
+        // Get user with tenant information
+        User user = userRepository.findByEmailIgnoreCase(email)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        // Ensure user has a tenant ID, use a default if not set
+        if (user.getTenantId() == null || user.getTenantId().trim().isEmpty()) {
+            user.setTenantId("default");
+            user = userRepository.save(user);
+        }
+
         ProfileExperience e = new ProfileExperience();
-        e.setUserId(userId);
+        e.setUserId(user.getId());
+        e.setTenantId(user.getTenantId());  // Set the tenant ID from user
         e.setType(type);
         e.setTitle(title);
         e.setDescription(description);
@@ -62,9 +94,11 @@ public class ProfileService {
         e.setEndDate(end);
         e.setVerificationStatus(VerificationStatus.UNVERIFIED);
         e = experienceRepository.save(e);
+
         // Award points based on experience type via wallet-service
         String cat = (type == ExperienceType.PROJECT) ? "PROJECT" : "INTERNSHIP";
-        walletClient.award(userId, cat, type + " added", e.getId());
+
+        walletClient.award(user.getId(), cat, type + " added", e.getId());
         return e;
     }
 
@@ -75,10 +109,51 @@ public class ProfileService {
     }
 
     @Transactional
+    public ProfileExperience updateExperience(UUID experienceId, String email, String title, String description,
+                                              String organizationName, LocalDate startDate, LocalDate endDate) {
+        UUID userId = currentUserIdByEmail(email);
+        return experienceRepository.findById(experienceId)
+                .map(exp -> {
+                    if (!exp.getUserId().equals(userId)) {
+                        throw new IllegalArgumentException("Cannot update other user's experience");
+                    }
+
+                    exp.setTitle(title);
+                    exp.setDescription(description);
+                    exp.setOrganizationName(organizationName);
+                    exp.setStartDate(startDate);
+                    exp.setEndDate(endDate);
+
+                    // Reset verification status since the experience was modified
+                    if (exp.getVerificationStatus() != VerificationStatus.UNVERIFIED) {
+                        exp.setVerificationStatus(VerificationStatus.UNVERIFIED);
+                        exp.setVerifierB2bUnitId(null);
+                        exp.setVerifiedAt(null);
+                        exp.setVerifiedByUserId(null);
+                    }
+
+                    return experienceRepository.save(exp);
+                })
+                .orElseThrow(() -> new IllegalArgumentException("Experience not found"));
+    }
+
+    @Transactional
+    public void deleteExperience(UUID experienceId, String email) {
+        UUID userId = currentUserIdByEmail(email);
+        experienceRepository.findById(experienceId).ifPresent(exp -> {
+            if (!exp.getUserId().equals(userId)) {
+                throw new IllegalArgumentException("Cannot delete other user's experience");
+            }
+            experienceRepository.delete(exp);
+        });
+    }
+
+    @Transactional
     public Optional<ProfileExperience> requestVerification(UUID expId, UUID verifierB2bUnitId, String email) {
         UUID userId = currentUserIdByEmail(email);
         return experienceRepository.findById(expId).map(e -> {
-            if (!e.getUserId().equals(userId)) throw new IllegalArgumentException("Cannot request verification for other user's experience");
+            if (!e.getUserId().equals(userId))
+                throw new IllegalArgumentException("Cannot request verification for other user's experience");
             e.setVerifierB2bUnitId(verifierB2bUnitId);
             e.setVerificationStatus(VerificationStatus.PENDING);
             return experienceRepository.save(e);
@@ -168,4 +243,5 @@ public class ProfileService {
         UUID userId = currentUserIdByEmail(email);
         return titleRepository.findByUserId(userId);
     }
+
 }

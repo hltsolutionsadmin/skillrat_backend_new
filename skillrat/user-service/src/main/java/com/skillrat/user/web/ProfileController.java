@@ -41,6 +41,41 @@ public class ProfileController {
         return profileService.myExperiences(auth.getName());
     }
 
+    // Add these endpoints in your ProfileController class
+
+    @PutMapping("/experiences/{id}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ProfileExperience> updateExperience(
+            @PathVariable("id") UUID id,
+            @RequestBody UpdateExperienceRequest req,
+            Authentication auth) {
+        return ResponseEntity.ok(profileService.updateExperience(
+                id,
+                auth.getName(),
+                req.title,
+                req.description,
+                req.organizationName,
+                req.startDate,
+                req.endDate
+        ));
+    }
+
+    @DeleteMapping("/experiences/{id}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> deleteExperience(@PathVariable("id") UUID id, Authentication auth) {
+        profileService.deleteExperience(id, auth.getName());
+        return ResponseEntity.noContent().build();
+    }
+
+    // Add this inner class for the update request
+    public static class UpdateExperienceRequest {
+        @NotBlank public String title;
+        public String description;
+        public String organizationName;
+        public LocalDate startDate;
+        public LocalDate endDate;
+    }
+
     @PostMapping("/experiences/{id}/request-verification")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> requestVerification(@PathVariable("id") UUID id, @RequestBody Map<String, String> body, Authentication auth) {
@@ -106,6 +141,8 @@ public class ProfileController {
         public LocalDate startDate;
         public LocalDate endDate;
     }
+    
+
 
     public static class CreateSkillRequest {
         @NotBlank public String name;
