@@ -195,36 +195,68 @@ public class ProjectService {
     }
 
     @Transactional(readOnly = true)
-    public Page<Project> listProjectsForUser(String userId, Pageable pageable) {
+    public Page<Project> listProjectsForUser(String email, Pageable pageable) {
+        UUID userId = null;
+        try {
+            org.springframework.http.ResponseEntity<java.util.Map<String, Object>> resp = userClient.getByEmail(email);
+            if (resp != null && resp.getStatusCode().is2xxSuccessful() && resp.getBody() != null) {
+                Object v = resp.getBody().get("id");
+                if (v != null) {
+                    // value expected as String UUID
+                    userId = UUID.fromString(v.toString());
+                }
+            }
+        } catch (Exception ignored) {}
+
+        if (userId == null) {
+            return Page.empty();
+        }
         // For regular users, return only projects they are a member of
-        return projectRepository.findByMembers_EmployeeId(UUID.fromString(userId), pageable);
+        return projectRepository.findByMembers_EmployeeId(userId, pageable);
     }
 
     @Transactional(readOnly = true)
-    public Page<Project> listProjectsForAdmin(String userId, Pageable pageable) {
-        // For admins, return all projects in their organization
-        // This assumes the user's organization is stored in the JWT or can be fetched
-        // You may need to adjust this based on your actual user-organization mapping
-        
-        // Get user's organization (simplified - adjust according to your auth setup)
-        String userOrgId = getCurrentUserOrganization();
-        
-        // If we can't determine the organization, return empty page
-        if (userOrgId == null) {
+    public Page<Project> listProjectsForAdmin(Pageable pageable) {
+        // Determine current user email from JWT
+        String email = getCurrentUserEmail();
+        if (email == null || email.isBlank()) {
             return Page.empty();
         }
-        
-        // Return projects filtered by organization
-        return projectRepository.findByB2bUnitId(UUID.fromString(userOrgId), pageable);
+
+        // Call user-service to fetch user details (including b2bUnitId) by email
+        UUID b2bUnitId = null;
+        try {
+            org.springframework.http.ResponseEntity<java.util.Map<String, Object>> resp = userClient.getByEmail(email);
+            if (resp != null && resp.getStatusCode().is2xxSuccessful() && resp.getBody() != null) {
+                Object v = resp.getBody().get("b2bUnitId");
+                if (v != null) {
+                    // value expected as String UUID
+                    b2bUnitId = UUID.fromString(v.toString());
+                }
+            }
+        } catch (Exception ignored) {}
+
+        if (b2bUnitId == null) {
+            return Page.empty();
+        }
+        return projectRepository.findByB2bUnitId(b2bUnitId, pageable);
     }
-    
-    private String getCurrentUserOrganization() {
-        // This is a simplified example - implement according to your auth system
-        // You might need to fetch this from the JWT claims or make a request to the user service
+
+    private String getCurrentUserEmail() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.getPrincipal() instanceof Jwt) {
-            Jwt jwt = (Jwt) authentication.getPrincipal();
-            return jwt.getClaimAsString("org_id"); // Adjust claim name as per your JWT
+        if (authentication != null) {
+            Object principal = authentication.getPrincipal();
+            if (principal instanceof Jwt jwt) {
+                String email = jwt.getClaimAsString("email");
+                if (email != null && !email.isBlank()) return email;
+                // fall back to subject if email claim not present
+                String sub = jwt.getClaimAsString("sub");
+                if (sub != null && !sub.isBlank()) return sub;
+            }
+            // fallback to name
+            if (authentication.getName() != null && !authentication.getName().isBlank()) {
+                return authentication.getName();
+            }
         }
         return null;
     }
