@@ -81,10 +81,20 @@ public class UserService {
         u.setPasswordNeedsReset(true);
         u.setPasswordSetupToken(UUID.randomUUID().toString());
         u.setPasswordSetupTokenExpires(Instant.now().plus(7, ChronoUnit.DAYS));
-        if (roleIds != null && !roleIds.isEmpty()) {
-            Set<Role> roles = new HashSet<>(roleRepository.findAllById(roleIds));
-            u.setRoles(roles);
-        }
+        Role r = roleRepository.findByNameAndB2bUnitId("BUSINESS_ADMIN", b2bUnitId)
+                .orElseGet(() -> {
+                    Role newRole = new Role();
+                    newRole.setName("BUSINESS_ADMIN");
+                    newRole.setB2bUnitId(b2bUnitId);
+                    newRole.setTenantId(tenantId);
+                    return roleRepository.save(newRole);
+                });
+        Set<Role> roles = Optional.ofNullable(u.getRoles())
+                .orElseGet(HashSet::new);
+        roles.add(r);
+        u.setRoles(roles);
+        roles.add(r);
+        u.setRoles(roles);
         return userRepository.save(u);
     }
 
@@ -132,10 +142,10 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
-    public Page<User> searchUsers(String q, String role, Pageable pageable) {
+    public Page<User> searchUsers(UUID b2bUnitId, String q, String role, Pageable pageable) {
         String query = (q == null || q.isBlank()) ? null : q.trim();
         String roleName = (role == null || role.isBlank() || "All".equalsIgnoreCase(role)) ? null : role.trim();
-        return userRepository.search(query, roleName, pageable);
+        return userRepository.search(b2bUnitId,query, "BUSINESS_ADMIN", pageable);
     }
 
     @Transactional

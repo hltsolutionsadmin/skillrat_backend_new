@@ -1,6 +1,8 @@
 package com.skillrat.user.web;
 
+import com.skillrat.user.domain.Employee;
 import com.skillrat.user.domain.User;
+import com.skillrat.user.security.B2BUnitAccessValidator;
 import com.skillrat.user.service.UserService;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -21,14 +23,20 @@ import java.util.UUID;
 public class AdminUserController {
 
     private final UserService userService;
+    private final B2BUnitAccessValidator b2bUnitAccessValidator;
 
-    public AdminUserController(UserService userService) { this.userService = userService; }
+
+    public AdminUserController(UserService userService, B2BUnitAccessValidator b2bUnitAccessValidator) { this.userService = userService;
+        this.b2bUnitAccessValidator = b2bUnitAccessValidator;
+    }
 
     @GetMapping
-    @PreAuthorize("isAuthenticated()")
-    public Page<User> search(@RequestParam(value = "q", required = false) String q,
-                             Pageable pageable) {
-        return userService.searchUsers(q, null, pageable);
+    @PreAuthorize("hasAnyRole('ADMIN','BUSINESS_ADMIN','HR_ADMIN')")
+    public Page<User> search(@RequestParam("b2bUnitId") UUID b2bUnitId,
+                                 @RequestParam(value = "q", required = false) String q,
+                                 Pageable pageable) {
+        b2bUnitAccessValidator.validateCurrentUserBelongsTo(b2bUnitId);
+        return userService.searchUsers(b2bUnitId,q, null, pageable);
     }
 
     @GetMapping("/{id}")
