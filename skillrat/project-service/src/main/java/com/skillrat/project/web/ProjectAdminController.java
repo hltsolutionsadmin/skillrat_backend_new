@@ -35,7 +35,7 @@ public class ProjectAdminController {
 
     // Create Project - Only organization admin can create projects
     @PostMapping
-    @PreAuthorize("hasRole('ORG_ADMIN')")
+    @PreAuthorize("hasRole('BUSINESS_ADMIN')")
     public ResponseEntity<Project> createProject(@RequestBody @Valid CreateProjectRequest req) {
         String userId = getCurrentUserId();
         Project p = service.createProject(
@@ -102,7 +102,7 @@ public class ProjectAdminController {
         
         String userId = getCurrentUserId();
         List<String> roles = getCurrentUserRoles();
-        boolean isAdmin = roles.contains("ORG_ADMIN");
+        boolean isAdmin = roles.contains("BUSINESS_ADMIN");
         
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by("createdAt").descending());
         
