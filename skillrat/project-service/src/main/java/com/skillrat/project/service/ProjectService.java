@@ -233,7 +233,7 @@ public class ProjectService {
     @Deprecated
     @Transactional(readOnly = true)
     public Page<Project> listProjectsByMember(UUID employeeId, Pageable pageable) {
-        return projectRepository.findDistinctByMembers_EmployeeId(employeeId, pageable);
+        return projectRepository.findByMembers_EmployeeId(employeeId, pageable);
     }
 
     @Deprecated
