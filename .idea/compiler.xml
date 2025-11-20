@@ -12,8 +12,10 @@
         <module name="placement-service" />
         <module name="auth-service" />
         <module name="config-service" />
+        <module name="audit-service" />
         <module name="gateway-service" />
         <module name="user-service" />
+        <module name="project-service" />
         <module name="discovery-service" />
         <module name="wallet-service" />
       </profile>
@@ -21,6 +23,7 @@
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="audit-service" options="-parameters" />
       <module name="auth-service" options="-parameters" />
       <module name="common-orm" options="-parameters" />
       <module name="config-service" options="-parameters" />
@@ -28,6 +31,7 @@
       <module name="gateway-service" options="-parameters" />
       <module name="organisation-service" options="-parameters" />
       <module name="placement-service" options="-parameters" />
+      <module name="project-service" options="-parameters" />
       <module name="user-service" options="-parameters" />
       <module name="wallet-service" options="-parameters" />
     </option>

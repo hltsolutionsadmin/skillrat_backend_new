@@ -108,7 +108,7 @@ public class SkillratPasswordAuthenticationProvider implements AuthenticationPro
         // Build authorization and generate access token
         Set<String> authorizedScopes = registeredClient.getScopes();
         Instant issuedAt = Instant.now();
-        Instant expiresAt = issuedAt.plus(java.time.Duration.ofMinutes(30));
+        Instant expiresAt = issuedAt.plus(java.time.Duration.ofDays(30));
         JwtClaimsSet.Builder claims = JwtClaimsSet.builder()
                 .subject(principalName)
                 .issuedAt(issuedAt)
