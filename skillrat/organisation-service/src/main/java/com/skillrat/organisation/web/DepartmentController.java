@@ -31,8 +31,16 @@ public class DepartmentController {
     public ResponseEntity<Page<Department>> searchDepartments(
             @RequestParam UUID b2bUnitId,
             @RequestParam String query,
-            @PageableDefault(sort = "name", size = 10) Pageable pageable) {
-        return ResponseEntity.ok(departmentService.searchDepartments(b2bUnitId, query, pageable));
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "name") String sortBy,
+            @RequestParam(defaultValue = "asc") String direction) {
+        org.springframework.data.domain.Sort sort =
+                "desc".equalsIgnoreCase(direction)
+                        ? org.springframework.data.domain.Sort.by(sortBy).descending()
+                        : org.springframework.data.domain.Sort.by(sortBy).ascending();
+        org.springframework.data.domain.PageRequest pr = org.springframework.data.domain.PageRequest.of(page, size, sort);
+        return ResponseEntity.ok(departmentService.searchDepartments(b2bUnitId, query, pr));
     }
 
     @GetMapping("/active")
