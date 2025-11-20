@@ -25,22 +25,26 @@ public class WalletClient {
         this.restTemplate = restTemplate;
     }
 
-    public int award(UUID userId, String category, String reason, UUID relatedId) {
-        String tenant = Optional.ofNullable(TenantContext.getTenantId()).orElse("default");
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.add("X-Skillrat-Tenant", tenant);
+    public int award(UUID userId, String tenantId, String category, String reason, UUID relatedId) {
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.add("X-Skillrat-Tenant", tenantId);
 
-        Map<String, Object> body = new HashMap<>();
-        body.put("userId", userId);
-        body.put("category", category);
-        body.put("reason", reason);
-        body.put("relatedId", relatedId);
+            Map<String, Object> body = new HashMap<>();
+            body.put("userId", userId);
+            body.put("category", category);
+            body.put("reason", reason);
+            body.put("relatedId", relatedId);
 
-        String url = walletBaseUrl + "/api/wallet/internal/award";
-        ResponseEntity<Map> resp = restTemplate.postForEntity(url, new HttpEntity<>(body, headers), Map.class);
-        if (resp.getStatusCode().is2xxSuccessful() && resp.getBody() != null && resp.getBody().get("credited") != null) {
-            return Integer.parseInt(resp.getBody().get("credited").toString());
+            String url = walletBaseUrl + "/api/wallet/internal/award";
+            ResponseEntity<Map> resp = restTemplate.postForEntity(url, new HttpEntity<>(body, headers), Map.class);
+            if (resp.getStatusCode().is2xxSuccessful() && resp.getBody() != null && resp.getBody().get("credited") != null) {
+                return Integer.parseInt(resp.getBody().get("credited").toString());
+            }
+        } catch (Exception e) {
+            // Log the error but don't fail the main operation
+            e.printStackTrace();
         }
         return 0;
     }

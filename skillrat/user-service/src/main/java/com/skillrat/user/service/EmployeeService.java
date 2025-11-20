@@ -52,6 +52,11 @@ public class EmployeeService {
         return employeeRepository.findById(id);
     }
 
+    @Transactional(readOnly = true)
+    public java.util.List<Employee> listByB2bUnit(UUID b2bUnitId) {
+        return employeeRepository.findByB2bUnitId(b2bUnitId);
+    }
+
     @Transactional
     public Employee create(UUID b2bUnitId,
                            String firstName,

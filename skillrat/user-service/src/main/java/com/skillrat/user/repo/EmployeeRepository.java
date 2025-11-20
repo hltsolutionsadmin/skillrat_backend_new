@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.UUID;
+import java.util.List;
 
 public interface EmployeeRepository extends JpaRepository<Employee, UUID> {
 
@@ -46,4 +47,6 @@ public interface EmployeeRepository extends JpaRepository<Employee, UUID> {
                           @Param("q") String q,
                           @Param("etype") EmploymentType employmentType,
                           Pageable pageable);
+
+    List<Employee> findByB2bUnitId(UUID b2bUnitId);
 }
