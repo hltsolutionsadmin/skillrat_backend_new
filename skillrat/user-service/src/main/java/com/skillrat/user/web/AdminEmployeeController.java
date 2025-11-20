@@ -63,6 +63,13 @@ public class AdminEmployeeController {
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
+    // List employees by b2bUnitId
+    @GetMapping("/byb2b/{b2bUnitId}")
+    @PreAuthorize("isAuthenticated()")
+    public List<Employee> listByB2b(@PathVariable("b2bUnitId") UUID b2bUnitId) {
+        return employeeService.listByB2bUnit(b2bUnitId);
+    }
+
     // Create employee
     @PostMapping
     @PreAuthorize("isAuthenticated()")
