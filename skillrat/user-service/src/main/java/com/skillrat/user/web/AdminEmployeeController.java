@@ -1,5 +1,6 @@
 package com.skillrat.user.web;
 
+import com.skillrat.user.api.ApiResponse;
 import com.skillrat.user.domain.Employee;
 import com.skillrat.user.domain.EmploymentType;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -8,10 +9,10 @@ import com.skillrat.user.service.EmployeeService;
 import com.skillrat.user.dto.EmployeeSummaryDto;
 import com.skillrat.user.dto.PageResponse;
 import com.skillrat.user.dto.UserBriefDto;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
+import com.skillrat.user.dto.CreateEmployeeRequest;
+import com.skillrat.user.dto.UpdateEmployeeRequest;
+import com.skillrat.user.dto.EmployeeDetailsDto;
+import com.skillrat.user.populator.EmployeePopulator;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -30,17 +31,20 @@ public class AdminEmployeeController {
 
     private final EmployeeService employeeService;
     private final B2BUnitAccessValidator b2bUnitAccessValidator;
+    private final EmployeePopulator employeePopulator;
 
     public AdminEmployeeController(EmployeeService employeeService,
-                                   B2BUnitAccessValidator b2bUnitAccessValidator) {
+                                   B2BUnitAccessValidator b2bUnitAccessValidator,
+                                   EmployeePopulator employeePopulator) {
         this.employeeService = employeeService;
         this.b2bUnitAccessValidator = b2bUnitAccessValidator;
+        this.employeePopulator = employeePopulator;
     }
 
     // List employees with filters and pagination, scoped to a B2B unit
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN','BUSINESS_ADMIN','HR_ADMIN')")
-    public PageResponse<EmployeeSummaryDto> search(@RequestParam("b2bUnitId") UUID b2bUnitId,
+    public ResponseEntity<ApiResponse<PageResponse<EmployeeSummaryDto>>> search(@RequestParam("b2bUnitId") UUID b2bUnitId,
                                                    @RequestParam(value = "q", required = false) String q,
                                                    @RequestParam(value = "employmentType", required = false) EmploymentType employmentType,
                                                    Pageable pageable) {
@@ -48,89 +52,68 @@ public class AdminEmployeeController {
         Page<Employee> page = employeeService.search(b2bUnitId, q, employmentType, pageable);
 
         List<EmployeeSummaryDto> items = page.getContent().stream()
-                .map(this::toSummary)
+                .map(employeePopulator::toSummary)
                 .collect(Collectors.toList());
 
-        return new PageResponse<>(items, page.getTotalElements(), page.getNumber(), page.getSize());
+        PageResponse<EmployeeSummaryDto> body = new PageResponse<>(items, page.getTotalElements(), page.getNumber(), page.getSize());
+        return ResponseEntity.ok(ApiResponse.ok(body));
     }
     
     // Employee details
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Employee> get(@PathVariable("id") UUID id) {
+    public ResponseEntity<ApiResponse<EmployeeDetailsDto>> get(@PathVariable("id") UUID id) {
         return employeeService.getById(id)
-                .map(ResponseEntity::ok)
+                .map(e -> ResponseEntity.ok(ApiResponse.ok(employeePopulator.toDetails(e))))
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     // List employees by b2bUnitId
     @GetMapping("/byb2b/{b2bUnitId}")
     @PreAuthorize("isAuthenticated()")
-    public List<Employee> listByB2b(@PathVariable("b2bUnitId") UUID b2bUnitId) {
-        return employeeService.listByB2bUnit(b2bUnitId);
+    public ResponseEntity<ApiResponse<List<EmployeeSummaryDto>>> listByB2b(@PathVariable("b2bUnitId") UUID b2bUnitId) {
+        List<EmployeeSummaryDto> items = employeeService.listByB2bUnit(b2bUnitId).stream()
+                .map(employeePopulator::toSummary)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(ApiResponse.ok(items));
     }
 
     // Create employee
     @PostMapping
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Employee> create(@RequestBody CreateEmployeeRequest req) {
+    public ResponseEntity<ApiResponse<EmployeeDetailsDto>> create(@RequestBody CreateEmployeeRequest req) {
         Employee e = employeeService.create(
-                req.b2bUnitId,
-                req.firstName,
-                req.lastName,
-                req.email,
-                req.mobile,
-                req.designation,
-                req.department,
-                req.employmentType,
-                req.hireDate,
-                req.reportingManagerId,
-                req.roleIds
+                req.getB2bUnitId(),
+                req.getFirstName(),
+                req.getLastName(),
+                req.getEmail(),
+                req.getMobile(),
+                req.getDesignation(),
+                req.getDepartment(),
+                req.getEmploymentType(),
+                req.getHireDate(),
+                req.getReportingManagerId(),
+                req.getRoleIds()
         );
-        return ResponseEntity.ok(e);
+        return ResponseEntity.ok(ApiResponse.ok(employeePopulator.toDetails(e)));
     }
 
     // Update employee
     @PutMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Employee> update(@PathVariable("id") UUID id, @RequestBody UpdateEmployeeRequest req) {
+    public ResponseEntity<ApiResponse<EmployeeDetailsDto>> update(@PathVariable("id") UUID id, @RequestBody UpdateEmployeeRequest req) {
         Employee e = employeeService.update(
                 id,
-                req.firstName,
-                req.lastName,
-                req.mobile,
-                req.designation,
-                req.department,
-                req.employmentType,
-                req.hireDate,
-                req.reportingManagerId
+                req.getFirstName(),
+                req.getLastName(),
+                req.getMobile(),
+                req.getDesignation(),
+                req.getDepartment(),
+                req.getEmploymentType(),
+                req.getHireDate(),
+                req.getReportingManagerId()
         );
-        return ResponseEntity.ok(e);
-    }
-
-    public static class CreateEmployeeRequest {
-        @NotNull public UUID b2bUnitId;
-        @NotBlank public String firstName;
-        @NotBlank public String lastName;
-        @NotBlank @Email public String email;
-        public String mobile;
-        public String designation;
-        public String department;
-        public EmploymentType employmentType;
-        public LocalDate hireDate;
-        public UUID reportingManagerId;
-        @NotEmpty public List<UUID> roleIds;
-    }
-
-    public static class UpdateEmployeeRequest {
-        public String firstName;
-        public String lastName;
-        public String mobile;
-        public String designation;
-        public String department;
-        public EmploymentType employmentType;
-        public LocalDate hireDate;
-        public UUID reportingManagerId;
+        return ResponseEntity.ok(ApiResponse.ok(employeePopulator.toDetails(e)));
     }
 
     private EmployeeSummaryDto toSummary(Employee e) {

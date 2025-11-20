@@ -1,9 +1,12 @@
 package com.skillrat.user.web;
 
+import com.skillrat.user.api.ApiResponse;
 import com.skillrat.user.domain.Role;
+import com.skillrat.user.dto.CreateRoleRequest;
+import com.skillrat.user.dto.RoleDto;
+import com.skillrat.user.populator.RolePopulator;
 import com.skillrat.user.security.RequiresBusinessOrHrAdmin;
 import com.skillrat.user.service.RoleService;
-import jakarta.validation.constraints.NotBlank;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -12,38 +15,40 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/roles")
 @Validated
 public class RoleController {
     private final RoleService roleService;
-    public RoleController(RoleService roleService) { this.roleService = roleService; }
+    private final RolePopulator rolePopulator;
+    public RoleController(RoleService roleService, RolePopulator rolePopulator) {
+        this.roleService = roleService;
+        this.rolePopulator = rolePopulator;
+    }
 
     @PostMapping
     @RequiresBusinessOrHrAdmin
-    public ResponseEntity<Role> create(@RequestBody CreateRoleRequest req) {
+    public ResponseEntity<ApiResponse<RoleDto>> create(@RequestBody CreateRoleRequest req) {
     	Role role = new Role();
-    	role.setName(req.name);
-    	role.setId(req.uid);
-        Role r = Objects.nonNull(req.b2bUnitId) ? roleService.createRole(req.b2bUnitId, req.name) : roleService.createRole(role);
-        return ResponseEntity.ok(r);
+    	role.setName(req.getName());
+    	role.setId(req.getUid());
+        Role r = Objects.nonNull(req.getB2bUnitId()) ? roleService.createRole(req.getB2bUnitId(), req.getName()) : roleService.createRole(role);
+        RoleDto dto = rolePopulator.toDto(r);
+        return ResponseEntity.ok(ApiResponse.ok(dto));
     }
 
     @GetMapping("/{b2bUnitId}")
     @PreAuthorize("isAuthenticated()")
-    public List<Role> list(@PathVariable("b2bUnitId") UUID b2bUnitId) {
-        return roleService.list(b2bUnitId);
+    public ResponseEntity<ApiResponse<List<RoleDto>>> list(@PathVariable("b2bUnitId") UUID b2bUnitId) {
+        List<RoleDto> items = roleService.list(b2bUnitId).stream().map(rolePopulator::toDto).collect(Collectors.toList());
+        return ResponseEntity.ok(ApiResponse.ok(items));
     }
 
     @GetMapping("/all")
-    public List<Role> listAll() {
-        return roleService.listAll();
-    }
-
-    public static class CreateRoleRequest {
-    	private UUID uid;
-        public UUID b2bUnitId;
-        @NotBlank public String name;
+    public ResponseEntity<ApiResponse<List<RoleDto>>> listAll() {
+        List<RoleDto> items = roleService.listAll().stream().map(rolePopulator::toDto).collect(Collectors.toList());
+        return ResponseEntity.ok(ApiResponse.ok(items));
     }
 }
