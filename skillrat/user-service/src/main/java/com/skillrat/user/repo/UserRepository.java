@@ -17,23 +17,32 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     Optional<User> findByPasswordSetupToken(String token);
 
     @Query(value = """
-            select u from User u
-            left join u.roles r
-            where (:q is null or lower(u.email) like lower(concat('%', :q, '%'))
-                           or lower(u.firstName) like lower(concat('%', :q, '%'))
-                           or lower(u.lastName) like lower(concat('%', :q, '%'))
-                           or lower(u.username) like lower(concat('%', :q, '%')))
-              and (:role is null or r.name = :role)
-            group by u
-            """,
+        select distinct u from User u
+        join u.roles r
+        where (:q is null or
+               lower(u.email) like lower(concat('%', :q, '%')) or
+               lower(u.firstName) like lower(concat('%', :q, '%')) or
+               lower(u.lastName) like lower(concat('%', :q, '%')) or
+               lower(u.username) like lower(concat('%', :q, '%')))
+          and (:role is null or r.name = :role)
+          and (:b2bUnitId is null or r.b2bUnitId = :b2bUnitId)
+        """,
             countQuery = """
-            select count(distinct u.id) from User u
-            left join u.roles r
-            where (:q is null or lower(u.email) like lower(concat('%', :q, '%'))
-                           or lower(u.firstName) like lower(concat('%', :q, '%'))
-                           or lower(u.lastName) like lower(concat('%', :q, '%'))
-                           or lower(u.username) like lower(concat('%', :q, '%')))
-              and (:role is null or r.name = :role)
-            """)
-    Page<User> search(@Param("q") String q, @Param("role") String role, Pageable pageable);
+        select count(distinct u.id) from User u
+        join u.roles r
+        where (:q is null or
+               lower(u.email) like lower(concat('%', :q, '%')) or
+               lower(u.firstName) like lower(concat('%', :q, '%')) or
+               lower(u.lastName) like lower(concat('%', :q, '%')) or
+               lower(u.username) like lower(concat('%', :q, '%')))
+          and (:role is null or r.name = :role)
+          and (:b2bUnitId is null or r.b2bUnitId = :b2bUnitId)
+        """)
+    Page<User> search(
+            @Param("b2bUnitId") UUID b2bUnitId,
+            @Param("q") String q,
+            @Param("role") String role,
+            Pageable pageable
+    );
+
 }
