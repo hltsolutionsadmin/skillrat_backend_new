@@ -55,12 +55,15 @@ public class ProfileService {
         User user = userRepository.findByEmailIgnoreCase(email)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-        // Get or set default tenant ID
-        String tenantId = user.getTenantId() != null ? user.getTenantId() : "default";
+        // Ensure user has a tenant ID, use a default if not set
+        if (user.getTenantId() == null || user.getTenantId().trim().isEmpty()) {
+            user.setTenantId("default");
+            user = userRepository.save(user);
+        }
 
         ProfileExperience e = new ProfileExperience();
         e.setUserId(user.getId());
-        e.setTenantId(tenantId);  // Set the tenant ID on the experience
+        e.setTenantId(user.getTenantId());  // Set the tenant ID from user
         e.setType(type);
         e.setTitle(title);
         e.setDescription(description);
@@ -72,7 +75,7 @@ public class ProfileService {
 
         // Award points based on experience type via wallet-service
         String cat = (type == ExperienceType.PROJECT) ? "PROJECT" : "INTERNSHIP";
-        walletClient.award(user.getId(), tenantId, cat, type + " added", e.getId());
+        walletClient.award(user.getId(), user.getTenantId(), cat, type + " added", e.getId());
         return e;
     }
 
@@ -110,24 +113,37 @@ public class ProfileService {
     // Skills
     @Transactional
     public UserSkill addSkill(String email, String name, String level) {
-        UUID userId = currentUserIdByEmail(email);
+        // Get user with tenant information first
+        User user = userRepository.findByEmailIgnoreCase(email)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        // Ensure user has a tenant ID, use a default if not set
+        if (user.getTenantId() == null || user.getTenantId().trim().isEmpty()) {
+            user.setTenantId("default");
+            user = userRepository.save(user);
+        }
+
         UserSkill s = new UserSkill();
-        s.setUserId(userId);
+        s.setUserId(user.getId());
+        s.setTenantId(user.getTenantId());  // Set the tenant ID on the skill
         s.setName(name);
         s.setLevel(level);
         s = skillRepository.save(s);
-        // Get user with tenant information
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
-        String tenantId = user.getTenantId() != null ? user.getTenantId() : "default";
-        walletClient.award(userId, tenantId, "SKILL", "Skill added", s.getId());
+        
+        walletClient.award(user.getId(), user.getTenantId(), "SKILL", "Skill added", s.getId());
         return s;
     }
 
     @Transactional(readOnly = true)
     public List<UserSkill> mySkills(String email) {
-        UUID userId = currentUserIdByEmail(email);
-        return skillRepository.findByUserId(userId);
+        // Get user with tenant information
+        User user = userRepository.findByEmailIgnoreCase(email)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                
+        // Use the user's tenant ID to fetch skills
+        // The query will also return skills with null tenant_id for backward compatibility
+        return skillRepository.findByUserIdAndTenantIdOrNull(user.getId(), 
+            user.getTenantId() != null ? user.getTenantId() : "default");
     }
 
     @Transactional
@@ -142,20 +158,27 @@ public class ProfileService {
     // Education
     @Transactional
     public Education addEducation(String email, String institution, String degree, String fieldOfStudy, java.time.LocalDate start, java.time.LocalDate end) {
-        UUID userId = currentUserIdByEmail(email);
+        // Get user with tenant information first
+        User user = userRepository.findByEmailIgnoreCase(email)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        // Ensure user has a tenant ID, use a default if not set
+        if (user.getTenantId() == null || user.getTenantId().trim().isEmpty()) {
+            user.setTenantId("default");
+            user = userRepository.save(user);
+        }
+
         Education ed = new Education();
-        ed.setUserId(userId);
+        ed.setUserId(user.getId());
+        ed.setTenantId(user.getTenantId());  // Set the tenant ID on the education
         ed.setInstitution(institution);
         ed.setDegree(degree);
         ed.setFieldOfStudy(fieldOfStudy);
         ed.setStartDate(start);
         ed.setEndDate(end);
         ed = educationRepository.save(ed);
-        // Get user with tenant information
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
-        String tenantId = user.getTenantId() != null ? user.getTenantId() : "default";
-        walletClient.award(userId, tenantId, "EDUCATION", "Education added", ed.getId());
+        
+        walletClient.award(user.getId(), user.getTenantId(), "EDUCATION", "Education added", ed.getId());
         return ed;
     }
 
@@ -168,18 +191,25 @@ public class ProfileService {
     // Titles
     @Transactional
     public TitleRecord addTitle(String email, String title, java.time.LocalDate start, java.time.LocalDate end) {
-        UUID userId = currentUserIdByEmail(email);
+        // Get user with tenant information first
+        User user = userRepository.findByEmailIgnoreCase(email)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        // Ensure user has a tenant ID, use a default if not set
+        if (user.getTenantId() == null || user.getTenantId().trim().isEmpty()) {
+            user.setTenantId("default");
+            user = userRepository.save(user);
+        }
+
         TitleRecord t = new TitleRecord();
-        t.setUserId(userId);
+        t.setUserId(user.getId());
+        t.setTenantId(user.getTenantId());  // Set the tenant ID on the title
         t.setTitle(title);
         t.setStartDate(start);
         t.setEndDate(end);
         t = titleRepository.save(t);
-        // Get user with tenant information
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
-        String tenantId = user.getTenantId() != null ? user.getTenantId() : "default";
-        walletClient.award(userId, tenantId, "TITLE", "Title added", t.getId());
+        
+        walletClient.award(user.getId(), user.getTenantId(), "TITLE", "Title added", t.getId());
         return t;
     }
 
