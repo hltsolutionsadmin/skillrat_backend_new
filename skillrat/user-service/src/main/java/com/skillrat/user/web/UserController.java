@@ -7,7 +7,6 @@ import com.skillrat.user.service.OrganisationClient;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -20,11 +19,16 @@ import java.util.*;
 @RestController
 @RequestMapping("/api/users")
 @Validated
-@RequiredArgsConstructor
+// Manual constructor replaces @RequiredArgsConstructor
 public class UserController {
 
     private final UserService userService;
     private final OrganisationClient organisationClient;
+
+    public UserController(UserService userService, OrganisationClient organisationClient) {
+        this.userService = userService;
+        this.organisationClient = organisationClient;
+    }
 
     @GetMapping("/me")
     @PreAuthorize("isAuthenticated()")
