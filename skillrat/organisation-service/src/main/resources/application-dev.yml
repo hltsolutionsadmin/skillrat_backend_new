@@ -1,48 +1,34 @@
 server:
   port: 8082
 spring:
+  application:
+    name: organisation-service
   datasource:
-    url: jdbc:h2:mem:org;DB_CLOSE_DELAY=-1;MODE=MySQL
-    driver-class-name: org.h2.Driver
-    username: sa
-    password: ''
+    url: jdbc:mysql://localhost:3306/skillrat_org?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+    username: root
+    password: Juvarya@2020
   jpa:
     hibernate:
-      ddl-auto: create-drop
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.H2Dialect
+      ddl-auto: update
+      naming:
+        implicit-strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyLegacyJpaImpl
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
   flyway:
     enabled: false
-  autoconfigure:
-    exclude:
-      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
-      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
-  redis:
-    host: localhost
-    port: 6379
-  cloud:
-    discovery:
-      enabled: false
+    baseline-on-migrate: true
+    baseline-version: 1
+    locations: classpath:db/migration
+    repair-on-migrate: true
   security:
     oauth2:
       resourceserver:
         jwt:
-          jwk-set-uri: http://localhost:8087/oauth2/jwks
+          jwk-set-uri: http://localhost:8080/oauth2/jwks
+  redis:
+    host: localhost
+    port: 6379
 management:
   endpoints:
     web:
       exposure:
         include: "*"
-  health:
-    redis:
-      enabled: false
-eureka:
-  client:
-    enabled: false
-logging:
-  level:
-    org.springframework.security: DEBUG
-    org.springframework.security.oauth2: DEBUG
-    org.springframework.security.oauth2.server.resource: DEBUG
-    org.springframework.web: INFO
