@@ -46,7 +46,15 @@ public class IncidentController {
     @PreAuthorize("isAuthenticated()")
     public Page<Incident> listByProject(@PathVariable("projectId") UUID projectId,
                                         @RequestParam(defaultValue = "0") @Min(0) int page,
-                                        @RequestParam(defaultValue = "20") @Min(1) int size) {
+                                        @RequestParam(defaultValue = "20") @Min(1) int size,
+                                        @RequestParam(value = "priority", required = false) IncidentPriority priority,
+                                        @RequestParam(value = "category", required = false) IncidentCategory category,
+                                        @RequestParam(value = "status", required = false) IncidentStatus status,
+                                        @RequestParam(value = "search", required = false) String search) {
+        boolean hasFilters = priority != null || category != null || status != null || (search != null && !search.isBlank());
+        if (hasFilters) {
+            return incidentService.listByProjectFiltered(projectId, priority, category, status, search, PageRequest.of(page, size));
+        }
         return incidentService.listByProject(projectId, PageRequest.of(page, size));
     }
 
@@ -86,12 +94,13 @@ public class IncidentController {
         return ResponseEntity.ok(incidentService.getById(incidentId));
     }
 
-    @GetMapping("/incidents/assignee/{assigneeId}")
+    @GetMapping("/projects/{projectId}/assignee/{assigneeId}")
     @PreAuthorize("isAuthenticated()")
-    public Page<Incident> listByAssignee(@PathVariable("assigneeId") UUID assigneeId,
+    public Page<Incident> listByAssignee(@PathVariable("projectId") UUID projectId,
+                                         @PathVariable("assigneeId") UUID assigneeId,
                                          @RequestParam(defaultValue = "0") @Min(0) int page,
                                          @RequestParam(defaultValue = "20") @Min(1) int size) {
-        return incidentService.listByAssignee(assigneeId, PageRequest.of(page, size));
+        return incidentService.listByProjectAndAssignee(projectId, assigneeId, PageRequest.of(page, size));
     }
 
     @GetMapping("/incidents/reporter/{reporterId}")

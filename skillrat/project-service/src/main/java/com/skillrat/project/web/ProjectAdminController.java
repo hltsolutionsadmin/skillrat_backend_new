@@ -54,7 +54,7 @@ public class ProjectAdminController {
     }
 
     // Create WBS under a project
-    @PostMapping("/{projectId}/wbs")
+    @PostMapping("/create/wbs")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<WBSElement> createWbs(@PathVariable("projectId") UUID projectId,
                                                 @RequestBody @Valid CreateWbsRequest req) {
