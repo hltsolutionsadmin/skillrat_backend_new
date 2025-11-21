@@ -1,6 +1,7 @@
 package com.skillrat.project.service;
 
 import com.skillrat.common.tenant.TenantContext;
+import com.skillrat.project.client.UserClient;
 import com.skillrat.project.domain.*;
 import com.skillrat.project.repo.IncidentRepository;
 import com.skillrat.project.repo.ProjectRepository;
@@ -16,6 +17,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.persistence.EntityManager;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -27,15 +30,17 @@ public class IncidentService {
     private final IncidentRepository incidentRepository;
     private final EntityManager entityManager;
     private final AuditClient auditClient;
+    private final UserClient userClient;
 
     public IncidentService(ProjectRepository projectRepository,
                            IncidentRepository incidentRepository,
                            EntityManager entityManager,
-                           AuditClient auditClient) {
+                           AuditClient auditClient, UserClient userClient) {
         this.projectRepository = projectRepository;
         this.incidentRepository = incidentRepository;
         this.entityManager = entityManager;
         this.auditClient = auditClient;
+        this.userClient = userClient;
     }
 
     @Transactional
@@ -251,11 +256,21 @@ public class IncidentService {
     }
 
     @Transactional(readOnly = true)
-    public Page<Incident> listByProjectAndAssignee(UUID projectId, UUID assigneeId, Pageable pageable) {
+    public Page<Incident> listByProjectAndLoggedInUser(UUID projectId, Pageable pageable) {
+
+        Map<String, Object> me = userClient.me();
+        if (me == null || me.get("id") == null) {
+            throw new IllegalStateException("Logged-in user not found");
+        }
+
+        UUID loggedInUserId = UUID.fromString(me.get("id").toString());
+
         Specification<Incident> spec = (root, query, cb) -> cb.and(
                 cb.equal(root.get("project").get("id"), projectId),
-                cb.equal(root.get("assigneeId"), assigneeId)
+                cb.equal(root.get("assigneeId"), loggedInUserId)
         );
+
         return incidentRepository.findAll(spec, pageable);
     }
+
 }
