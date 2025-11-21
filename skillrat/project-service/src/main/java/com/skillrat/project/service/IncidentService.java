@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -93,6 +94,41 @@ public class IncidentService {
     @Transactional(readOnly = true)
     public Page<Incident> listByProject(UUID projectId, Pageable pageable) {
         return incidentRepository.findByProject_Id(projectId, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<Incident> listByProjectFiltered(
+            UUID projectId,
+            IncidentPriority priority,
+            IncidentCategory category,
+            IncidentStatus status,
+            String search,
+            Pageable pageable
+    ) {
+        Specification<Incident> spec = (root, query, cb) -> {
+            var predicates = new java.util.ArrayList<jakarta.persistence.criteria.Predicate>();
+            predicates.add(cb.equal(root.get("project").get("id"), projectId));
+            if (priority != null) {
+                predicates.add(cb.equal(root.get("priority"), priority));
+            }
+            if (category != null) {
+                predicates.add(cb.equal(root.get("category"), category));
+            }
+            if (status != null) {
+                predicates.add(cb.equal(root.get("status"), status));
+            }
+            if (search != null && !search.isBlank()) {
+                String like = "%" + search.toLowerCase() + "%";
+                var orPred = cb.or(
+                        cb.like(cb.lower(root.get("incidentNumber")), like),
+                        cb.like(cb.lower(root.get("title")), like),
+                        cb.like(cb.lower(root.get("shortDescription")), like)
+                );
+                predicates.add(orPred);
+            }
+            return cb.and(predicates.toArray(new jakarta.persistence.criteria.Predicate[0]));
+        };
+        return incidentRepository.findAll(spec, pageable);
     }
 
     @Transactional
@@ -212,5 +248,14 @@ public class IncidentService {
     @Transactional(readOnly = true)
     public Page<Incident> listByReporter(UUID reporterId, Pageable pageable) {
         return incidentRepository.findByReporterId(reporterId, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<Incident> listByProjectAndAssignee(UUID projectId, UUID assigneeId, Pageable pageable) {
+        Specification<Incident> spec = (root, query, cb) -> cb.and(
+                cb.equal(root.get("project").get("id"), projectId),
+                cb.equal(root.get("assigneeId"), assigneeId)
+        );
+        return incidentRepository.findAll(spec, pageable);
     }
 }
