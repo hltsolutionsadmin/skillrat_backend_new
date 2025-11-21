@@ -23,7 +23,7 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          jwk-set-uri: http://localhost:8080/oauth2/jwks
+          jwk-set-uri: http://localhost:8087/oauth2/jwks
   redis:
     host: localhost
     port: 6379
