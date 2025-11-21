@@ -58,6 +58,10 @@ public class ProjectService {
         if (code != null && !code.isBlank() && projectRepository.findByCodeAndTenantId(code, tenant).isPresent()) {
             throw new IllegalStateException("Project code already exists for tenant");
         }
+        Optional<Project> project = projectRepository.findByCode(code);
+        if (project.isPresent()) {
+            throw new IllegalStateException("Project code already exists");
+        }
         Project p = new Project();
         p.setName(name);
         p.setCode(code);
@@ -166,6 +170,10 @@ public class ProjectService {
             if (existing.isPresent()) {
                 throw new IllegalStateException("WBS code already exists for tenant");
             }
+            Optional<WBSElement> existingwithCode = wbsRepository.findByCode(code);
+            if (existingwithCode.isPresent()) {
+                throw new IllegalStateException("WBS code already exists");
+            }
         }
         WBSElement wbs = new WBSElement();
         wbs.setProject(project);
@@ -239,6 +247,11 @@ public class ProjectService {
     public WBSElement getWbs(UUID id) {
         return wbsRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("WBS not found"));
+    }
+
+    @Transactional(readOnly = true)
+    public Page<WBSElement> listWbs(UUID projectId, Pageable pageable) {
+        return wbsRepository.findByProject_Id(projectId, pageable);
     }
 
     @Transactional(readOnly = true)
