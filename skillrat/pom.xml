@@ -42,6 +42,7 @@
     <module>project-service</module>
     <module>audit-service</module>
     <module>asset-service</module>
+    <module>expense-service</module>
   </modules>
 
   <dependencyManagement>

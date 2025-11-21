@@ -15,6 +15,9 @@ public class Asset extends BaseEntity {
     @JoinColumn(name = "category_id")
     private AssetCategory category;
 
+    @Column(name = "business_id", nullable = false, length = 64, unique = true)
+    private String businessId;
+
     @Column(name = "name", nullable = false, length = 256)
     private String name;
 
