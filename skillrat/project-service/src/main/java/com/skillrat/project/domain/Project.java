@@ -59,4 +59,8 @@ public class Project extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 32)
     private ProjectSLAType status = ProjectSLAType.STANDARD;
+
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL)
+    @JsonManagedReference
+    private List<ProjectRelease> releases = new ArrayList<>();
 }
