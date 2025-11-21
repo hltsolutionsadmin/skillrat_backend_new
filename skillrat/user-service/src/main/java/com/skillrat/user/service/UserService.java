@@ -145,7 +145,7 @@ public class UserService {
     public Page<User> searchUsers(UUID b2bUnitId, String q, String role, Pageable pageable) {
         String query = (q == null || q.isBlank()) ? null : q.trim();
         String roleName = (role == null || role.isBlank() || "All".equalsIgnoreCase(role)) ? null : role.trim();
-       return userRepository.search(b2bUnitId, query, roleName, pageable);
+       return userRepository.search(b2bUnitId, query, "BUSINESS_ADMIN", pageable);
     }
 
     @Transactional
