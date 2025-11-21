@@ -145,34 +145,7 @@ public class UserService {
     public Page<User> searchUsers(UUID b2bUnitId, String q, String role, Pageable pageable) {
         String query = (q == null || q.isBlank()) ? null : q.trim();
         String roleName = (role == null || role.isBlank() || "All".equalsIgnoreCase(role)) ? null : role.trim();
-
-        // Determine if current user should be excluded (is BUSINESS_ADMIN in the same b2b unit)
-        UUID excludeUserId = null;
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth != null) {
-            String email = null;
-            Object principal = auth.getPrincipal();
-            if (principal instanceof Jwt jwt) {
-                String emailClaim = jwt.getClaimAsString("email");
-                email = (emailClaim != null && !emailClaim.isBlank()) ? emailClaim : jwt.getSubject();
-            } else if (auth.getName() != null && !auth.getName().isBlank()) {
-                email = auth.getName();
-            }
-
-            if (email != null && !email.isBlank()) {
-                User current = userRepository.findByEmailIgnoreCase(email).orElse(null);
-                if (current != null) {
-                    boolean isBusinessAdminHere = current.getRoles() != null && current.getRoles().stream()
-                        .anyMatch(r -> "BUSINESS_ADMIN".equals(r.getName()) &&
-                                       (b2bUnitId == null || java.util.Objects.equals(r.getB2bUnitId(), b2bUnitId)));
-                    if (isBusinessAdminHere) {
-                        excludeUserId = current.getId();
-                    }
-                }
-            }
-        }
-
-        return userRepository.search(b2bUnitId, query, roleName, excludeUserId, pageable);
+       return userRepository.search(b2bUnitId, query, roleName, pageable);
     }
 
     @Transactional
