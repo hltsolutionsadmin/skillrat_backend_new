@@ -75,6 +75,20 @@ public class ProfileController {
         profileService.deleteSkill(auth.getName(), id);
         return ResponseEntity.noContent().build();
     }
+    
+    @PutMapping("/skills/{id}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<UserSkill> updateSkill(
+            @PathVariable("id") UUID id,
+            @RequestBody CreateSkillRequest req,
+            Authentication auth) {
+        return ResponseEntity.ok(profileService.updateSkill(
+            auth.getName(),
+            id,
+            req.name,
+            req.level
+        ));
+    }
 
     // Education
     @PostMapping("/education")

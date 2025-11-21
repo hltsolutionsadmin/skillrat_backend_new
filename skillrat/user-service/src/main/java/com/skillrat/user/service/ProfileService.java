@@ -103,10 +103,14 @@ public class ProfileService {
     @Transactional
     public UserSkill addSkill(String email, String name, String level) {
         UUID userId = currentUserIdByEmail(email);
+        User user = userRepository.findByEmailIgnoreCase(email).orElseThrow();
+        String tenantId = user.getTenantId() != null ? user.getTenantId() : "default";
         UserSkill s = new UserSkill();
         s.setUserId(userId);
         s.setName(name);
         s.setLevel(level);
+
+        s.setTenantId(tenantId);
         s = skillRepository.save(s);
         walletClient.award(userId, "SKILL", "Skill added", s.getId());
         return s;
@@ -125,6 +129,27 @@ public class ProfileService {
             if (!s.getUserId().equals(userId)) throw new IllegalArgumentException("Cannot delete others' skill");
             skillRepository.delete(s);
         });
+    }
+    
+    @Transactional
+    public UserSkill updateSkill(String email, UUID skillId, String name, String level) {
+        UUID userId = currentUserIdByEmail(email);
+        UserSkill skill = skillRepository.findById(skillId)
+                .orElseThrow(() -> new IllegalArgumentException("Skill not found with id: " + skillId));
+                
+        if (!skill.getUserId().equals(userId)) {
+            throw new IllegalArgumentException("Cannot update others' skill");
+        }
+        
+        if (name != null && !name.isBlank()) {
+            skill.setName(name.trim());
+        }
+        
+        if (level != null) {
+            skill.setLevel(level);
+        }
+        
+        return skillRepository.save(skill);
     }
 
     // Education
