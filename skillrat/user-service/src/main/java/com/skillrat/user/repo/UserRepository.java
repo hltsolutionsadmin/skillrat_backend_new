@@ -26,7 +26,6 @@ public interface UserRepository extends JpaRepository<User, UUID> {
                lower(u.username) like lower(concat('%', :q, '%')))
           and (:role is null or r.name = :role)
           and (:b2bUnitId is null or r.b2bUnitId = :b2bUnitId)
-          and (:excludeUserId is null or u.id <> :excludeUserId)
         """,
             countQuery = """
         select count(distinct u.id) from User u
@@ -38,13 +37,11 @@ public interface UserRepository extends JpaRepository<User, UUID> {
                lower(u.username) like lower(concat('%', :q, '%')))
           and (:role is null or r.name = :role)
           and (:b2bUnitId is null or r.b2bUnitId = :b2bUnitId)
-          and (:excludeUserId is null or u.id <> :excludeUserId)
         """)
     Page<User> search(
             @Param("b2bUnitId") UUID b2bUnitId,
             @Param("q") String q,
             @Param("role") String role,
-            @Param("excludeUserId") UUID excludeUserId,
             Pageable pageable
     );
 
