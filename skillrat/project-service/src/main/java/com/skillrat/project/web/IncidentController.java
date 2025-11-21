@@ -94,13 +94,12 @@ public class IncidentController {
         return ResponseEntity.ok(incidentService.getById(incidentId));
     }
 
-    @GetMapping("/projects/{projectId}/assignee/{assigneeId}")
+    @GetMapping("/projects/{projectId}/assignee")
     @PreAuthorize("isAuthenticated()")
     public Page<Incident> listByAssignee(@PathVariable("projectId") UUID projectId,
-                                         @PathVariable("assigneeId") UUID assigneeId,
                                          @RequestParam(defaultValue = "0") @Min(0) int page,
                                          @RequestParam(defaultValue = "20") @Min(1) int size) {
-        return incidentService.listByProjectAndAssignee(projectId, assigneeId, PageRequest.of(page, size));
+        return incidentService.listByProjectAndLoggedInUser(projectId, PageRequest.of(page, size));
     }
 
     @GetMapping("/incidents/reporter/{reporterId}")
