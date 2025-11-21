@@ -33,4 +33,6 @@ public interface ProjectRepository extends JpaRepository<Project, UUID> {
         @Param("name") String name,
         Pageable pageable
     );
+
+    Optional<Project>  findByCode(String code);
 }

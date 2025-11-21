@@ -115,6 +115,18 @@ public class ProjectAdminController {
         return ResponseEntity.ok(w);
     }
 
+    // List WBS elements for a project with pagination
+    @GetMapping("/{projectId}/wbs")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Page<WBSElement>> listWbs(
+            @PathVariable("projectId") UUID projectId,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "10") @Min(1) int size) {
+        PageRequest pageRequest = PageRequest.of(page, size, Sort.by("createdDate").descending());
+        Page<WBSElement> wbs = service.listWbs(projectId, pageRequest);
+        return ResponseEntity.ok(wbs);
+    }
+
     // List projects with pagination
     @GetMapping
     public ResponseEntity<Page<Project>> listProjects(
