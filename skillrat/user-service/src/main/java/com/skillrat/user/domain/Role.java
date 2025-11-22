@@ -1,5 +1,6 @@
 package com.skillrat.user.domain;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.skillrat.common.orm.BaseEntity;
 import jakarta.persistence.*;
 
@@ -16,12 +17,12 @@ import java.util.UUID;
 @Table(name = "roles")
 public class Role extends BaseEntity {
 
-    public static final String ROLE_ADMIN = "ROLE_ADMIN";
+    public static final String ROLE_ADMIN = "ADMIN";
     public static final String ROLE_USER = "ROLE_USER";
-    public static final String ROLE_BUSINESS_OWNER = "ROLE_BUSINESS_OWNER";
-    public static final String ROLE_PROJECT_MANAGER = "ROLE_PROJECT_MANAGER";
-    public static final String ROLE_TEAM_LEAD = "ROLE_TEAM_LEAD";
-    public static final String ROLE_DEVELOPER = "ROLE_DEVELOPER";
+    public static final String ROLE_BUSINESS_OWNER = "BUSINESS_ADMIN";
+    public static final String ROLE_PROJECT_MANAGER = "PROJECT_MANAGER";
+    public static final String ROLE_TEAM_LEAD = "TEAM_LEAD";
+    public static final String ROLE_DEVELOPER = "DEVELOPER";
 
     @Column(nullable = false, length = 64, unique = true)
     private String name;
@@ -33,6 +34,7 @@ public class Role extends BaseEntity {
     private UUID b2bUnitId;
 
     @ManyToMany(mappedBy = "roles")
+    @JsonBackReference
     private Set<User> users = new HashSet<>();
 
     @ManyToMany(fetch = FetchType.EAGER)
@@ -41,6 +43,7 @@ public class Role extends BaseEntity {
         joinColumns = @JoinColumn(name = "role_id"),
         inverseJoinColumns = @JoinColumn(name = "permission_id")
     )
+    @JsonBackReference
     private Set<Permission> permissions = new HashSet<>();
     
     // Constructors
