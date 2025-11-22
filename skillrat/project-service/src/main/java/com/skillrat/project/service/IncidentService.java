@@ -1,5 +1,6 @@
 package com.skillrat.project.service;
 
+import com.skillrat.common.dto.UserDTO;
 import com.skillrat.common.tenant.TenantContext;
 import com.skillrat.project.client.UserClient;
 import com.skillrat.project.domain.*;
@@ -137,11 +138,16 @@ public class IncidentService {
     }
 
     @Transactional
-    public Incident assignAssignee(UUID incidentId, UUID assigneeId) {
+    public Incident assignAssignee(UUID incidentId, UUID assigneeId) throws Exception {
         Incident incident = incidentRepository.findById(incidentId)
                 .orElseThrow(() -> new IllegalArgumentException("Incident not found"));
         UUID oldAssignee = incident.getAssigneeId();
+        UserDTO user=userClient.getUserById(assigneeId);
+        if(user==null){
+            throw new Exception("User not found with id: " + assigneeId);
+        }
         incident.setAssigneeId(assigneeId);
+        incident.setAssigneeName(user.getFirstName()+" "+user.getLastName());
         Incident saved = incidentRepository.save(incident);
         log.info("Incident assignee updated id={}, oldAssigneeId={}, newAssigneeId={}, updatedBy={}",
                 saved.getId(),
@@ -161,11 +167,17 @@ public class IncidentService {
     }
 
     @Transactional
-    public Incident assignReporter(UUID incidentId, UUID reporterId) {
+    public Incident assignReporter(UUID incidentId, UUID reporterId) throws Exception {
         Incident incident = incidentRepository.findById(incidentId)
                 .orElseThrow(() -> new IllegalArgumentException("Incident not found"));
         UUID oldReporter = incident.getReporterId();
+        UserDTO user=userClient.getUserById(reporterId);
+        if(user==null){
+            throw new Exception("User not found with id: " + reporterId);
+        }
         incident.setReporterId(reporterId);
+        incident.setAssigneeName(user.getFirstName()+" "+user.getLastName());
+
         Incident saved = incidentRepository.save(incident);
         log.info("Incident reporter updated id={}, oldReporterId={}, newReporterId={}, updatedBy={}",
                 saved.getId(),

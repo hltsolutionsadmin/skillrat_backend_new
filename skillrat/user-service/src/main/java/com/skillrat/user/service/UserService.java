@@ -1,5 +1,6 @@
 package com.skillrat.user.service;
 
+import com.skillrat.common.dto.UserDTO;
 import com.skillrat.common.tenant.TenantContext;
 import com.skillrat.user.domain.Employee;
 import com.skillrat.user.domain.Role;
@@ -269,5 +270,23 @@ public class UserService {
         userRepository.save(u);
         log.info("Password setup completed for user id={}, email={}", u.getId(), u.getEmail());
         return true;
+    }
+
+    @Transactional(readOnly = true)
+    public UserDTO getUserById(UUID userId) throws Exception {
+        UserDTO userDTO=new UserDTO();
+        Optional<User> user=userRepository.findById(userId);
+        if(!user.isPresent()){
+          throw new Exception("User not found with id: " + userId);  
+        }
+        populateUser(userDTO,user.get());
+        return userDTO;
+    }
+
+    private void populateUser(UserDTO userDTO, User user) {
+        userDTO.setId(user.getId());
+        userDTO.setFirstName(user.getFirstName());
+        userDTO.setLastName(user.getLastName());
+        userDTO.setEmail(user.getEmail());
     }
 }
