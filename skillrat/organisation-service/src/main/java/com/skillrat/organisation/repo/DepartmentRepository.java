@@ -19,4 +19,6 @@ public interface DepartmentRepository extends JpaRepository<Department, UUID> {
     Page<Department> findByNameContainingIgnoreCaseAndB2bUnitId(String name, UUID b2bUnitId, Pageable pageable);
     
     Page<Department> findByActiveAndB2bUnitId(boolean active, UUID b2bUnitId, Pageable pageable);
+
+    Optional<Object> findByCode(String code);
 }
