@@ -61,7 +61,7 @@ public class IncidentController {
     @PutMapping("/incidents/{incidentId}/assignee")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Incident> assignAssignee(@PathVariable("incidentId") UUID incidentId,
-                                                   @RequestBody @Valid AssignUserRequest req) {
+                                                   @RequestBody @Valid AssignUserRequest req) throws Exception {
         Incident updated = incidentService.assignAssignee(incidentId, req.userId);
         return ResponseEntity.ok(updated);
     }
@@ -69,7 +69,7 @@ public class IncidentController {
     @PutMapping("/incidents/{incidentId}/reporter")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Incident> assignReporter(@PathVariable("incidentId") UUID incidentId,
-                                                   @RequestBody @Valid AssignUserRequest req) {
+                                                   @RequestBody @Valid AssignUserRequest req) throws Exception {
         Incident updated = incidentService.assignReporter(incidentId, req.userId);
         return ResponseEntity.ok(updated);
     }
