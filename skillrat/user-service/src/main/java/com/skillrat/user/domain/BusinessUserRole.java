@@ -2,7 +2,9 @@ package com.skillrat.user.domain;
 
 import com.skillrat.common.orm.BaseEntity;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.Objects;
 import java.util.UUID;
 
@@ -10,15 +12,17 @@ import java.util.UUID;
  * Represents the association between a User, Business, and Role.
  * This allows users to have different roles in different businesses.
  */
+@Setter
+@Getter
 @Entity
 @Table(name = "business_user_roles",
        uniqueConstraints = @UniqueConstraint(
            columnNames = {"user_id", "business_id", "role_id"}
        )
 )
-@IdClass(BusinessUserRoleId.class)
 public class BusinessUserRole extends BaseEntity {
 
+    // Getters and Setters
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
@@ -30,8 +34,9 @@ public class BusinessUserRole extends BaseEntity {
     @JoinColumn(name = "role_id", nullable = false)
     private Role role;
 
-    @Column(name = "assigned_by")
-    private UUID assignedBy;
+    @Column(name = "assigned_by", length = 255)
+    private String assignedBy;
+
 
     @Override
     public boolean equals(Object o) {
@@ -51,40 +56,7 @@ public class BusinessUserRole extends BaseEntity {
             role != null ? role.getId() : null
         );
     }
-    
-    // Getters and Setters
-    public User getUser() {
-        return user;
-    }
 
-    public void setUser(User user) {
-        this.user = user;
-    }
-
-    public UUID getBusinessId() {
-        return businessId;
-    }
-
-    public void setBusinessId(UUID businessId) {
-        this.businessId = businessId;
-    }
-
-    public Role getRole() {
-        return role;
-    }
-
-    public void setRole(Role role) {
-        this.role = role;
-    }
-
-    public UUID getAssignedBy() {
-        return assignedBy;
-    }
-
-    public void setAssignedBy(UUID assignedBy) {
-        this.assignedBy = assignedBy;
-    }
-    
     // Builder pattern methods
     public static BusinessUserRoleBuilder builder() {
         return new BusinessUserRoleBuilder();
@@ -94,7 +66,7 @@ public class BusinessUserRole extends BaseEntity {
         private User user;
         private UUID businessId;
         private Role role;
-        private UUID assignedBy;
+        private String assignedBy;
         
         public BusinessUserRoleBuilder user(User user) {
             this.user = user;
@@ -111,7 +83,7 @@ public class BusinessUserRole extends BaseEntity {
             return this;
         }
         
-        public BusinessUserRoleBuilder assignedBy(UUID assignedBy) {
+        public BusinessUserRoleBuilder assignedBy(String assignedBy) {
             this.assignedBy = assignedBy;
             return this;
         }

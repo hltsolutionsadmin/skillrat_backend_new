@@ -8,7 +8,6 @@ import com.skillrat.user.repo.BusinessUserRoleRepository;
 import com.skillrat.user.repo.RoleRepository;
 import com.skillrat.user.repo.UserRepository;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.slf4j.Logger;
@@ -34,7 +33,7 @@ public class BusinessRoleService {
      * Assign a role to a user in a specific business
      */
     @Transactional
-    public BusinessUserRole assignRoleToUser(UUID userId, UUID businessId, String roleName, UUID assignedBy) {
+    public BusinessUserRole assignRoleToUser(UUID userId, UUID businessId, String roleName, String assignedBy) {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
             
@@ -149,7 +148,7 @@ public class BusinessRoleService {
      * Update a user's roles in a business (replaces all existing roles)
      */
     @Transactional
-    public void updateUserRolesInBusiness(UUID userId, UUID businessId, List<String> roleNames, UUID assignedBy) {
+    public void updateUserRolesInBusiness(UUID userId, UUID businessId, List<String> roleNames, String assignedBy) {
         // Remove all existing roles
         removeAllRolesFromUserInBusiness(userId, businessId);
         
