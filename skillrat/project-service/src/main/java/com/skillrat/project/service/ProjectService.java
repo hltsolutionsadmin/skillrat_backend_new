@@ -27,17 +27,20 @@ public class ProjectService {
     private final WBSElementRepository wbsRepository;
     private final ProjectMemberRepository memberRepository;
     private final WBSAllocationRepository allocationRepository;
+    private final ProjectReleaseRepository releaseRepository;
     private final UserClient userClient;
 
     public ProjectService(ProjectRepository projectRepository,
                           WBSElementRepository wbsRepository,
                           ProjectMemberRepository memberRepository,
                           WBSAllocationRepository allocationRepository,
+                          ProjectReleaseRepository releaseRepository,
                           UserClient userClient) {
         this.projectRepository = projectRepository;
         this.wbsRepository = wbsRepository;
         this.memberRepository = memberRepository;
         this.allocationRepository = allocationRepository;
+        this.releaseRepository = releaseRepository;
         this.userClient = userClient;
     }
 
@@ -338,6 +341,112 @@ public class ProjectService {
     @Transactional(readOnly = true)
     public Page<Project> listProjectsByB2bUnit(UUID b2bUnitId, Pageable pageable) {
         return projectRepository.findByB2bUnitId(b2bUnitId, pageable);
+    }
+
+    // Project Release CRUD Operations
+    
+    @Transactional
+    public ProjectRelease createProjectRelease(
+            UUID projectId,
+            String version,
+            ProjectRelease.ReleaseStatus status,
+            Integer progress,
+            LocalDate startDate,
+            LocalDate releaseDate,
+            String description) {
+        
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new IllegalArgumentException("Project not found"));
+                
+        // Check if version already exists for this project
+        if (releaseRepository.existsByProjectIdAndVersion(projectId, version)) {
+            throw new IllegalStateException("Version " + version + " already exists for this project");
+        }
+        
+        ProjectRelease release = new ProjectRelease();
+        release.setVersion(version);
+        release.setStatus(status != null ? status : ProjectRelease.ReleaseStatus.PLANNED);
+        release.setProgress(progress != null ? progress : 0);
+        release.setStartDate(startDate);
+        release.setReleaseDate(releaseDate);
+        release.setDescription(description);
+        release.setProject(project);
+        release.setTenantId(TenantContext.getTenantId());
+        
+        applyAuditFromCurrentUser(release);
+        return releaseRepository.save(release);
+    }
+    
+    @Transactional(readOnly = true)
+    public Page<ProjectRelease> getProjectReleases(UUID projectId, Pageable pageable) {
+        return releaseRepository.findByProjectId(projectId, pageable);
+    }
+    
+    @Transactional(readOnly = true)
+    public ProjectRelease getProjectRelease(UUID projectId, UUID releaseId) {
+        return releaseRepository.findByIdAndProjectId(releaseId, projectId)
+                .orElseThrow(() -> new IllegalArgumentException("Release not found"));
+    }
+    
+    @Transactional
+    public ProjectRelease updateProjectRelease(
+            UUID projectId,
+            UUID releaseId,
+            String version,
+            ProjectRelease.ReleaseStatus status,
+            Integer progress,
+            LocalDate startDate,
+            LocalDate releaseDate,
+            String description) {
+                
+        ProjectRelease release = getProjectRelease(projectId, releaseId);
+        
+        // Check if version is being changed and if the new version already exists
+        if (version != null && !version.equals(release.getVersion())) {
+            if (releaseRepository.existsByProjectIdAndVersion(projectId, version)) {
+                throw new IllegalStateException("Version " + version + " already exists for this project");
+            }
+            release.setVersion(version);
+        }
+        
+        if (status != null) release.setStatus(status);
+        if (progress != null) release.setProgress(progress);
+        if (startDate != null) release.setStartDate(startDate);
+        if (releaseDate != null) release.setReleaseDate(releaseDate);
+        if (description != null) release.setDescription(description);
+        
+        applyAuditFromCurrentUser(release);
+        return releaseRepository.save(release);
+    }
+    
+    @Transactional
+    public void deleteProjectRelease(UUID projectId, UUID releaseId) {
+        ProjectRelease release = getProjectRelease(projectId, releaseId);
+        releaseRepository.delete(release);
+    }
+    
+    @Transactional
+    public ProjectRelease updateReleaseProgress(UUID projectId, UUID releaseId, int progress) {
+        ProjectRelease release = getProjectRelease(projectId, releaseId);
+        release.setProgress(progress);
+        
+        // Auto-update status based on progress
+        if (progress >= 100) {
+            release.setStatus(ProjectRelease.ReleaseStatus.DEPLOYED);
+        } else if (progress > 0) {
+            release.setStatus(ProjectRelease.ReleaseStatus.IN_PROGRESS);
+        }
+        
+        applyAuditFromCurrentUser(release);
+        return releaseRepository.save(release);
+    }
+    
+    @Transactional(readOnly = true)
+    public Page<ProjectRelease> getProjectReleasesByStatus(
+            UUID projectId,
+            ProjectRelease.ReleaseStatus status,
+            Pageable pageable) {
+        return releaseRepository.findByProjectIdAndStatus(projectId, status, pageable);
     }
 
     private void applyAuditFromCurrentUser(com.skillrat.common.orm.BaseEntity entity) {
