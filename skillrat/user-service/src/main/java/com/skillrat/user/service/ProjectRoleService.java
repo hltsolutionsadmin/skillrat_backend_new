@@ -8,7 +8,6 @@ import com.skillrat.user.repo.ProjectUserRoleRepository;
 import com.skillrat.user.repo.RoleRepository;
 import com.skillrat.user.repo.UserRepository;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.slf4j.Logger;
@@ -34,7 +33,7 @@ public class ProjectRoleService {
      * Assign a role to a user in a specific project
      */
     @Transactional
-    public ProjectUserRole assignRoleToUser(UUID userId, UUID projectId, String roleName, UUID assignedBy) {
+    public ProjectUserRole assignRoleToUser(UUID userId, UUID projectId, String roleName, String assignedBy) {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
             
@@ -149,7 +148,7 @@ public class ProjectRoleService {
      * Update a user's roles in a project (replaces all existing roles)
      */
     @Transactional
-    public void updateUserRolesInProject(UUID userId, UUID projectId, List<String> roleNames, UUID assignedBy) {
+    public void updateUserRolesInProject(UUID userId, UUID projectId, List<String> roleNames, String assignedBy) {
         // Remove all existing roles
         removeAllRolesFromUserInProject(userId, projectId);
         

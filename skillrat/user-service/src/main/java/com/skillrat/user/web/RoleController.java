@@ -40,10 +40,8 @@ public class RoleController {
         this.projectRoleService = projectRoleService;
     }
 
-    // ========== Role Management ==========
-
     @PostMapping
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Role> createRole(@Valid @RequestBody CreateRoleRequest request) {
         Role role = new Role();
         role.setName(request.getName());
@@ -61,7 +59,7 @@ public class RoleController {
     }
 
     @PutMapping("/{roleId}")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Role> updateRole(
             @PathVariable UUID roleId,
             @Valid @RequestBody UpdateRoleRequest request) {
@@ -71,7 +69,7 @@ public class RoleController {
     }
 
     @DeleteMapping("/{roleId}")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> deleteRole(@PathVariable UUID roleId) {
         roleService.deleteRole(roleId);
         return ResponseEntity.noContent().build();
@@ -92,12 +90,12 @@ public class RoleController {
     // ========== Business Role Assignments ==========
 
     @PostMapping("/business/assign")
-    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_BUSINESS_OWNER')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> assignBusinessRole(
             @Valid @RequestBody AssignBusinessRoleRequest request,
             @AuthenticationPrincipal Jwt jwt) {
         
-        UUID assignedBy = UUID.fromString(jwt.getSubject());
+        String assignedBy = jwt.getSubject();
         businessRoleService.assignRoleToUser(
             request.getUserId(), 
             request.getBusinessId(), 
@@ -109,7 +107,7 @@ public class RoleController {
     }
 
     @PostMapping("/business/remove")
-    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_BUSINESS_OWNER')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> removeBusinessRole(@Valid @RequestBody RemoveBusinessRoleRequest request) {
         businessRoleService.removeRoleFromUser(
             request.getUserId(),
@@ -132,12 +130,12 @@ public class RoleController {
     // ========== Project Role Assignments ==========
 
     @PostMapping("/project/assign")
-    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_BUSINESS_OWNER', 'ROLE_PROJECT_MANAGER')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> assignProjectRole(
             @Valid @RequestBody AssignProjectRoleRequest request,
             @AuthenticationPrincipal Jwt jwt) {
         
-        UUID assignedBy = UUID.fromString(jwt.getSubject());
+        String assignedBy = jwt.getSubject();
         projectRoleService.assignRoleToUser(
             request.getUserId(),
             request.getProjectId(),
@@ -149,7 +147,7 @@ public class RoleController {
     }
 
     @PostMapping("/project/remove")
-    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_BUSINESS_OWNER', 'ROLE_PROJECT_MANAGER')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> removeProjectRole(@Valid @RequestBody RemoveProjectRoleRequest request) {
         projectRoleService.removeRoleFromUser(
             request.getUserId(),

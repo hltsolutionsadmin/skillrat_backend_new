@@ -10,15 +10,17 @@ import java.util.UUID;
  * Represents the association between a User, Project, and Role.
  * This allows users to have different roles in different projects.
  */
+@Setter
+@Getter
 @Entity
 @Table(name = "project_user_roles",
        uniqueConstraints = @UniqueConstraint(
            columnNames = {"user_id", "project_id", "role_id"}
        )
 )
-@IdClass(ProjectUserRoleId.class)
 public class ProjectUserRole extends BaseEntity {
 
+    // Getters and Setters
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
@@ -30,8 +32,9 @@ public class ProjectUserRole extends BaseEntity {
     @JoinColumn(name = "role_id", nullable = false)
     private Role role;
 
-    @Column(name = "assigned_by")
-    private UUID assignedBy;
+    @Column(name = "assigned_by", length = 255)
+    private String assignedBy;
+
 
     @Override
     public boolean equals(Object o) {
@@ -51,40 +54,7 @@ public class ProjectUserRole extends BaseEntity {
             role != null ? role.getId() : null
         );
     }
-    
-    // Getters and Setters
-    public User getUser() {
-        return user;
-    }
 
-    public void setUser(User user) {
-        this.user = user;
-    }
-
-    public UUID getProjectId() {
-        return projectId;
-    }
-
-    public void setProjectId(UUID projectId) {
-        this.projectId = projectId;
-    }
-
-    public Role getRole() {
-        return role;
-    }
-
-    public void setRole(Role role) {
-        this.role = role;
-    }
-
-    public UUID getAssignedBy() {
-        return assignedBy;
-    }
-
-    public void setAssignedBy(UUID assignedBy) {
-        this.assignedBy = assignedBy;
-    }
-    
     // Builder pattern methods
     public static ProjectUserRoleBuilder builder() {
         return new ProjectUserRoleBuilder();
@@ -94,7 +64,7 @@ public class ProjectUserRole extends BaseEntity {
         private User user;
         private UUID projectId;
         private Role role;
-        private UUID assignedBy;
+        private String assignedBy;
         
         public ProjectUserRoleBuilder user(User user) {
             this.user = user;
@@ -111,7 +81,7 @@ public class ProjectUserRole extends BaseEntity {
             return this;
         }
         
-        public ProjectUserRoleBuilder assignedBy(UUID assignedBy) {
+        public ProjectUserRoleBuilder assignedBy(String assignedBy) {
             this.assignedBy = assignedBy;
             return this;
         }
