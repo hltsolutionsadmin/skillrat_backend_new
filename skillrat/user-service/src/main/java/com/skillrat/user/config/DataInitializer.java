@@ -144,16 +144,22 @@ public class DataInitializer {
      * Helper method to assign permissions to a role
      */
     private void assignPermissionsToRole(String roleName, List<String> permissionNames) {
-        roleRepository.findByName(roleName).ifPresent(role -> {
-            Set<Permission> permissions = new HashSet<>();
-            
-            for (String permissionName : permissionNames) {
-                permissionRepository.findByName(permissionName).ifPresent(permissions::add);
-            }
-            
+        // Fetch all roles matching this name (handles accidental duplicates gracefully)
+        List<Role> roles = roleRepository.findAllByName(roleName);
+        if (roles == null || roles.isEmpty()) {
+            log.warn("No role found with name '{}' while assigning permissions", roleName);
+            return;
+        }
+
+        Set<Permission> permissions = new HashSet<>();
+        for (String permissionName : permissionNames) {
+            permissionRepository.findByName(permissionName).ifPresent(permissions::add);
+        }
+
+        for (Role role : roles) {
             role.setPermissions(permissions);
             roleRepository.save(role);
-            log.debug("Assigned {} permissions to role: {}", permissions.size(), roleName);
-        });
+        }
+        log.debug("Assigned {} permissions to {} role record(s) for name: {}", permissions.size(), roles.size(), roleName);
     }
 }

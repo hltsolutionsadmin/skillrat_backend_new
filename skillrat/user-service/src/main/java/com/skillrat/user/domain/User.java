@@ -1,5 +1,6 @@
 package com.skillrat.user.domain;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.skillrat.common.orm.BaseEntity;
 import jakarta.persistence.*;
 import java.time.Instant;
@@ -53,6 +54,7 @@ public class User extends BaseEntity {
         joinColumns = @JoinColumn(name = "user_id"),
         inverseJoinColumns = @JoinColumn(name = "role_id")
     )
+    @JsonManagedReference
     private Set<Role> roles = new HashSet<>();
 
     @Column(name = "b2b_unit_id")

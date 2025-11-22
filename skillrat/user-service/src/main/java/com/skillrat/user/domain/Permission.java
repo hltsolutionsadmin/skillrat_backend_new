@@ -1,5 +1,6 @@
 package com.skillrat.user.domain;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.skillrat.common.orm.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -22,7 +23,7 @@ public class Permission extends BaseEntity {
     private String description;
 
     @ManyToMany(mappedBy = "permissions")
-    @Builder.Default
+    @JsonManagedReference
     private Set<Role> roles = new HashSet<>();
 
     @Override
