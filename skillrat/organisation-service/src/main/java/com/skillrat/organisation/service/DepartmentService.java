@@ -47,6 +47,11 @@ public class DepartmentService {
                 .ifPresent(d -> {
                     throw new IllegalArgumentException("Department with name " + department.getName() + " already exists");
                 });
+
+        departmentRepository.findByCode(department.getCode())
+                .ifPresent(d -> {
+                    throw new IllegalArgumentException("Department with code " + department.getCode() + " already exists");
+                });
         
         department.setTenantId(tenantId);
         Department saved = departmentRepository.save(department);
