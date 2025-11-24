@@ -1,4 +1,4 @@
-package com.skillrat.project.web;
+ipackage com.skillrat.project.web;
 
 import com.skillrat.project.domain.*;
 import com.skillrat.project.service.IncidentService;
@@ -27,7 +27,7 @@ public class IncidentController {
     }
 
     @PostMapping("/projects/{projectId}/incidents")
-    @PreAuthorize("isAuthenticated()")
+   // @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Incident> create(@PathVariable("projectId") UUID projectId,
                                            @RequestBody @Valid CreateIncidentRequest req) {
         Incident incident = incidentService.create(
