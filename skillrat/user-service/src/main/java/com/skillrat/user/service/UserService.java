@@ -535,4 +535,18 @@ public class UserService {
         userDTO.setLastName(user.getLastName());
         userDTO.setEmail(user.getEmail());
     }
+
+    @Transactional(readOnly = true)
+    public List<UserDTO> getUsersByIds(List<UUID> ids) {
+        if (ids == null || ids.isEmpty()) return java.util.Collections.emptyList();
+        List<User> users = userRepository.findAllById(ids);
+        List<UserDTO> result = new java.util.ArrayList<>(users.size());
+        for (User u : users) {
+            if (u == null) continue;
+            UserDTO dto = new UserDTO();
+            populateUser(dto, u);
+            result.add(dto);
+        }
+        return result;
+    }
 }
