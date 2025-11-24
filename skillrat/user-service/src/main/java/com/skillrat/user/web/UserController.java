@@ -1,5 +1,6 @@
 package com.skillrat.user.web;
 
+import com.skillrat.common.dto.UserDTO;
 import com.skillrat.user.domain.User;
 import com.skillrat.user.domain.Employee;
 import com.skillrat.user.service.UserService;
@@ -154,6 +155,12 @@ public class UserController {
     public ResponseEntity<?> setupPassword(@RequestBody SetupPasswordRequest req) {
         boolean ok = userService.setupPassword(req.token, req.newPassword);
         return ok ? ResponseEntity.ok(Map.of("status", "ok")) : ResponseEntity.badRequest().body(Map.of("error", "Invalid or expired token"));
+    }
+
+    @GetMapping("/{userId}")
+    @PreAuthorize("isAuthenticated()")
+    public UserDTO getUserById(@PathVariable("userId") UUID userId) throws Exception {
+        return userService.getUserById(userId);
     }
 
     public static class SignupRequest {

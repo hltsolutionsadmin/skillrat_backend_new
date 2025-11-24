@@ -1,5 +1,6 @@
 package com.skillrat.user.service;
 
+import com.skillrat.common.dto.UserDTO;
 import com.skillrat.common.tenant.TenantContext;
 import com.skillrat.user.domain.Employee;
 import com.skillrat.user.domain.Role;
@@ -235,10 +236,10 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
-    public Page<User> searchUsers(String q, String role, Pageable pageable) {
+    public Page<User> searchUsers(UUID b2bUnitId, String q, String role, Pageable pageable) {
         String query = (q == null || q.isBlank()) ? null : q.trim();
         String roleName = (role == null || role.isBlank() || "All".equalsIgnoreCase(role)) ? null : role.trim();
-        return userRepository.search(query, roleName, pageable);
+       return userRepository.search(b2bUnitId, query, "BUSINESS_ADMIN", pageable);
     }
 
     @Transactional
@@ -515,5 +516,23 @@ public class UserService {
         // TODO: Send confirmation email to the user
         
         return true;
+    }
+
+    @Transactional(readOnly = true)
+    public UserDTO getUserById(UUID userId) throws Exception {
+        UserDTO userDTO=new UserDTO();
+        Optional<User> user=userRepository.findById(userId);
+        if(!user.isPresent()){
+          throw new Exception("User not found with id: " + userId);  
+        }
+        populateUser(userDTO,user.get());
+        return userDTO;
+    }
+
+    private void populateUser(UserDTO userDTO, User user) {
+        userDTO.setId(user.getId());
+        userDTO.setFirstName(user.getFirstName());
+        userDTO.setLastName(user.getLastName());
+        userDTO.setEmail(user.getEmail());
     }
 }

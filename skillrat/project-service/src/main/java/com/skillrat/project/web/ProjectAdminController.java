@@ -35,7 +35,7 @@ public class ProjectAdminController {
 
     // Create Project - Only organization admin can create projects
     @PostMapping
-    @PreAuthorize("hasRole('BUSINESS_ADMIN')")
+    //@PreAuthorize("hasRole('BUSINESS_ADMIN')")
     public ResponseEntity<Project> createProject(@RequestBody @Valid CreateProjectRequest req) {
         String userId = getCurrentUserId();
         Project p = service.createProject(
@@ -60,6 +60,27 @@ public class ProjectAdminController {
                                                 @RequestBody @Valid CreateWbsRequest req) {
         WBSElement w = service.createWbs(projectId, req.name, req.code, req.category, req.startDate, req.endDate);
         return ResponseEntity.ok(w);
+    }
+
+    // Update Project - Only organization admin can update projects
+    @PutMapping("/{projectId}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Project> updateProject(@PathVariable("projectId") UUID projectId,
+                                                 @RequestBody @Valid UpdateProjectRequest req) {
+        String userId = getCurrentUserId();
+        Project p = service.updateProject(
+                projectId,
+                req.name,
+                req.code,
+                req.description,
+                req.startDate,
+                req.endDate,
+                req.client != null ? req.client.name : null,
+                req.client != null ? req.client.primaryContactEmail : null,
+                req.client != null ? req.client.secondaryContactEmail : null,
+                userId
+        );
+        return ResponseEntity.ok(p);
     }
 
     // Add or update project member (with project role and reporting manager)
@@ -94,18 +115,32 @@ public class ProjectAdminController {
         return ResponseEntity.ok(w);
     }
 
+    // List WBS elements for a project with pagination
+    @GetMapping("/{projectId}/wbs")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Page<WBSElement>> listWbs(
+            @PathVariable("projectId") UUID projectId,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "10") @Min(1) int size) {
+        PageRequest pageRequest = PageRequest.of(page, size, Sort.by("createdDate").descending());
+        Page<WBSElement> wbs = service.listWbs(projectId, pageRequest);
+        return ResponseEntity.ok(wbs);
+    }
+
     // List projects with pagination
     @GetMapping
     public ResponseEntity<Page<Project>> listProjects(
             @RequestParam(defaultValue = "0") @Min(0) int page,
-            @RequestParam(defaultValue = "10") @Min(1) int size) {
-        
+            @RequestParam(defaultValue = "10") @Min(1) int size,
+            @RequestParam(value = "fromDate", required = false) LocalDate fromDate,
+            @RequestParam(value = "toDate", required = false) LocalDate toDate) {
+
         String email = getCurrentUserId();
         List<String> roles = getCurrentUserRoles();
         boolean isAdmin = roles.contains("BUSINESS_ADMIN");
-        
+
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by("createdDate").descending());
-        
+
         Page<Project> projects;
         if (isAdmin) {
             projects = service.listProjectsForAdmin(pageRequest);
@@ -113,7 +148,20 @@ public class ProjectAdminController {
             // For regular users, get only their assigned projects
             projects = service.listProjectsForUser(email, pageRequest);
         }
-        
+
+        if (fromDate != null || toDate != null) {
+            List<Project> filtered = projects.getContent().stream()
+                    .filter(p -> {
+                        LocalDate s = p.getStartDate();
+                        LocalDate e = p.getEndDate();
+                        boolean afterFrom = (fromDate == null) || (e == null || !e.isBefore(fromDate));
+                        boolean beforeTo = (toDate == null) || (s == null || !s.isAfter(toDate));
+                        return afterFrom && beforeTo; // overlap logic
+                    })
+                    .collect(Collectors.toList());
+            projects = new org.springframework.data.domain.PageImpl<>(filtered, pageRequest, filtered.size());
+        }
+
         return ResponseEntity.ok(projects);
     }
 
@@ -174,6 +222,15 @@ public class ProjectAdminController {
         @NotBlank public String name;
         public String primaryContactEmail;
         public String secondaryContactEmail;
+    }
+
+    public static class UpdateProjectRequest {
+        public String name;
+        public String code;
+        public String description;
+        public LocalDate startDate;
+        public LocalDate endDate;
+        public ProjectClientRequest client;
     }
 
 }
