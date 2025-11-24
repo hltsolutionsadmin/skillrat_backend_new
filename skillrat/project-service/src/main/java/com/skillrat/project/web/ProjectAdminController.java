@@ -1,5 +1,6 @@
 package com.skillrat.project.web;
 
+import com.skillrat.common.dto.UserDTO;
 import com.skillrat.project.domain.*;
 import com.skillrat.project.service.ProjectService;
 import jakarta.validation.Valid;
@@ -165,6 +166,27 @@ public class ProjectAdminController {
         return ResponseEntity.ok(projects);
     }
 
+    // Get basic user details for all members of a project
+    @GetMapping("/{projectId}/members/users")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<UserDTO>> listMemberUsers(@PathVariable UUID projectId) {
+        return ResponseEntity.ok(service.listMemberUsers(projectId));
+    }
+    @PutMapping("/wbs/{wbsId}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<WBSElement> updateWbs(@PathVariable UUID wbsId, @RequestBody @Valid UpdateWbsRequest req) {
+        WBSElement w = service.updateWbs(wbsId, req.name, req.code, req.category, req.startDate, req.endDate,req.projectId);
+        return ResponseEntity.ok(w);
+    }
+
+    public static class UpdateWbsRequest {
+        public String name;
+        public String code;
+        public UUID projectId;
+        public WBSCategory category;
+        public LocalDate startDate;
+        public LocalDate endDate;
+    }
     // Helper methods to get current user info
     private String getCurrentUserId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

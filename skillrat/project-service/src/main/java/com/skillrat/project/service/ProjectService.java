@@ -1,5 +1,6 @@
 package com.skillrat.project.service;
 
+import com.skillrat.common.dto.UserDTO;
 import com.skillrat.common.tenant.TenantContext;
 import com.skillrat.project.client.UserClient;
 import com.skillrat.project.domain.*;
@@ -187,6 +188,32 @@ public class ProjectService {
     }
 
     @Transactional
+    public WBSElement updateWbs(UUID wbsId, String name, String code, WBSCategory category, LocalDate start, LocalDate end,UUID projectId) {
+        WBSElement wbs = wbsRepository.findById(wbsId)
+                .orElseThrow(() -> new IllegalArgumentException("WBS not found"));
+        String tenant = TenantContext.getTenantId();
+        if (code != null && !code.isBlank()) {
+            Optional<WBSElement> existingTenant = wbsRepository.findByCodeAndTenantId(code, tenant);
+            if (existingTenant.isPresent() && !existingTenant.get().getId().equals(wbsId)) {
+                throw new IllegalStateException("WBS code already exists for tenant");
+            }
+            Optional<WBSElement> existingAny = wbsRepository.findByCode(code);
+            if (existingAny.isPresent() && !existingAny.get().getId().equals(wbsId)) {
+                throw new IllegalStateException("WBS code already exists");
+            }
+            wbs.setCode(code);
+        }
+        if (name != null && !name.isBlank()) wbs.setName(name);
+        if (category != null) wbs.setCategory(category);
+        if (start != null) wbs.setStartDate(start);
+        if (end != null) wbs.setEndDate(end);
+        if (projectId != null) wbs.setProject(projectRepository.findById(projectId)
+                .orElseThrow(() -> new IllegalArgumentException("Project not found")));
+
+        return wbsRepository.save(wbs);
+    }
+
+    @Transactional
     public ProjectMember addOrUpdateMember(UUID projectId, UUID employeeId, ProjectRole role, UUID reportingManagerId,
                                            LocalDate start, LocalDate end, boolean active) {
         Project project = projectRepository.findById(projectId)
@@ -252,6 +279,25 @@ public class ProjectService {
     @Transactional(readOnly = true)
     public Page<WBSElement> listWbs(UUID projectId, Pageable pageable) {
         return wbsRepository.findByProject_Id(projectId, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ProjectMember> listMembersByProject(UUID projectId) {
+        return memberRepository.findByProject_Id(projectId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<UserDTO> listMemberUsers(UUID projectId) {
+        List<ProjectMember> members = memberRepository.findByProject_Id(projectId);
+        if (members == null || members.isEmpty()) return java.util.Collections.emptyList();
+        List<UUID> ids = members.stream()
+                .map(ProjectMember::getEmployeeId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(java.util.stream.Collectors.toList());
+        if (ids.isEmpty()) return java.util.Collections.emptyList();
+        java.util.Map<String, java.util.List<UUID>> body = java.util.Map.of("ids", ids);
+        return userClient.getUsersByIds(body);
     }
 
     @Transactional(readOnly = true)

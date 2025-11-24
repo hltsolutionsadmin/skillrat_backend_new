@@ -263,8 +263,21 @@ public class IncidentService {
     }
 
     @Transactional(readOnly = true)
-    public Page<Incident> listByReporter(UUID reporterId, Pageable pageable) {
-        return incidentRepository.findByReporterId(reporterId, pageable);
+    public Page<Incident> listByReporter(UUID projectId, Pageable pageable) {
+
+        Map<String, Object> me = userClient.me();
+        if (me == null || me.get("id") == null) {
+            throw new IllegalStateException("Logged-in user not found");
+        }
+
+        UUID loggedInUserId = UUID.fromString(me.get("id").toString());
+
+        Specification<Incident> spec = (root, query, cb) -> cb.and(
+                cb.equal(root.get("project").get("id"), projectId),
+                cb.equal(root.get("reporterId"), loggedInUserId)
+        );
+
+        return incidentRepository.findAll(spec, pageable);
     }
 
     @Transactional(readOnly = true)
