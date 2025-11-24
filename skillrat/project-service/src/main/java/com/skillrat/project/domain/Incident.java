@@ -42,12 +42,15 @@ public class Incident extends BaseEntity {
     @Column(nullable = false, length = 32)
     private IncidentPriority priority;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 64)
-    private IncidentCategory category;
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "category_id")
+    @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
+    private IncidentCategoryEntity category;
 
-    @Column(length = 128)
-    private String subCategory; // free-text or catalog-driven in future
+    @ManyToOne(optional = true)
+    @JoinColumn(name = "sub_category_id")
+    @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
+    private IncidentSubCategoryEntity subCategory;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 32)

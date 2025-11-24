@@ -36,8 +36,8 @@ public class IncidentController {
                 req.shortDescription,
                 req.urgency,
                 req.impact,
-                req.category,
-                req.subCategory
+                req.categoryId,
+                req.subCategoryId
         );
         return ResponseEntity.ok(incident);
     }
@@ -48,12 +48,12 @@ public class IncidentController {
                                         @RequestParam(defaultValue = "0") @Min(0) int page,
                                         @RequestParam(defaultValue = "20") @Min(1) int size,
                                         @RequestParam(value = "priority", required = false) IncidentPriority priority,
-                                        @RequestParam(value = "category", required = false) IncidentCategory category,
+                                        @RequestParam(value = "categoryId", required = false) UUID categoryId,
                                         @RequestParam(value = "status", required = false) IncidentStatus status,
                                         @RequestParam(value = "search", required = false) String search) {
-        boolean hasFilters = priority != null || category != null || status != null || (search != null && !search.isBlank());
+        boolean hasFilters = priority != null || categoryId != null || status != null || (search != null && !search.isBlank());
         if (hasFilters) {
-            return incidentService.listByProjectFiltered(projectId, priority, category, status, search, PageRequest.of(page, size));
+            return incidentService.listByProjectFiltered(projectId, priority, categoryId, status, search, PageRequest.of(page, size));
         }
         return incidentService.listByProject(projectId, PageRequest.of(page, size));
     }
@@ -114,8 +114,8 @@ public class IncidentController {
         @NotBlank public String shortDescription;
         @NotNull public IncidentUrgency urgency;
         @NotNull public IncidentImpact impact;
-        public IncidentCategory category;
-        public String subCategory;
+        public UUID categoryId;
+        public UUID subCategoryId;
     }
 
     public static class AssignUserRequest {

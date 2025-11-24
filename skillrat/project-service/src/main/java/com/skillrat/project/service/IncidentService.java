@@ -6,6 +6,8 @@ import com.skillrat.project.client.UserClient;
 import com.skillrat.project.domain.*;
 import com.skillrat.project.repo.IncidentRepository;
 import com.skillrat.project.repo.ProjectRepository;
+import com.skillrat.project.repo.IncidentCategoryRepository;
+import com.skillrat.project.repo.IncidentSubCategoryRepository;
 import org.hibernate.envers.AuditReader;
 import org.hibernate.envers.AuditReaderFactory;
 import org.slf4j.Logger;
@@ -29,16 +31,22 @@ public class IncidentService {
 
     private final ProjectRepository projectRepository;
     private final IncidentRepository incidentRepository;
+    private final IncidentCategoryRepository categoryRepository;
+    private final IncidentSubCategoryRepository subCategoryRepository;
     private final EntityManager entityManager;
     private final AuditClient auditClient;
     private final UserClient userClient;
 
     public IncidentService(ProjectRepository projectRepository,
                            IncidentRepository incidentRepository,
+                           IncidentCategoryRepository categoryRepository,
+                           IncidentSubCategoryRepository subCategoryRepository,
                            EntityManager entityManager,
                            AuditClient auditClient, UserClient userClient) {
         this.projectRepository = projectRepository;
         this.incidentRepository = incidentRepository;
+        this.categoryRepository = categoryRepository;
+        this.subCategoryRepository = subCategoryRepository;
         this.entityManager = entityManager;
         this.auditClient = auditClient;
         this.userClient = userClient;
@@ -50,10 +58,26 @@ public class IncidentService {
                            String shortDescription,
                            IncidentUrgency urgency,
                            IncidentImpact impact,
-                           IncidentCategory category,
-                           String subCategory) {
+                           UUID categoryId,
+                           UUID subCategoryId) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new IllegalArgumentException("Project not found"));
+        String tenantId = TenantContext.getTenantId();
+        IncidentCategoryEntity category = null;
+        if (categoryId != null) {
+            category = categoryRepository.findByIdAndTenantId(categoryId, tenantId)
+                    .orElseThrow(() -> new IllegalArgumentException("Category not found"));
+        } else {
+            throw new IllegalArgumentException("categoryId is required");
+        }
+        IncidentSubCategoryEntity subCategory = null;
+        if (subCategoryId != null) {
+            subCategory = subCategoryRepository.findByIdAndTenantId(subCategoryId, tenantId)
+                    .orElseThrow(() -> new IllegalArgumentException("SubCategory not found"));
+            if (!Objects.equals(subCategory.getCategory().getId(), category.getId())) {
+                throw new IllegalArgumentException("SubCategory does not belong to Category");
+            }
+        }
         Incident incident = new Incident();
         incident.setProject(project);
         incident.setIncidentNumber(generateIncidentNumber(project));
@@ -62,10 +86,10 @@ public class IncidentService {
         incident.setUrgency(urgency);
         incident.setImpact(impact);
         incident.setPriority(computePriority(urgency, impact));
-        incident.setCategory(category == null ? IncidentCategory.OTHER : category);
+        incident.setCategory(category);
         incident.setSubCategory(subCategory);
         incident.setStatus(IncidentStatus.OPEN);
-        incident.setTenantId(TenantContext.getTenantId());
+        incident.setTenantId(tenantId);
         Incident saved = incidentRepository.save(incident);
         log.info("Incident created id={}, projectId={}, number={}, createdBy={}",
                 saved.getId(), projectId, saved.getIncidentNumber(), saved.getCreatedBy());
@@ -106,7 +130,7 @@ public class IncidentService {
     public Page<Incident> listByProjectFiltered(
             UUID projectId,
             IncidentPriority priority,
-            IncidentCategory category,
+            UUID categoryId,
             IncidentStatus status,
             String search,
             Pageable pageable
@@ -117,8 +141,8 @@ public class IncidentService {
             if (priority != null) {
                 predicates.add(cb.equal(root.get("priority"), priority));
             }
-            if (category != null) {
-                predicates.add(cb.equal(root.get("category"), category));
+            if (categoryId != null) {
+                predicates.add(cb.equal(root.get("category").get("id"), categoryId));
             }
             if (status != null) {
                 predicates.add(cb.equal(root.get("status"), status));
