@@ -7,12 +7,13 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.util.Optional;
 import java.util.UUID;
 
 public interface IncidentRepository extends JpaRepository<Incident, UUID>, JpaSpecificationExecutor<Incident> {
     Page<Incident> findByProject_Id(UUID projectId, Pageable pageable);
 
-    Incident findTopByProjectAndIncidentNumberStartingWithOrderByIncidentNumberDesc(Project project, String incidentNumberPrefix);
+   Optional<Incident> findTopByProjectAndIncidentNumberStartingWithOrderByIncidentNumberDesc(Project project, String incidentNumberPrefix);
 
     Page<Incident> findByAssigneeId(UUID assigneeId, Pageable pageable);
 

@@ -15,14 +15,15 @@ import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.persistence.EntityManager;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.UUID;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 
 @Service
 public class IncidentService {
@@ -106,20 +107,16 @@ public class IncidentService {
     }
 
     private String generateIncidentNumber(Project project) {
-        String prefix = (project.getCode() != null && !project.getCode().isBlank()) ? project.getCode() : "INC";
-        Incident last = incidentRepository.findTopByProjectAndIncidentNumberStartingWithOrderByIncidentNumberDesc(project, prefix);
-        int nextNumber = 1;
-        if (last != null) {
-            String lastNumber = last.getIncidentNumber();
-            String numericPart = lastNumber.substring(prefix.length());
-            try {
-                nextNumber = Integer.parseInt(numericPart) + 1;
-            } catch (NumberFormatException ignored) {
-                nextNumber = 1;
-            }
+
+        if (project == null) {
+            throw new IllegalArgumentException("Project cannot be null");
         }
-        return prefix + String.format("%04d", nextNumber);
+
+        return  (project.getCode() != null && !project.getCode().isBlank())
+                ? project.getCode()
+                : "INC"+ DateTimeFormatter.ofPattern("yyyy").format(LocalDateTime.now());
     }
+
 
     @Transactional(readOnly = true)
     public Page<Incident> listByProject(UUID projectId, Pageable pageable) {

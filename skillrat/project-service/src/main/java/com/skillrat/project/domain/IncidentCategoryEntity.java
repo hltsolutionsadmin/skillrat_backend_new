@@ -1,5 +1,6 @@
 package com.skillrat.project.domain;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.skillrat.common.orm.BaseEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -34,5 +35,6 @@ public class IncidentCategoryEntity extends BaseEntity {
     private UUID organisationId;
 
     @OneToMany(mappedBy = "category")
+    @JsonManagedReference
     private List<IncidentSubCategoryEntity> subCategories;
 }
