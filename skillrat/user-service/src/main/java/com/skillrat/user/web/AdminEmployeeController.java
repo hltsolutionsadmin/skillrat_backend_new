@@ -39,7 +39,7 @@ public class AdminEmployeeController {
 
     // List employees with filters and pagination, scoped to a B2B unit
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN','BUSINESS_ADMIN','HR_ADMIN')")
+    @PreAuthorize("isAuthenticated()")
     public PageResponse<EmployeeSummaryDto> search(@RequestParam("b2bUnitId") UUID b2bUnitId,
                                                    @RequestParam(value = "q", required = false) String q,
                                                    @RequestParam(value = "employmentType", required = false) EmploymentType employmentType,
