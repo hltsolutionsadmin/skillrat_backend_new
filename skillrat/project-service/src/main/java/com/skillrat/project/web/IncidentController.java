@@ -27,7 +27,6 @@ public class IncidentController {
     }
 
     @PostMapping("/projects/{projectId}/incidents")
-   // @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Incident> create(@PathVariable("projectId") UUID projectId,
                                            @RequestBody @Valid CreateIncidentRequest req) {
         Incident incident = incidentService.create(
