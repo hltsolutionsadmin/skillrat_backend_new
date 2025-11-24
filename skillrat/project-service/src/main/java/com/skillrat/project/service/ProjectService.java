@@ -300,6 +300,18 @@ public class ProjectService {
         return userClient.getUsersByIds(body);
     }
 
+    @Transactional
+    public void removeMember(UUID projectId, UUID employeeId) {
+        ProjectMember member = memberRepository.findByProject_IdAndEmployeeId(projectId, employeeId)
+                .orElseThrow(() -> new IllegalArgumentException("Project member not found"));
+        // Remove allocations linked to this member to maintain referential integrity
+        List<WBSAllocation> allocations = allocationRepository.findByMember_Id(member.getId());
+        if (allocations != null && !allocations.isEmpty()) {
+            allocationRepository.deleteAll(allocations);
+        }
+        memberRepository.delete(member);
+    }
+
     @Transactional(readOnly = true)
     public Page<Project> listProjectsForUser(String email, Pageable pageable) {
         UUID userId = null;

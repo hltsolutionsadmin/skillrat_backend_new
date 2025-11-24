@@ -179,6 +179,14 @@ public class ProjectAdminController {
         return ResponseEntity.ok(w);
     }
 
+    @DeleteMapping("/{projectId}/removeMember/{employeeId}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Void> removeMember(@PathVariable UUID projectId,
+                                             @PathVariable UUID employeeId) {
+        service.removeMember(projectId, employeeId);
+        return ResponseEntity.noContent().build();
+    }
+
     public static class UpdateWbsRequest {
         public String name;
         public String code;
