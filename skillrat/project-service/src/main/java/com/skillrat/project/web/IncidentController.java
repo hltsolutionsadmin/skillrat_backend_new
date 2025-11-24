@@ -102,12 +102,12 @@ public class IncidentController {
         return incidentService.listByProjectAndLoggedInUser(projectId, PageRequest.of(page, size));
     }
 
-    @GetMapping("/incidents/reporter/{reporterId}")
+    @GetMapping("/incidents/reporter/{projectId}")
     @PreAuthorize("isAuthenticated()")
-    public Page<Incident> listByReporter(@PathVariable("reporterId") UUID reporterId,
+    public Page<Incident> listByReporter(@PathVariable("projectId") UUID projectId,
                                          @RequestParam(defaultValue = "0") @Min(0) int page,
                                          @RequestParam(defaultValue = "20") @Min(1) int size) {
-        return incidentService.listByReporter(reporterId, PageRequest.of(page, size));
+        return incidentService.listByReporter(projectId, PageRequest.of(page, size));
     }
     public static class CreateIncidentRequest {
         @NotBlank public String title;

@@ -157,6 +157,14 @@ public class UserController {
         return ok ? ResponseEntity.ok(Map.of("status", "ok")) : ResponseEntity.badRequest().body(Map.of("error", "Invalid or expired token"));
     }
 
+    // Bulk lookup: given a list of user IDs, return basic user details (for project-service member mapping)
+    @PostMapping("/internal/byIds")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<UserDTO>> getUsersByIds(@RequestBody IdsRequest req) {
+        List<UserDTO> users = userService.getUsersByIds(req.ids);
+        return ResponseEntity.ok(users);
+    }
+
     @GetMapping("/{userId}")
     @PreAuthorize("isAuthenticated()")
     public UserDTO getUserById(@PathVariable("userId") UUID userId) throws Exception {
@@ -200,5 +208,9 @@ public class UserController {
     public static class SetupPasswordRequest {
         @NotBlank public String token;
         @NotBlank public String newPassword;
+    }
+
+    public static class IdsRequest {
+        @NotEmpty public List<UUID> ids;
     }
 }
