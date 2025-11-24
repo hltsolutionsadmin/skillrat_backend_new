@@ -1,6 +1,8 @@
 package com.skillrat.project.service;
 
+import com.skillrat.common.dto.UserDTO;
 import com.skillrat.common.tenant.TenantContext;
+import com.skillrat.project.client.UserClient;
 import com.skillrat.project.domain.*;
 import com.skillrat.project.repo.IncidentRepository;
 import com.skillrat.project.repo.ProjectRepository;
@@ -10,11 +12,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.persistence.EntityManager;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -26,15 +31,17 @@ public class IncidentService {
     private final IncidentRepository incidentRepository;
     private final EntityManager entityManager;
     private final AuditClient auditClient;
+    private final UserClient userClient;
 
     public IncidentService(ProjectRepository projectRepository,
                            IncidentRepository incidentRepository,
                            EntityManager entityManager,
-                           AuditClient auditClient) {
+                           AuditClient auditClient, UserClient userClient) {
         this.projectRepository = projectRepository;
         this.incidentRepository = incidentRepository;
         this.entityManager = entityManager;
         this.auditClient = auditClient;
+        this.userClient = userClient;
     }
 
     @Transactional
@@ -95,12 +102,52 @@ public class IncidentService {
         return incidentRepository.findByProject_Id(projectId, pageable);
     }
 
+    @Transactional(readOnly = true)
+    public Page<Incident> listByProjectFiltered(
+            UUID projectId,
+            IncidentPriority priority,
+            IncidentCategory category,
+            IncidentStatus status,
+            String search,
+            Pageable pageable
+    ) {
+        Specification<Incident> spec = (root, query, cb) -> {
+            var predicates = new java.util.ArrayList<jakarta.persistence.criteria.Predicate>();
+            predicates.add(cb.equal(root.get("project").get("id"), projectId));
+            if (priority != null) {
+                predicates.add(cb.equal(root.get("priority"), priority));
+            }
+            if (category != null) {
+                predicates.add(cb.equal(root.get("category"), category));
+            }
+            if (status != null) {
+                predicates.add(cb.equal(root.get("status"), status));
+            }
+            if (search != null && !search.isBlank()) {
+                String like = "%" + search.toLowerCase() + "%";
+                var orPred = cb.or(
+                        cb.like(cb.lower(root.get("incidentNumber")), like),
+                        cb.like(cb.lower(root.get("title")), like),
+                        cb.like(cb.lower(root.get("shortDescription")), like)
+                );
+                predicates.add(orPred);
+            }
+            return cb.and(predicates.toArray(new jakarta.persistence.criteria.Predicate[0]));
+        };
+        return incidentRepository.findAll(spec, pageable);
+    }
+
     @Transactional
-    public Incident assignAssignee(UUID incidentId, UUID assigneeId) {
+    public Incident assignAssignee(UUID incidentId, UUID assigneeId) throws Exception {
         Incident incident = incidentRepository.findById(incidentId)
                 .orElseThrow(() -> new IllegalArgumentException("Incident not found"));
         UUID oldAssignee = incident.getAssigneeId();
+        UserDTO user=userClient.getUserById(assigneeId);
+        if(user==null){
+            throw new Exception("User not found with id: " + assigneeId);
+        }
         incident.setAssigneeId(assigneeId);
+        incident.setAssigneeName(user.getFirstName()+" "+user.getLastName());
         Incident saved = incidentRepository.save(incident);
         log.info("Incident assignee updated id={}, oldAssigneeId={}, newAssigneeId={}, updatedBy={}",
                 saved.getId(),
@@ -120,11 +167,17 @@ public class IncidentService {
     }
 
     @Transactional
-    public Incident assignReporter(UUID incidentId, UUID reporterId) {
+    public Incident assignReporter(UUID incidentId, UUID reporterId) throws Exception {
         Incident incident = incidentRepository.findById(incidentId)
                 .orElseThrow(() -> new IllegalArgumentException("Incident not found"));
         UUID oldReporter = incident.getReporterId();
+        UserDTO user=userClient.getUserById(reporterId);
+        if(user==null){
+            throw new Exception("User not found with id: " + reporterId);
+        }
         incident.setReporterId(reporterId);
+        incident.setAssigneeName(user.getFirstName()+" "+user.getLastName());
+
         Incident saved = incidentRepository.save(incident);
         log.info("Incident reporter updated id={}, oldReporterId={}, newReporterId={}, updatedBy={}",
                 saved.getId(),
@@ -213,4 +266,23 @@ public class IncidentService {
     public Page<Incident> listByReporter(UUID reporterId, Pageable pageable) {
         return incidentRepository.findByReporterId(reporterId, pageable);
     }
+
+    @Transactional(readOnly = true)
+    public Page<Incident> listByProjectAndLoggedInUser(UUID projectId, Pageable pageable) {
+
+        Map<String, Object> me = userClient.me();
+        if (me == null || me.get("id") == null) {
+            throw new IllegalStateException("Logged-in user not found");
+        }
+
+        UUID loggedInUserId = UUID.fromString(me.get("id").toString());
+
+        Specification<Incident> spec = (root, query, cb) -> cb.and(
+                cb.equal(root.get("project").get("id"), projectId),
+                cb.equal(root.get("assigneeId"), loggedInUserId)
+        );
+
+        return incidentRepository.findAll(spec, pageable);
+    }
+
 }

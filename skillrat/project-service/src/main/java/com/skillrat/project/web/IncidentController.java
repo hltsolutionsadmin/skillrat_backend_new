@@ -6,12 +6,13 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.validation.constraints.Min;
 import java.util.UUID;
 
 @RestController
@@ -43,14 +44,24 @@ public class IncidentController {
 
     @GetMapping("/projects/{projectId}/incidents")
     @PreAuthorize("isAuthenticated()")
-    public Page<Incident> listByProject(@PathVariable("projectId") UUID projectId, Pageable pageable) {
-        return incidentService.listByProject(projectId, pageable);
+    public Page<Incident> listByProject(@PathVariable("projectId") UUID projectId,
+                                        @RequestParam(defaultValue = "0") @Min(0) int page,
+                                        @RequestParam(defaultValue = "20") @Min(1) int size,
+                                        @RequestParam(value = "priority", required = false) IncidentPriority priority,
+                                        @RequestParam(value = "category", required = false) IncidentCategory category,
+                                        @RequestParam(value = "status", required = false) IncidentStatus status,
+                                        @RequestParam(value = "search", required = false) String search) {
+        boolean hasFilters = priority != null || category != null || status != null || (search != null && !search.isBlank());
+        if (hasFilters) {
+            return incidentService.listByProjectFiltered(projectId, priority, category, status, search, PageRequest.of(page, size));
+        }
+        return incidentService.listByProject(projectId, PageRequest.of(page, size));
     }
 
     @PutMapping("/incidents/{incidentId}/assignee")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Incident> assignAssignee(@PathVariable("incidentId") UUID incidentId,
-                                                   @RequestBody @Valid AssignUserRequest req) {
+                                                   @RequestBody @Valid AssignUserRequest req) throws Exception {
         Incident updated = incidentService.assignAssignee(incidentId, req.userId);
         return ResponseEntity.ok(updated);
     }
@@ -58,7 +69,7 @@ public class IncidentController {
     @PutMapping("/incidents/{incidentId}/reporter")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Incident> assignReporter(@PathVariable("incidentId") UUID incidentId,
-                                                   @RequestBody @Valid AssignUserRequest req) {
+                                                   @RequestBody @Valid AssignUserRequest req) throws Exception {
         Incident updated = incidentService.assignReporter(incidentId, req.userId);
         return ResponseEntity.ok(updated);
     }
@@ -83,16 +94,20 @@ public class IncidentController {
         return ResponseEntity.ok(incidentService.getById(incidentId));
     }
 
-    @GetMapping("/incidents/assignee/{assigneeId}")
+    @GetMapping("/projects/{projectId}/assignee")
     @PreAuthorize("isAuthenticated()")
-    public Page<Incident> listByAssignee(@PathVariable("assigneeId") UUID assigneeId, Pageable pageable) {
-        return incidentService.listByAssignee(assigneeId, pageable);
+    public Page<Incident> listByAssignee(@PathVariable("projectId") UUID projectId,
+                                         @RequestParam(defaultValue = "0") @Min(0) int page,
+                                         @RequestParam(defaultValue = "20") @Min(1) int size) {
+        return incidentService.listByProjectAndLoggedInUser(projectId, PageRequest.of(page, size));
     }
 
     @GetMapping("/incidents/reporter/{reporterId}")
     @PreAuthorize("isAuthenticated()")
-    public Page<Incident> listByReporter(@PathVariable("reporterId") UUID reporterId, Pageable pageable) {
-        return incidentService.listByReporter(reporterId, pageable);
+    public Page<Incident> listByReporter(@PathVariable("reporterId") UUID reporterId,
+                                         @RequestParam(defaultValue = "0") @Min(0) int page,
+                                         @RequestParam(defaultValue = "20") @Min(1) int size) {
+        return incidentService.listByReporter(reporterId, PageRequest.of(page, size));
     }
     public static class CreateIncidentRequest {
         @NotBlank public String title;

@@ -47,6 +47,11 @@ public class DepartmentService {
                 .ifPresent(d -> {
                     throw new IllegalArgumentException("Department with name " + department.getName() + " already exists");
                 });
+
+        departmentRepository.findByCode(department.getCode())
+                .ifPresent(d -> {
+                    throw new IllegalArgumentException("Department with code " + department.getCode() + " already exists");
+                });
         
         department.setTenantId(tenantId);
         Department saved = departmentRepository.save(department);
@@ -65,9 +70,17 @@ public class DepartmentService {
                         throw new IllegalArgumentException("Department with name " + departmentDetails.getName() + " already exists");
                     });
         }
-        
-        department.setName(departmentDetails.getName());
-        department.setDescription(departmentDetails.getDescription());
+        if (departmentDetails.getCode() != null) {
+            department.setCode(departmentDetails.getCode());
+        }
+
+        if (departmentDetails.getName() != null) {
+            department.setName(departmentDetails.getName());
+        }
+
+        if (departmentDetails.getDescription() != null) {
+            department.setDescription(departmentDetails.getDescription());
+        }
         department.setActive(departmentDetails.isActive());
         
         Department updated = departmentRepository.save(department);
@@ -78,8 +91,7 @@ public class DepartmentService {
     @Transactional
     public void deleteDepartment(UUID id) {
         Department department = getDepartmentById(id);
-        department.setActive(false);
-        departmentRepository.save(department);
+        departmentRepository.delete(department);
         log.info("Department deactivated id={}, name={}", department.getId(), department.getName());
     }
 

@@ -56,6 +56,12 @@ public class Incident extends BaseEntity {
     @Column(name = "assignee_id")
     private java.util.UUID assigneeId;
 
+    @Column(nullable = true, length = 200)
+    private String assigneeName;
+
     @Column(name = "reporter_id")
     private java.util.UUID reporterId;
+
+    @Column(nullable = true, length = 200)
+    private String reporterName;
 }

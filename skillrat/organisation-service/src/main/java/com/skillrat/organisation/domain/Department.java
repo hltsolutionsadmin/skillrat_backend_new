@@ -24,4 +24,7 @@ public class Department extends BaseEntity {
     
     @Column(name = "b2b_unit_id")
     private java.util.UUID b2bUnitId;
+
+    @Column(nullable = false, unique = true, length = 100)
+    private String code;
 }
