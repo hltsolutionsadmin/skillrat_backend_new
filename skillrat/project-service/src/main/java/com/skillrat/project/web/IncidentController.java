@@ -1,4 +1,4 @@
-ipackage com.skillrat.project.web;
+package com.skillrat.project.web;
 
 import com.skillrat.project.domain.*;
 import com.skillrat.project.service.IncidentService;
