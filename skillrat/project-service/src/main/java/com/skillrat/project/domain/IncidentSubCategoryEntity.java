@@ -1,5 +1,6 @@
 package com.skillrat.project.domain;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.skillrat.common.orm.BaseEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -20,6 +21,7 @@ public class IncidentSubCategoryEntity extends BaseEntity {
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "category_id", nullable = false)
+    @JsonBackReference
     private IncidentCategoryEntity category;
 
     @Column(nullable = false, length = 64)
