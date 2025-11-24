@@ -81,52 +81,39 @@ public class UserService {
 
     @Transactional
     public User adminCreateUser(UUID b2bUnitId, String firstName, String lastName, String email, String mobile, List<UUID> roleIds) {
-        if (email == null || email.isBlank()) {
-            throw new IllegalArgumentException("Email is required");
-        }
-        
         String tenantId = Optional.ofNullable(TenantContext.getTenantId()).orElse("default");
-        
-        // Check for existing user
-        if (userRepository.existsByEmailIgnoreCase(email)) {
-            throw new IllegalArgumentException("Email already in use");
+        userRepository.findByEmailIgnoreCase(email).ifPresent(u -> { throw new IllegalArgumentException("Email already in use"); });
+        if (mobile != null && !mobile.isBlank()) {
+            userRepository.findByMobile(mobile).ifPresent(u -> { throw new IllegalArgumentException("Mobile already in use"); });
         }
-        if (mobile != null && !mobile.isBlank() && userRepository.existsByMobile(mobile)) {
-            throw new IllegalArgumentException("Mobile number already in use");
-        }
-        
-        // Create and save user
-        User user = new User();
-        user.setFirstName(firstName != null ? firstName.trim() : null);
-        user.setLastName(lastName != null ? lastName.trim() : null);
-        user.setUsername(email.toLowerCase().trim());
-        user.setEmail(email.toLowerCase().trim());
-        user.setMobile(mobile != null ? mobile.trim() : null);
-        user.setPasswordHash(passwordEncoder.encode(UUID.randomUUID().toString()));
-        user.setActive(true);
-        user.setTenantId(tenantId);
-        user.setB2bUnitId(b2bUnitId);
-        user.setPasswordNeedsReset(true);
-        user.setPasswordSetupToken(UUID.randomUUID().toString());
-        user.setPasswordSetupTokenExpires(Instant.now().plus(7, ChronoUnit.DAYS));
-        
-        // Assign roles
-        Set<Role> roles = new HashSet<>();
-        if (roleIds != null && !roleIds.isEmpty()) {
-            roles.addAll(roleRepository.findAllById(roleIds));
-        }
-        
-        // Always add ROLE_USER if not already present
-        if (roles.stream().noneMatch(r -> "ROLE_USER".equals(r.getName()))) {
-            Role userRole = getOrCreateRole("ROLE_USER", "Default role for all users", b2bUnitId);
-            roles.add(userRole);
-        }
-        
-        user.setRoles(roles);
-        
-        User savedUser = userRepository.save(user);
-        log.info("Admin created user id={}, email={}, tenantId={}", savedUser.getId(), savedUser.getEmail(), tenantId);
-        return savedUser;
+        User u = new User();
+        u.setFirstName(firstName);
+        u.setLastName(lastName);
+        u.setUsername(email.toLowerCase());
+        u.setEmail(email.toLowerCase());
+        u.setMobile(mobile);
+        u.setPasswordHash(passwordEncoder.encode(UUID.randomUUID().toString()));
+        u.setActive(true);
+        u.setTenantId(tenantId);
+        u.setB2bUnitId(b2bUnitId);
+        u.setPasswordNeedsReset(true);
+        u.setPasswordSetupToken(UUID.randomUUID().toString());
+        u.setPasswordSetupTokenExpires(Instant.now().plus(7, ChronoUnit.DAYS));
+        Role r = roleRepository.findByNameAndB2bUnitId("BUSINESS_ADMIN", b2bUnitId)
+                .orElseGet(() -> {
+                    Role newRole = new Role();
+                    newRole.setName("BUSINESS_ADMIN");
+                    newRole.setB2bUnitId(b2bUnitId);
+                    newRole.setTenantId(tenantId);
+                    return roleRepository.save(newRole);
+                });
+        Set<Role> roles = Optional.ofNullable(u.getRoles())
+                .orElseGet(HashSet::new);
+        roles.add(r);
+        u.setRoles(roles);
+        roles.add(r);
+        u.setRoles(roles);
+        return userRepository.save(u);
     }
 
     @Transactional
