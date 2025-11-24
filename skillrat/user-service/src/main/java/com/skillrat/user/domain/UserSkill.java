@@ -4,18 +4,15 @@ import com.skillrat.common.orm.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
 import java.util.UUID;
 
 @Entity
 @Table(name = "user_skills")
-@Getter
-@Setter
-@NoArgsConstructor
 public class UserSkill extends BaseEntity {
+
+    public UserSkill() {
+        // Default constructor
+    }
 
     @Column(name = "user_id", nullable = false)
     private UUID userId;
@@ -25,4 +22,29 @@ public class UserSkill extends BaseEntity {
 
     @Column(length = 32)
     private String level; // Beginner, Intermediate, Expert (optional)
+    
+    // Getters and setters
+    public UUID getUserId() {
+        return userId;
+    }
+    
+    public void setUserId(UUID userId) {
+        this.userId = userId;
+    }
+    
+    public String getName() {
+        return name;
+    }
+    
+    public void setName(String name) {
+        this.name = name;
+    }
+    
+    public String getLevel() {
+        return level;
+    }
+    
+    public void setLevel(String level) {
+        this.level = level;
+    }
 }
