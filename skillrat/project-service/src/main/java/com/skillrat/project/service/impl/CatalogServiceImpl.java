@@ -3,6 +3,7 @@ package com.skillrat.project.service.impl;
 import com.skillrat.common.tenant.TenantContext;
 import com.skillrat.project.domain.IncidentCategoryEntity;
 import com.skillrat.project.domain.IncidentSubCategoryEntity;
+import com.skillrat.project.client.OrganisationClient;
 import com.skillrat.project.repo.IncidentCategoryRepository;
 import com.skillrat.project.repo.IncidentSubCategoryRepository;
 import com.skillrat.project.service.CatalogService;
@@ -22,11 +23,14 @@ public class CatalogServiceImpl implements CatalogService {
 
     private final IncidentCategoryRepository categoryRepo;
     private final IncidentSubCategoryRepository subCategoryRepo;
+    private final OrganisationClient organisationClient;
 
     public CatalogServiceImpl(IncidentCategoryRepository categoryRepo,
-                              IncidentSubCategoryRepository subCategoryRepo) {
+                              IncidentSubCategoryRepository subCategoryRepo,
+                              OrganisationClient organisationClient) {
         this.categoryRepo = categoryRepo;
         this.subCategoryRepo = subCategoryRepo;
+        this.organisationClient = organisationClient;
     }
 
     private static CategoryDTO toDTO(IncidentCategoryEntity e) {
@@ -68,6 +72,9 @@ public class CatalogServiceImpl implements CatalogService {
         if (dto.code == null || dto.code.isBlank()) throw new IllegalArgumentException("code is required");
         if (dto.name == null || dto.name.isBlank()) throw new IllegalArgumentException("name is required");
         if (dto.organisationId == null) throw new IllegalArgumentException("organisationId is required");
+        if (!organisationClient.existsOrganisation(dto.organisationId)) {
+            throw new IllegalArgumentException("organisationId is invalid or not found");
+        }
         if (categoryRepo.existsByTenantIdAndOrganisationIdAndCodeIgnoreCase(tenantId, dto.organisationId, dto.code)) {
             throw new IllegalArgumentException("Category code already exists");
         }
