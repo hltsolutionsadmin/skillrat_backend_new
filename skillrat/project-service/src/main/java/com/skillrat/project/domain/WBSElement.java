@@ -25,7 +25,6 @@ public class WBSElement extends BaseEntity {
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "project_id")
-    @JsonBackReference
     private Project project;
 
     @Column(nullable = false, length = 200)
