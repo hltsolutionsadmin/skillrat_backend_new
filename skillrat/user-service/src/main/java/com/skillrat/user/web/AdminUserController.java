@@ -31,7 +31,7 @@ public class AdminUserController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN','BUSINESS_ADMIN','HR_ADMIN')")
+    @PreAuthorize("isAuthenticated()")
     public Page<User> search(@RequestParam("b2bUnitId") UUID b2bUnitId,
                                  @RequestParam(value = "q", required = false) String q,
                                  Pageable pageable) {
