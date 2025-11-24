@@ -237,12 +237,15 @@ public class ProjectService {
     }
 
     @Transactional
-    public WBSAllocation allocateMemberToWbs(UUID memberId, UUID wbsId, LocalDate start, LocalDate end) {
-        ProjectMember member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new IllegalArgumentException("Project member not found"));
+    public WBSAllocation allocateMemberToWbs(UUID projectId,UUID userId, UUID wbsId, LocalDate start, LocalDate end) {
+        Optional<ProjectMember> projectMember = memberRepository.findByProject_IdAndEmployeeId(projectId, userId);
+        if (projectMember.isEmpty()) {
+            throw new IllegalArgumentException("Member not found");
+        }
+        ProjectMember member = projectMember.get();
         WBSElement wbs = wbsRepository.findById(wbsId)
                 .orElseThrow(() -> new IllegalArgumentException("WBS not found"));
-        // Validate project match
+// Validate project match
         if (!wbs.getProject().getId().equals(member.getProject().getId())) {
             throw new IllegalStateException("WBS and Member must belong to the same project");
         }
