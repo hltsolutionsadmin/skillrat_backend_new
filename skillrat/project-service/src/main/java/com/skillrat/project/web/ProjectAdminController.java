@@ -95,13 +95,15 @@ public class ProjectAdminController {
     }
 
     // Allocate member to a WBS (assignment that controls time entry eligibility)
-    @PostMapping("/members/{memberId}/allocations")
+    @PostMapping("/members/{projectId}/allocations/{userId}")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<WBSAllocation> allocate(@PathVariable("memberId") UUID memberId,
+    public ResponseEntity<WBSAllocation> allocate(@PathVariable("projectId") UUID projectId,
+                                                  @PathVariable("userId") UUID userId,
                                                   @RequestBody @Valid AllocateRequest req) {
-        WBSAllocation a = service.allocateMemberToWbs(memberId, req.wbsId, req.startDate, req.endDate);
+        WBSAllocation a = service.allocateMemberToWbs(projectId,userId, req.wbsId, req.startDate, req.endDate);
         return ResponseEntity.ok(a);
     }
+
 
     @GetMapping("/{projectId}")
     public ResponseEntity<Project> getProject(@PathVariable("projectId") UUID projectId) {
