@@ -43,4 +43,22 @@ public class MailService {
         mailSender.send(msg);
         log.info("Password setup email sent to {}", toEmail);
     }
+    
+    @Async
+    public void sendOtpEmail(String toEmail, String otp) {
+        if (toEmail == null || otp == null) return;
+        String subject = "Your SkillRat Login OTP";
+        String text = "Your OTP for SkillRat login is: " + otp + "\n\n" +
+                "This OTP is valid for 10 minutes.\n" +
+                "If you didn't request this OTP, please ignore this email or contact support.";
+
+        SimpleMailMessage msg = new SimpleMailMessage();
+        msg.setFrom(fromAddress);
+        msg.setTo(toEmail);
+        msg.setSubject(subject);
+        msg.setText(text);
+        log.info("Sending OTP email to {}", toEmail);
+        mailSender.send(msg);
+        log.info("OTP email sent to {}", toEmail);
+    }
 }

@@ -3,11 +3,14 @@ package com.skillrat.user.web;
 import com.skillrat.common.dto.UserDTO;
 import com.skillrat.user.domain.User;
 import com.skillrat.user.domain.Employee;
+import com.skillrat.user.service.OtpService;
 import com.skillrat.user.service.UserService;
 import com.skillrat.user.service.OrganisationClient;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.Size;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -16,19 +19,26 @@ import org.springframework.security.core.Authentication;
 import com.skillrat.user.security.RequiresBusinessOrHrAdmin;
 
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.Objects;
+import java.util.UUID;
+import java.util.HashMap;
 
 @RestController
 @RequestMapping("/api/users")
 @Validated
+@Slf4j
 // Manual constructor replaces @RequiredArgsConstructor
 public class UserController {
 
     private final UserService userService;
     private final OrganisationClient organisationClient;
+    private final OtpService otpService;
 
-    public UserController(UserService userService, OrganisationClient organisationClient) {
+    public UserController(UserService userService, OrganisationClient organisationClient, OtpService otpService) {
         this.userService = userService;
         this.organisationClient = organisationClient;
+        this.otpService = otpService;
     }
 
     @GetMapping("/me")
@@ -171,6 +181,108 @@ public class UserController {
         return userService.getUserById(userId);
     }
 
+//    public static class SignupRequest {
+//        @NotBlank public String firstName;
+//        @NotBlank public String lastName;
+//        @NotBlank @Email public String email;
+//        public String mobile;
+//        @NotBlank public String password;
+//    }
+
+    public static class LoginRequest {
+        @NotBlank public String emailOrMobile;
+        @NotBlank public String password;
+    }
+
+//    public static class CreateBusinessAdminRequest {
+//        @NotBlank public String firstName;
+//        @NotBlank public String lastName;
+//        @NotBlank @Email public String email;
+//        public String mobile;
+//        public java.util.UUID b2bUnitId;
+//    }
+
+//    public static class AssignBusinessAdminRequest {
+//        @NotBlank @Email public String email;
+//        public java.util.UUID b2bUnitId;
+//    }
+
+//    public static class InviteEmployeeRequest {
+//        @NotBlank public String firstName;
+//        @NotBlank public String lastName;
+//        @NotBlank @Email public String email;
+//        public String mobile;
+//        @NotEmpty public java.util.List<java.util.UUID> roleIds;
+//    }
+
+//    public static class SetupPasswordRequest {
+//        @NotBlank public String token;
+//        @NotBlank public String newPassword;
+//    }
+
+//    public static class IdsRequest {
+//        @NotEmpty public List<UUID> ids;
+//    }
+
+    @PostMapping("/otp/send")
+    public ResponseEntity<?> sendOtp(@RequestBody OtpRequest request) {
+        boolean sent = otpService.sendOtp(request.email);
+        if (sent) {
+            return ResponseEntity.ok(Map.of("message", "OTP sent successfully"));
+        } else {
+            return ResponseEntity.badRequest().body(Map.of("error", "User not found with the provided email"));
+        }
+    }
+
+    @PostMapping("/otp/verify")
+    public ResponseEntity<?> verifyOtp(@RequestBody VerifyOtpRequest request) {
+        log.info("Verifying OTP for email: {}", request.email);
+        
+        try {
+            return otpService.verifyOtpAndGetToken(request.email, request.otp)
+                    .flatMap(token -> {
+                        log.debug("OTP verified, getting user details for: {}", request.email);
+                        return userService.findByEmail(request.email)
+                                .map(user -> {
+                                    try {
+                                        List<String> roles = (user.getRoles() == null)
+                                                ? List.of()
+                                                : user.getRoles().stream()
+                                                        .filter(Objects::nonNull)
+                                                        .map(r -> r.getName())
+                                                        .filter(Objects::nonNull)
+                                                        .collect(Collectors.toList());
+
+                                        Map<String, Object> response = new HashMap<>();
+                                        response.put("token", token);
+                                        response.put("id", user.getId());
+                                        response.put("username", user.getUsername());
+                                        response.put("email", user.getEmail());
+                                        response.put("mobile", user.getMobile());
+                                        response.put("roles", roles);
+
+                                        log.info("Successfully authenticated user via OTP: {}", request.email);
+                                        return ResponseEntity.ok(response);
+                                    } catch (Exception e) {
+                                        log.error("Error processing user data for: " + request.email, e);
+                                        return ResponseEntity.status(500).body(
+                                                Map.of("error", "Error processing user data"));
+                                    }
+                                });
+                    })
+                    .orElseGet(() -> {
+                        log.warn("Invalid or expired OTP for email: {}", request.email);
+                        return ResponseEntity.status(401)
+                                .body(Map.of("error", "Invalid or expired OTP"));
+                    });
+        } catch (Exception e) {
+            log.error("Unexpected error during OTP verification for email: " + request.email, e);
+            return ResponseEntity.status(500)
+                    .body(Map.of("error", "An unexpected error occurred during OTP verification"));
+        }
+    }
+
+
     public static class SignupRequest {
         @NotBlank public String firstName;
         @NotBlank public String lastName;
@@ -179,10 +291,10 @@ public class UserController {
         @NotBlank public String password;
     }
 
-    public static class LoginRequest {
-        @NotBlank public String emailOrMobile;
-        @NotBlank public String password;
-    }
+//    public static class LoginRequest {
+//        @NotBlank public String emailOrMobile;
+//        @NotBlank public String password;
+//    }
 
     public static class CreateBusinessAdminRequest {
         @NotBlank public String firstName;
@@ -212,5 +324,14 @@ public class UserController {
 
     public static class IdsRequest {
         @NotEmpty public List<UUID> ids;
+    }
+
+    public static class OtpRequest {
+        @NotBlank @Email public String email;
+    }
+
+    public static class VerifyOtpRequest {
+        @NotBlank @Email public String email;
+        @NotBlank @Size(min = 4, max = 8) public String otp;
     }
 }

@@ -30,6 +30,22 @@ spring:
 
   security:
     oauth2:
+      client:
+        registration:
+          skillrat:
+            client-id: skillrat-client
+            client-secret: your-client-secret-here
+            authorization-grant-type: password
+            scope: read,write
+            client-authentication-method: basic
+        provider:
+          skillrat:
+            token-uri: http://localhost:8087/oauth2/token
+            authorization-uri: http://localhost:8087/oauth2/authorize
+            user-info-uri: http://localhost:8087/userinfo
+            user-info-authentication-method: header
+            user-name-attribute: sub
+            jwk-set-uri: http://localhost:8087/oauth2/jwks
       resourceserver:
         jwt:
           jwk-set-uri: http://localhost:8087/oauth2/jwks

@@ -71,7 +71,9 @@ public class SecurityConfig {
                     "/api/users/signup",
                     "/api/users/login",
                     "/api/users/password/reset",
-                    "/api/users/password/setup"
+                    "/api/users/password/setup",
+                    "/api/users/otp/send",
+                    "/api/users/otp/verify"
                 ).permitAll()
                 
                 // Role management endpoints
