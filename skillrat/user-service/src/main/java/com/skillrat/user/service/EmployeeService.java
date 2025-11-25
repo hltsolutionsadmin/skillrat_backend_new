@@ -8,6 +8,8 @@ import com.skillrat.user.domain.User;
 import com.skillrat.user.repo.EmployeeRepository;
 import com.skillrat.user.repo.RoleRepository;
 import com.skillrat.user.repo.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -26,19 +28,24 @@ import java.util.UUID;
 @Service
 public class EmployeeService {
 
+    private static final Logger log = LoggerFactory.getLogger(EmployeeService.class);
+
     private final EmployeeRepository employeeRepository;
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
+    private final MailService mailService;
 
     public EmployeeService(EmployeeRepository employeeRepository,
                            UserRepository userRepository,
                            RoleRepository roleRepository,
-                           PasswordEncoder passwordEncoder) {
+                           PasswordEncoder passwordEncoder,
+                           MailService mailService) {
         this.employeeRepository = employeeRepository;
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
+        this.mailService = mailService;
     }
 
     @Transactional(readOnly = true)
@@ -101,7 +108,13 @@ public class EmployeeService {
             Set<Role> roles = new HashSet<>(roleRepository.findAllById(roleIds));
             e.setRoles(roles);
         }
-        return employeeRepository.save(e);
+        Employee saved = employeeRepository.save(e);
+        try {
+            mailService.sendPasswordSetupEmail(saved.getEmail(), saved.getFirstName(), saved.getPasswordSetupToken());
+        } catch (Exception ex) {
+            log.error("Failed to send password setup email to {}: {}", saved.getEmail(), ex.getMessage());
+        }
+        return saved;
     }
 
     @Transactional
