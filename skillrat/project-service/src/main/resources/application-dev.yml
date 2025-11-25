@@ -40,6 +40,9 @@ services:
 skillrat:
   gateway:
     check-token-cache-ttl-seconds: 30
+  client:
+    id: gateway
+    secret: gateway-secret
   coins:
     education:
       perAction: 10
