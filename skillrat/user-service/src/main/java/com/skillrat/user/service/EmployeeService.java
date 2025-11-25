@@ -96,7 +96,8 @@ public class EmployeeService {
             e.setReportingManager(rm);
         }
         e.setEmployeeCode("EMP-" + UUID.randomUUID().toString().substring(0,8).toUpperCase());
-        e.setPasswordHash(passwordEncoder.encode(UUID.randomUUID().toString()));
+        String defaultPassword = "Password@123";
+        e.setPasswordHash(passwordEncoder.encode(defaultPassword));
         e.setActive(true);
         e.setTenantId(tenantId);
         e.setB2bUnitId(b2bUnitId);
