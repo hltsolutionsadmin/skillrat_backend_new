@@ -28,11 +28,9 @@ public class MailService {
     public void sendPasswordSetupEmail(String toEmail, String displayName, String token) {
         if (toEmail == null || token == null) return;
         String subject = "Set up your SkillRat account password";
-        String link = frontendBaseUrl.replaceAll("/$", "") + "/password/setup?token=" + token;
         String greeting = (displayName != null && !displayName.isBlank()) ? ("Hi " + displayName + ",") : "Hi,";
         String text = greeting + "\n\n" +
-                "An account has been created for you. Please set your password using the link below:" + "\n\n" +
-                link + "\n\n" +
+                "An account has been created for you. Please set your password in the application." + "\n\n" +
                 "This link will expire in 7 days." + "\n\n" +
                 "If you didn't expect this email, you can ignore it.";
 
