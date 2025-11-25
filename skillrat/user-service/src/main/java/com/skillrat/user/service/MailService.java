@@ -6,6 +6,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Async;
 
 @Service
 public class MailService {
@@ -23,6 +24,7 @@ public class MailService {
         this.frontendBaseUrl = frontendBaseUrl;
     }
 
+    @Async
     public void sendPasswordSetupEmail(String toEmail, String displayName, String token) {
         if (toEmail == null || token == null) return;
         String subject = "Set up your SkillRat account password";
