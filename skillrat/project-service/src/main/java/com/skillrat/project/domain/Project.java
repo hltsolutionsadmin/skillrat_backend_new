@@ -67,5 +67,11 @@ public class Project extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "project_status", nullable = false, length = 32)
     private ProjectStatus projectStatus = ProjectStatus.PLANNED;
+
+    @Column(name = "task_management_enabled", nullable = false)
+    private boolean taskManagement = false;
+
+    @Column(name = "incident_management_enabled", nullable = false)
+    private boolean projectManagement = false;
 }
 

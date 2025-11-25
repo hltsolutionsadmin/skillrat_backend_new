@@ -53,6 +53,8 @@ public class ProjectAdminController {
                 req.projectType,
                 req.status,
                 req.projectStatus,
+                req.taskManagement,
+                req.projectManagement,
                 userId
         );
         return ResponseEntity.ok(p);
@@ -86,6 +88,8 @@ public class ProjectAdminController {
                 req.projectType,
                 req.status,
                 req.projectStatus,
+                req.taskManagement,
+                req.projectManagement,
                 userId
         );
         return ResponseEntity.ok(p);
@@ -236,6 +240,9 @@ public class ProjectAdminController {
         public ProjectType projectType;
         public ProjectSLAType status;
         public ProjectStatus projectStatus;
+        public boolean taskManagement;
+        public boolean projectManagement;
+
     }
 
     public static class CreateWbsRequest {
@@ -277,6 +284,8 @@ public class ProjectAdminController {
         public ProjectType projectType;
         public ProjectSLAType status;
         public ProjectStatus projectStatus;
+        public boolean taskManagement;
+        public boolean projectManagement;
     }
 
 }
