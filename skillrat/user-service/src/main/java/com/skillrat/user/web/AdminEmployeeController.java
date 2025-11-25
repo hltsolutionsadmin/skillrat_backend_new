@@ -108,6 +108,13 @@ public class AdminEmployeeController {
         return ResponseEntity.ok(e);
     }
 
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deleteUser(@PathVariable UUID id) {
+        employeeService.deleteUser(id);
+        return ResponseEntity.ok("User deleted successfully");
+    }
+
+
     public static class CreateEmployeeRequest {
         @NotNull public UUID b2bUnitId;
         @NotBlank public String firstName;
