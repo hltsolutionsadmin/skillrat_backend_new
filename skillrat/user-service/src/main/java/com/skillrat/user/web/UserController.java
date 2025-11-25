@@ -5,9 +5,15 @@ import com.skillrat.user.domain.User;
 import com.skillrat.user.domain.Employee;
 import com.skillrat.user.service.UserService;
 import com.skillrat.user.service.OrganisationClient;
+import com.skillrat.user.service.OtpService;
+import com.skillrat.user.web.dto.OtpRequest;
+import com.skillrat.user.web.dto.OtpVerificationRequest;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -20,15 +26,76 @@ import java.util.*;
 @RestController
 @RequestMapping("/api/users")
 @Validated
+@Slf4j
 // Manual constructor replaces @RequiredArgsConstructor
 public class UserController {
 
     private final UserService userService;
     private final OrganisationClient organisationClient;
+    private final OtpService otpService;
 
-    public UserController(UserService userService, OrganisationClient organisationClient) {
+    public UserController(UserService userService, 
+                         OrganisationClient organisationClient,
+                         OtpService otpService) {
         this.userService = userService;
         this.organisationClient = organisationClient;
+        this.otpService = otpService;
+    }
+
+    /**
+     * Send OTP to the provided email address
+     * @param request OTP request containing the email
+     * @return Success message
+     */
+    @PostMapping("/otp/send")
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<Map<String, String>> sendOtp(@RequestBody @Valid OtpRequest request) {
+        try {
+            otpService.sendOtp(request.email());
+            return ResponseEntity.ok(Map.of(
+                "status", "success",
+                "message", "OTP has been sent to your email"
+            ));
+        } catch (Exception e) {
+            log.error("Error sending OTP: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of(
+                    "status", "error",
+                    "message", "Failed to send OTP. Please try again later.",
+                    "error", e.getMessage()
+                ));
+        }
+    }
+
+    /**
+     * Verify the provided OTP for the given email
+     * @param request Verification request containing email and OTP
+     * @return Success message if OTP is valid
+     */
+    @PostMapping("/otp/verify")
+    public ResponseEntity<Map<String, String>> verifyOtp(@RequestBody @Valid OtpVerificationRequest request) {
+        try {
+            boolean isValid = otpService.verifyOtp(request.email(), request.otp());
+            if (isValid) {
+                return ResponseEntity.ok(Map.of(
+                    "status", "success",
+                    "message", "OTP verified successfully"
+                ));
+            } else {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                    "status", "error",
+                    "message", "Invalid or expired OTP"
+                ));
+            }
+        } catch (Exception e) {
+            log.error("Error verifying OTP: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of(
+                    "status", "error",
+                    "message", "Error verifying OTP. Please try again.",
+                    "error", e.getMessage()
+                ));
+        }
     }
 
     @GetMapping("/me")
