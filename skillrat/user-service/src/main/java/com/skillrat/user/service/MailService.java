@@ -4,6 +4,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 public class MailService {
@@ -11,6 +13,7 @@ public class MailService {
     private final JavaMailSender mailSender;
     private final String fromAddress;
     private final String frontendBaseUrl;
+    private static final Logger log = LoggerFactory.getLogger(MailService.class);
 
     public MailService(JavaMailSender mailSender,
                        @Value("${spring.mail.username}") String fromAddress,
@@ -36,6 +39,8 @@ public class MailService {
         msg.setTo(toEmail);
         msg.setSubject(subject);
         msg.setText(text);
+        log.info("Sending password setup email to {}", toEmail);
         mailSender.send(msg);
+        log.info("Password setup email sent to {}", toEmail);
     }
 }
