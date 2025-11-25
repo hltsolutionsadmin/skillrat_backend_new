@@ -112,7 +112,7 @@ public class EmployeeService {
         try {
             mailService.sendPasswordSetupEmail(saved.getEmail(), saved.getFirstName(), saved.getPasswordSetupToken());
         } catch (Exception ex) {
-            log.error("Failed to send password setup email to {}: {}", saved.getEmail(), ex.getMessage());
+            log.info("Failed to send password setup email to {}", saved.getEmail());
         }
         return saved;
     }
