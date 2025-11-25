@@ -78,7 +78,6 @@ public class ProjectService {
         if (projectStatus != null) {
             p.setProjectStatus(projectStatus);
         }
-        p.setProjectStatus(ProjectStatus.ACTIVE);
         if (clientName != null && !clientName.isBlank()) {
             ProjectClient client = new ProjectClient();
             client.setName(clientName);
