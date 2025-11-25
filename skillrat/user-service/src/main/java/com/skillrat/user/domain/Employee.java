@@ -27,6 +27,10 @@ public class Employee extends User {
     @Column(length = 128)
     private String department;
 
+    @Enumerated(EnumType.STRING)
+    @Column(length = 32)
+    private EmployeeBand band;
+
     private LocalDate hireDate;
 
     @Enumerated(EnumType.STRING)
@@ -84,6 +88,14 @@ public class Employee extends User {
     
     public void setReportingManager(User reportingManager) {
         this.reportingManager = reportingManager;
+    }
+
+    public EmployeeBand getBand() {
+        return band;
+    }
+
+    public void setBand(EmployeeBand band) {
+        this.band = band;
     }
     
     // Default constructor
