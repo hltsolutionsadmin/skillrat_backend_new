@@ -49,6 +49,9 @@ public class ProjectAdminController {
                 req.client != null ? req.client.name : null,
                 req.client != null ? req.client.primaryContactEmail : null,
                 req.client != null ? req.client.secondaryContactEmail : null,
+                req.projectType,
+                req.status,
+                req.projectStatus,
                 userId
         );
         return ResponseEntity.ok(p);
@@ -79,6 +82,9 @@ public class ProjectAdminController {
                 req.client != null ? req.client.name : null,
                 req.client != null ? req.client.primaryContactEmail : null,
                 req.client != null ? req.client.secondaryContactEmail : null,
+                req.projectType,
+                req.status,
+                req.projectStatus,
                 userId
         );
         return ResponseEntity.ok(p);
@@ -177,7 +183,7 @@ public class ProjectAdminController {
     @PutMapping("/wbs/{wbsId}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<WBSElement> updateWbs(@PathVariable UUID wbsId, @RequestBody @Valid UpdateWbsRequest req) {
-        WBSElement w = service.updateWbs(wbsId, req.name, req.code, req.category, req.startDate, req.endDate,req.projectId);
+        WBSElement w = service.updateWbs(wbsId, req.name, req.code, req.category, req.startDate, req.endDate,req.projectId,req.disabled);
         return ResponseEntity.ok(w);
     }
 
@@ -196,6 +202,7 @@ public class ProjectAdminController {
         public WBSCategory category;
         public LocalDate startDate;
         public LocalDate endDate;
+        public boolean disabled;
     }
     // Helper methods to get current user info
     private String getCurrentUserId() {
@@ -225,6 +232,9 @@ public class ProjectAdminController {
         public LocalDate endDate;
         public String description;
         public ProjectClientRequest client;
+        public ProjectType projectType;
+        public ProjectSLAType status;
+        public ProjectStatus projectStatus;
     }
 
     public static class CreateWbsRequest {
@@ -263,6 +273,9 @@ public class ProjectAdminController {
         public LocalDate startDate;
         public LocalDate endDate;
         public ProjectClientRequest client;
+        public ProjectType projectType;
+        public ProjectSLAType status;
+        public ProjectStatus projectStatus;
     }
 
 }
