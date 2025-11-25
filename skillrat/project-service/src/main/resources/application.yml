@@ -32,3 +32,9 @@ management:
     web:
       exposure:
         include: "*"
+
+skillrat:
+  client:
+    id: gateway
+    secret: gateway-secret
+
