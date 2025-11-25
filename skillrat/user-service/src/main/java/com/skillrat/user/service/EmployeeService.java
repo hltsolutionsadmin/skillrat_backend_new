@@ -146,4 +146,17 @@ public class EmployeeService {
         }
         return employeeRepository.save(e);
     }
+
+
+    @Transactional
+    public void deleteUser(UUID userId) {
+
+        if (!userRepository.existsById(userId)) {
+            throw new IllegalArgumentException("User not found with id: " + userId);
+        }
+        // Step 1: Remove dependent mapping first
+        employeeRepository.deleteById(userId);
+        // Step 2: Delete User
+        userRepository.deleteById(userId);
+    }
 }
