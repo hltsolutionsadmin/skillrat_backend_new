@@ -7,7 +7,6 @@ import com.skillrat.project.domain.*;
 import com.skillrat.project.repo.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -16,10 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.*;
-import java.util.stream.Collectors;
-
-import jakarta.persistence.criteria.Join;
-import jakarta.persistence.criteria.Predicate;
 
 @Service
 public class ProjectService {
@@ -44,15 +39,18 @@ public class ProjectService {
 
     @Transactional
     public Project createProject(String name,
-                               String code,
-                               String description,
-                               String b2bUnitId,
-                               LocalDate start,
-                               LocalDate end,
-                               String clientName,
-                               String clientPrimaryEmail,
-                               String clientSecondaryEmail,
-                               String createdBy) {
+                                 String code,
+                                 String description,
+                                 String b2bUnitId,
+                                 LocalDate start,
+                                 LocalDate end,
+                                 String clientName,
+                                 String clientPrimaryEmail,
+                                 String clientSecondaryEmail,
+                                 ProjectType projectType,
+                                 ProjectSLAType status,
+                                 ProjectStatus projectStatus ,
+                                 String createdBy) {
     	String tenant = Optional.ofNullable(TenantContext.getTenantId())
                 .filter(t -> !t.isBlank())
                 .orElse("default");
@@ -71,6 +69,16 @@ public class ProjectService {
         p.setEndDate(end);
         p.setTenantId(tenant);
         p.setDescription(description);
+        if (ProjectType.SUPPORT.equals(projectType)) {
+            p.setProjectType(projectType);
+            if (ProjectSLAType.ENTERPRISE.equals(status)) {
+                p.setStatus(ProjectSLAType.ENTERPRISE);
+            }
+        }
+        if (projectStatus != null) {
+            p.setProjectStatus(projectStatus);
+        }
+        p.setProjectStatus(ProjectStatus.ACTIVE);
         if (clientName != null && !clientName.isBlank()) {
             ProjectClient client = new ProjectClient();
             client.setName(clientName);
@@ -99,7 +107,7 @@ public class ProjectService {
                                  String clientName,
                                  String clientPrimaryEmail,
                                  String clientSecondaryEmail,
-                                 String updatedBy) {
+                                 ProjectType projectType, ProjectSLAType status,ProjectStatus projectStatus , String updatedBy) {
         Project p = projectRepository.findById(projectId)
                 .orElseThrow(() -> new IllegalArgumentException("Project not found"));
 
@@ -116,6 +124,15 @@ public class ProjectService {
         if (description != null) p.setDescription(description);
         if (start != null) p.setStartDate(start);
         if (end != null) p.setEndDate(end);
+        if (ProjectType.SUPPORT.equals(projectType)) {
+            p.setProjectType(projectType);
+            if (ProjectSLAType.ENTERPRISE.equals(status)) {
+                p.setStatus(ProjectSLAType.ENTERPRISE);
+            }
+        }
+        if (projectStatus != null) {
+            p.setProjectStatus(projectStatus);
+        }
 
         if (clientName != null || clientPrimaryEmail != null || clientSecondaryEmail != null) {
             ProjectClient client = p.getClient();
@@ -188,7 +205,7 @@ public class ProjectService {
     }
 
     @Transactional
-    public WBSElement updateWbs(UUID wbsId, String name, String code, WBSCategory category, LocalDate start, LocalDate end,UUID projectId) {
+    public WBSElement updateWbs(UUID wbsId, String name, String code, WBSCategory category, LocalDate start, LocalDate end, UUID projectId, boolean disabled) {
         WBSElement wbs = wbsRepository.findById(wbsId)
                 .orElseThrow(() -> new IllegalArgumentException("WBS not found"));
         String tenant = TenantContext.getTenantId();
@@ -203,6 +220,7 @@ public class ProjectService {
             }
             wbs.setCode(code);
         }
+        if (disabled) wbs.setDisabled(disabled);
         if (name != null && !name.isBlank()) wbs.setName(name);
         if (category != null) wbs.setCategory(category);
         if (start != null) wbs.setStartDate(start);
