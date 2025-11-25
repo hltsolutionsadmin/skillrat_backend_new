@@ -1,6 +1,6 @@
 package com.skillrat.project.domain;
 
-public enum     ProjectStatus {
+public enum ProjectStatus {
     PLANNED,
     STANDARD,
     ACTIVE,
