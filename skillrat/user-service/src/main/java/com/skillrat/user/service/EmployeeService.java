@@ -2,7 +2,6 @@ package com.skillrat.user.service;
 
 import com.skillrat.common.tenant.TenantContext;
 import com.skillrat.user.domain.*;
-import com.skillrat.user.repo.EmployeeBandRepository;
 import com.skillrat.user.repo.EmployeeRepository;
 import com.skillrat.user.repo.RoleRepository;
 import com.skillrat.user.repo.UserRepository;
@@ -30,11 +29,12 @@ public class EmployeeService {
     private final PasswordEncoder passwordEncoder;
     private final MailService mailService;
     private final EmployeeBandService service;
+    private final DesignationService designationService;
     public EmployeeService(EmployeeRepository employeeRepository,
                            UserRepository userRepository,
                            RoleRepository roleRepository,
                            PasswordEncoder passwordEncoder,
-                           MailService mailService,EmployeeBandService service) {
+                           MailService mailService, EmployeeBandService service, DesignationService designationService) {
         this.employeeRepository = employeeRepository;
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
@@ -42,6 +42,7 @@ public class EmployeeService {
         this.mailService = mailService;
         this.service = service;
 
+        this.designationService = designationService;
     }
 
     @Transactional(readOnly = true)
@@ -66,7 +67,7 @@ public class EmployeeService {
                            String lastName,
                            String email,
                            String mobile,
-                           String designation,
+                           UUID designation,
                            String department,
                            EmploymentType employmentType,
                            LocalDate hireDate,
@@ -85,7 +86,6 @@ public class EmployeeService {
         e.setUsername(email.toLowerCase());
         e.setEmail(email.toLowerCase());
         e.setMobile(mobile);
-        e.setDesignation(designation);
         e.setDepartment(department);
         e.setEmploymentType(employmentType);
         if(band.getId()!=null){
@@ -105,10 +105,8 @@ public class EmployeeService {
         e.setPasswordNeedsReset(true);
         e.setPasswordSetupToken(UUID.randomUUID().toString());
         e.setPasswordSetupTokenExpires(Instant.now().plus(7, ChronoUnit.DAYS));
-        if (designation != null ) {
-            Set<Role> roles = new HashSet<>(roleRepository.findAllByName(designation));
-            e.setRoles(roles);
-        }
+        Designation design = designationService.findById(designation);
+        e.setDesignation(design);
         Employee saved = employeeRepository.save(e);
         try {
             mailService.sendPasswordSetupEmail(saved.getEmail(), saved.getFirstName(), saved.getPasswordSetupToken());
@@ -123,7 +121,7 @@ public class EmployeeService {
                            String firstName,
                            String lastName,
                            String mobile,
-                           String designation,
+                           UUID designation,
                            String department,
                            EmploymentType employmentType,
                            LocalDate hireDate,
@@ -139,10 +137,8 @@ public class EmployeeService {
             e.setMobile(mobile);
         }
         if (designation != null) {
-            Set<Role> roles = new HashSet<>(roleRepository.findAllByName(designation));
-            e.setRoles(roles);
+            e.setDesignation((designationService.findById(designation)));
         }
-        if (designation != null) e.setDesignation(designation);
         if (department != null) e.setDepartment(department);
         if (employmentType != null) e.setEmploymentType(employmentType);
         if(band.getId()!=null){

@@ -1,5 +1,6 @@
 package com.skillrat.user.domain;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
@@ -21,8 +22,10 @@ public class Employee extends User {
     @Column(nullable = true, unique = true, length = 64)
     private String employeeCode;
 
-    @Column(length = 128)
-    private String designation;
+    @ManyToOne
+    @JoinColumn(name = "designation_id")
+    @JsonBackReference
+    private Designation designation;
 
     @Column(length = 128)
     private String department;
@@ -41,6 +44,8 @@ public class Employee extends User {
     @JoinColumn(name = "reporting_manager_id")
     private User reportingManager;
 
+
+
     // Getters and Setters
     public String getEmployeeCode() {
         return employeeCode;
@@ -48,14 +53,6 @@ public class Employee extends User {
 
     public void setEmployeeCode(String employeeCode) {
         this.employeeCode = employeeCode;
-    }
-
-    public String getDesignation() {
-        return designation;
-    }
-
-    public void setDesignation(String designation) {
-        this.designation = designation;
     }
 
     public String getDepartment() {
@@ -98,6 +95,14 @@ public class Employee extends User {
         this.band = band;
     }
 
+    public Designation getDesignation() {
+        return designation;
+    }
+
+    public void setDesignation(Designation designation) {
+        this.designation = designation;
+    }
+
     // Default constructor
     public Employee() {
         // Default constructor
@@ -109,7 +114,6 @@ public class Employee extends User {
                    LocalDate hireDate, EmploymentType employmentType) {
         super(username, email, passwordHash, firstName, lastName, active);
         this.employeeCode = employeeCode;
-        this.designation = designation;
         this.department = department;
         this.hireDate = hireDate;
         this.employmentType = employmentType;

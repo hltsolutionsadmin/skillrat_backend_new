@@ -2,6 +2,7 @@ package com.skillrat.user.repo;
 
 import com.skillrat.user.domain.Employee;
 import com.skillrat.user.domain.EmploymentType;
+import com.skillrat.user.dto.DesignationDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -51,4 +52,16 @@ public interface EmployeeRepository extends JpaRepository<Employee, UUID> {
     List<Employee> findByB2bUnitId(UUID b2bUnitId);
 
     void deleteById(UUID userId);
+
+    @Query("SELECT new com.skillrat.user.dto.DesignationDTO(" +
+            "d.id, d.name, b.name, COUNT(e)) " +
+            "FROM Employee e " +
+            "JOIN e.designation d " +
+            "LEFT JOIN e.band b " +      // allow null bands
+            "WHERE d.b2bUnitId = :b2bUnitId " +  // moved filter to designation
+            "GROUP BY d.id, d.name, b.name " +
+            "ORDER BY d.name")
+    List<DesignationDTO> findDesignationWithBandAndResourceCount(@Param("b2bUnitId") UUID b2bUnitId);
 }
+
+
