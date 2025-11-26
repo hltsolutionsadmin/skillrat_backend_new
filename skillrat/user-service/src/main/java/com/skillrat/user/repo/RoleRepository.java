@@ -39,4 +39,6 @@ public interface RoleRepository extends JpaRepository<Role, UUID> {
      * @return list of global roles
      */
     List<Role> findByB2bUnitIdIsNull();
+
+    List<Role> findByB2bUnitIdIsNullAndNameNotIn(List<String> excludedRoles);
 }
