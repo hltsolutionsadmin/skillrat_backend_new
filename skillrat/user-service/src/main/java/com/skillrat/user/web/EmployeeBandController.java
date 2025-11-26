@@ -22,6 +22,9 @@ public class EmployeeBandController {
         EmployeeOrgBand band=new EmployeeOrgBand();
         band.setB2bUnitId(orgBand.getB2bUnitId());
         band.setName(orgBand.getName());
+        band.setExperienceMin(orgBand.getExperienceMin());
+        band.setExperienceMax(orgBand.getExperienceMax());
+        band.setSalary(orgBand.getSalary());
         return ResponseEntity.ok(service.createBand(band));
     }
 
@@ -38,8 +41,8 @@ public class EmployeeBandController {
     @PutMapping("/{id}")
     public ResponseEntity<EmployeeOrgBand> updateBand(
             @PathVariable UUID id,
-            @RequestParam String name) {
-        return ResponseEntity.ok(service.updateBand(id, name));
+            @RequestBody EmployeeOrgBand orgBand) {
+        return ResponseEntity.ok(service.updateBand(id, orgBand));
     }
 
     @DeleteMapping("/{id}")

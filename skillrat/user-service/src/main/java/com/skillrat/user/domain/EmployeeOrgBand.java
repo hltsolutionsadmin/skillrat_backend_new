@@ -21,6 +21,15 @@ public class EmployeeOrgBand {
     @Column(nullable = false)
     private String name;
 
+    @Column(name = "experience_min")
+    private Integer experienceMin;
+
+    @Column(name = "experience_max")
+    private Integer experienceMax;
+
+    @Column
+    private Double salary;
+
     @Column(nullable = false)
     private UUID b2bUnitId;
 }

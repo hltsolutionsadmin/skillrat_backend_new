@@ -29,9 +29,20 @@ public class EmployeeBandService {
                 .orElseThrow(() -> new IllegalArgumentException("Band not found"));
     }
 
-    public EmployeeOrgBand updateBand(UUID id, String name) {
+    public EmployeeOrgBand updateBand(UUID id, EmployeeOrgBand orgBand) {
         EmployeeOrgBand band = getBand(id);
-        band.setName(name);
+        if(orgBand.getName()!=null) {
+            band.setName(orgBand.getName());
+        }
+        if(orgBand.getExperienceMin()!=null) {
+            band.setExperienceMin(orgBand.getExperienceMin());
+        }
+        if(orgBand.getExperienceMax()!=null) {
+            band.setExperienceMax(orgBand.getExperienceMax());
+        }
+        if(orgBand.getSalary()!=null) {
+            band.setSalary(orgBand.getSalary());
+        }
         return repository.save(band);
     }
 
