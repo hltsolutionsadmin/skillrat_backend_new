@@ -5,19 +5,27 @@ import com.skillrat.project.service.IncidentService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import lombok.Data;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.constraints.Min;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/api")
 @Validated
+@Slf4j
 public class IncidentController {
 
     private final IncidentService incidentService;
@@ -26,19 +34,28 @@ public class IncidentController {
         this.incidentService = incidentService;
     }
 
-    @PostMapping("/projects/{projectId}/incidents")
-    public ResponseEntity<Incident> create(@PathVariable("projectId") UUID projectId,
-                                           @RequestBody @Valid CreateIncidentRequest req) {
-        Incident incident = incidentService.create(
-                projectId,
-                req.title,
-                req.shortDescription,
-                req.urgency,
-                req.impact,
-                req.categoryId,
-                req.subCategoryId
-        );
-        return ResponseEntity.ok(incident);
+    @PostMapping(value = "/projects/{projectId}/incidents", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Incident> create(
+            @PathVariable("projectId") UUID projectId,
+            @Valid @ModelAttribute CreateIncidentRequest request) {
+        
+
+        try {
+            Incident incident = incidentService.create(
+                    projectId,
+                    request.getTitle(),
+                    request.getShortDescription(),
+                    request.getUrgency(),
+                    request.getImpact(),
+                    request.getCategoryId(),
+                    request.getSubCategoryId(),
+                    request.getMediaFiles(),
+                    request.getMediaUrls()
+            );
+            return ResponseEntity.ok(incident);
+        } catch (Exception e) {
+            throw e;
+        }
     }
 
     @GetMapping("/projects/{projectId}/incidents")
@@ -108,13 +125,37 @@ public class IncidentController {
                                          @RequestParam(defaultValue = "20") @Min(1) int size) {
         return incidentService.listByReporter(projectId, PageRequest.of(page, size));
     }
+    @Data
     public static class CreateIncidentRequest {
-        @NotBlank public String title;
-        @NotBlank public String shortDescription;
-        @NotNull public IncidentUrgency urgency;
-        @NotNull public IncidentImpact impact;
-        public UUID categoryId;
-        public UUID subCategoryId;
+        @NotBlank(message = "Title is required")
+        private String title;
+        
+        @NotBlank(message = "Short description is required")
+        private String shortDescription;
+        
+        @NotNull(message = "Urgency is required")
+        private IncidentUrgency urgency;
+        
+        @NotNull(message = "Impact is required")
+        private IncidentImpact impact;
+        
+        @NotNull(message = "Category ID is required")
+        private UUID categoryId;
+        
+        private UUID subCategoryId;
+        
+        private List<MultipartFile> mediaFiles = new ArrayList<>();
+        
+        private List<String> mediaUrls = new ArrayList<>();
+        
+        // Getters and setters
+        public List<MultipartFile> getMediaFiles() {
+            return mediaFiles != null ? mediaFiles : new ArrayList<>();
+        }
+        
+        public List<String> getMediaUrls() {
+            return mediaUrls != null ? mediaUrls : new ArrayList<>();
+        }
     }
 
     public static class AssignUserRequest {

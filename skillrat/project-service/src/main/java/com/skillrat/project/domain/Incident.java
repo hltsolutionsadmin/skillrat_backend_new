@@ -8,6 +8,9 @@ import lombok.Setter;
 import org.hibernate.envers.Audited;
 import org.hibernate.envers.RelationTargetAuditMode;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Table(name = "incident")
 @Audited
@@ -51,6 +54,21 @@ public class Incident extends BaseEntity {
     @JoinColumn(name = "sub_category_id")
     @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     private IncidentSubCategoryEntity subCategory;
+
+
+    @OneToMany(mappedBy = "incident", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    private List<MediaModel> media = new ArrayList<>();
+    
+    // Helper methods to manage bidirectional relationship
+    public void addMedia(MediaModel media) {
+        media.setIncident(this);
+        this.media.add(media);
+    }
+    
+    public void removeMedia(MediaModel media) {
+        this.media.remove(media);
+        media.setIncident(null);
+    }
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 32)
