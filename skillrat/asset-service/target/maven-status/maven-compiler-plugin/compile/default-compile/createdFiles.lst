@@ -1,0 +1,17 @@
+com/skillrat/asset/repository/AssetRepository.class
+com/skillrat/asset/domain/Asset$OwnerType.class
+com/skillrat/asset/domain/AssetCategory.class
+com/skillrat/asset/domain/AssetRequest$Status.class
+com/skillrat/asset/AssetServiceApplication.class
+com/skillrat/asset/config/SecurityConfig.class
+com/skillrat/asset/web/AssetCategoryController.class
+com/skillrat/asset/domain/Asset$Visibility.class
+com/skillrat/asset/web/AssetController.class
+com/skillrat/asset/web/AssetRequestController.class
+com/skillrat/asset/domain/Asset.class
+com/skillrat/asset/repository/AssetRequestRepository.class
+com/skillrat/asset/domain/AssetInventory.class
+com/skillrat/asset/repository/AssetInventoryRepository.class
+com/skillrat/asset/domain/AssetRequest.class
+com/skillrat/asset/repository/AssetCategoryRepository.class
+com/skillrat/asset/web/AssetInventoryController.class

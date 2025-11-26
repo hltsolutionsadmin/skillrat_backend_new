@@ -1,0 +1,48 @@
+
+server:
+  port: 8089
+spring:
+  application:
+    name: project-service
+  datasource:
+    url: jdbc:mysql://localhost:3306/skillrat_project?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+  flyway:
+    enabled: false
+    baseline-on-migrate: true
+    baseline-version: 1
+    locations: classpath:db/migration
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://localhost:8087/oauth2/jwks
+          services:
+            user:
+              base-url: http://localhost:8081
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+
+skillrat:
+  client:
+    id: gateway
+    secret: gateway-secret
+
+azure:
+  storage:
+    account-name: ${AZURE_STORAGE_ACCOUNT_NAME:skillrat}
+    account-key: ${AZURE_STORAGE_ACCOUNT_KEY:}
+    container-name: ${AZURE_STORAGE_CONTAINER_NAME:skillratdata}
+    endpoint: ${AZURE_STORAGE_ENDPOINT:https://skillrat.blob.core.windows.net/}
+    connection-string: ${AZURE_STORAGE_CONNECTION_STRING:}

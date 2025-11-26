@@ -1,0 +1,34 @@
+server:
+  port: 8082
+spring:
+  application:
+    name: organisation-service
+  datasource:
+    url: jdbc:mysql://localhost:3306/skillrat_org?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+    username: root
+    password: root
+  jpa:
+    hibernate:
+      ddl-auto: update
+      naming:
+        implicit-strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyLegacyJpaImpl
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+  flyway:
+    enabled: false
+    baseline-on-migrate: true
+    baseline-version: 1
+    locations: classpath:db/migration
+    repair-on-migrate: true
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://localhost:8087/oauth2/jwks
+  redis:
+    host: localhost
+    port: 6379
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
