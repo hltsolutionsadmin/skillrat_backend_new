@@ -1,5 +1,6 @@
 package com.skillrat.project.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.skillrat.common.orm.BaseEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -42,6 +43,7 @@ public class MediaModel extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "incident_id")
+    @JsonIgnoreProperties({"media"})
     private Incident incident;
 
     @Column(name = "created_by", length = 36)

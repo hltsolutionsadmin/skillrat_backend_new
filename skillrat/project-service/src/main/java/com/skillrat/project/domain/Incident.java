@@ -1,5 +1,6 @@
 package com.skillrat.project.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.skillrat.common.orm.BaseEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -25,6 +26,7 @@ public class Incident extends BaseEntity {
     @ManyToOne(optional = false)
     @JoinColumn(name = "project_id")
     @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
+    @JsonIgnoreProperties({"wbsElements", "members", "client"})
     private Project project;
 
     @Column(nullable = false, length = 200)
@@ -57,6 +59,7 @@ public class Incident extends BaseEntity {
 
 
     @OneToMany(mappedBy = "incident", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    @JsonIgnoreProperties({"incident"})
     private List<MediaModel> media = new ArrayList<>();
 
     // Helper methods to manage bidirectional relationship

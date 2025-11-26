@@ -8,7 +8,6 @@ import com.azure.storage.common.StorageSharedKeyCredential;
 import com.skillrat.project.domain.Incident;
 import com.skillrat.project.domain.MediaModel;
 import com.skillrat.project.service.AwsBlobService;
-import com.skillrat.project.service.CatalogService;
 import com.skillrat.project.service.MediaService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;

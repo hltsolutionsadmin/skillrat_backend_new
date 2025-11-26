@@ -1,6 +1,7 @@
 package com.skillrat.project.domain;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.skillrat.common.orm.BaseEntity;
 import jakarta.persistence.*;
@@ -21,6 +22,7 @@ import java.util.UUID;
                 @Index(name = "idx_project_b2b_unit", columnList = "b2b_unit_id")
         }
 )
+@JsonIgnoreProperties({"incidents"})
 @Getter
 @Setter
 @NoArgsConstructor
