@@ -68,3 +68,15 @@ management:
     web:
       exposure:
         include: "*"
+
+
+
+azure:
+  storage:
+    account-name: skillrat
+    account-key: PND8fkaPdzZSDYu252VgFoXVQx3BgR5QaktrlRRepfdbR7ogyHQpG2T+aUFlt/kvD/7sxfHXf2Ph+AStxEbdeg==
+    container-name: skillratdata
+    endpoint: https://skillrat.blob.core.windows.net/
+    connection-string: DefaultEndpointsProtocol=https;AccountName=skillrat;AccountKey=PND8fkaPdzZSDYu252VgFoXVQx3BgR5QaktrlRRepfdbR7ogyHQpG2T+aUFlt/kvD/7sxfHXf2Ph+AStxEbdeg==;EndpointSuffix=core.windows.net
+
+ 
