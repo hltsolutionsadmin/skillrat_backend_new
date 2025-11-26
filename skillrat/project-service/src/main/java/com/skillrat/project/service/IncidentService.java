@@ -8,6 +8,8 @@ import com.skillrat.project.repo.IncidentRepository;
 import com.skillrat.project.repo.ProjectRepository;
 import com.skillrat.project.repo.IncidentCategoryRepository;
 import com.skillrat.project.repo.IncidentSubCategoryRepository;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import org.hibernate.envers.AuditReader;
 import org.hibernate.envers.AuditReaderFactory;
 import org.slf4j.Logger;
@@ -252,12 +254,39 @@ public class IncidentService {
     }
 
     @Transactional
-    public Incident updateStatus(UUID incidentId, IncidentStatus status) {
+    public Incident updateStatus(UUID incidentId, IncidentStatus status, @NotBlank(message = "Title is required") String discription, @NotNull(message = "Urgency is required") IncidentUrgency urgency, @NotNull(message = "Impact is required") IncidentImpact impact, List<MultipartFile> mediaFiles, List<String> mediaUrls) {
         Incident incident = incidentRepository.findById(incidentId)
                 .orElseThrow(() -> new IllegalArgumentException("Incident not found"));
+
+
         IncidentStatus oldStatus = incident.getStatus();
         incident.setStatus(status);
+        incident.setShortDescription(discription);
+        if (urgency != null) {
+            incident.setUrgency(urgency);
+        }
+        if (impact != null) {
+            incident.setImpact(impact);
+        }
+        if (impact != null && urgency != null) {
+            incident.setPriority(computePriority(urgency, impact));
+        }
         Incident saved = incidentRepository.save(incident);
+        log.info("Incident created id={}, projectId={}, number={}",
+                saved.getId(), saved.getProject().getId(), saved.getIncidentNumber());
+        if (mediaFiles != null && mediaFiles.size() > 0) {
+            try {
+                // Handle media files and URLs
+                List<MediaModel> savedMedia = incidentMediaService.handleIncidentMedia(saved, mediaFiles, mediaUrls);
+                saved.getMedia().addAll(savedMedia);
+                saved = incidentRepository.save(saved);
+
+            } catch (Exception e) {
+                log.error("Error processing media for incident: {}", saved.getId(), e);
+                // Don't fail the entire request if media processing fails
+            }
+
+        }
         log.info("Incident status updated id={}, oldStatus={}, newStatus={}, updatedBy={}",
                 saved.getId(),
                 oldStatus,

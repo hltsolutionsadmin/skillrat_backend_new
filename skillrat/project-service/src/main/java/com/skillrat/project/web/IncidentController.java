@@ -95,8 +95,13 @@ public class IncidentController {
     @PutMapping("/incidents/{incidentId}/status")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Incident> updateStatus(@PathVariable("incidentId") UUID incidentId,
-                                                 @RequestBody @Valid UpdateStatusRequest req) {
-        Incident updated = incidentService.updateStatus(incidentId, req.status);
+                                                 @Valid @ModelAttribute UpdateStatusRequest request) {
+        Incident updated = incidentService.updateStatus(incidentId, request.status,
+                request.getShortDescription(),
+                request.getUrgency(),
+                request.getImpact(),
+                request.getMediaFiles(),
+                request.getMediaUrls());
         return ResponseEntity.ok(updated);
     }
 
@@ -168,7 +173,32 @@ public class IncidentController {
         @NotNull public UUID userId;
     }
 
+    @Data
     public static class UpdateStatusRequest {
         @NotNull public IncidentStatus status;
+        @NotBlank(message = "Title is required")
+        private String title;
+
+        @NotBlank(message = "Short description is required")
+        private String shortDescription;
+
+        @NotNull(message = "Urgency is required")
+        private IncidentUrgency urgency;
+
+        @NotNull(message = "Impact is required")
+        private IncidentImpact impact;
+
+        @NotNull(message = "Category ID is required")
+        private UUID categoryId;
+
+        private UUID subCategoryId;
+
+        private List<MultipartFile> mediaFiles = new ArrayList<>();
+
+        private List<String> mediaUrls = new ArrayList<>();
+
+        private UUID assigneeId;
+
+        private UUID reporterId;
     }
 }
