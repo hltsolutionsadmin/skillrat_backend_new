@@ -50,9 +50,4 @@ public class EmployeeBandController {
         service.deleteBand(id);
         return ResponseEntity.noContent().build();
     }
-
-    @GetMapping("/names")
-    public ResponseEntity<EmployeeBand[]> getAllBandNames() {
-        return ResponseEntity.ok(service.getAllBandNames());
-    }
 }

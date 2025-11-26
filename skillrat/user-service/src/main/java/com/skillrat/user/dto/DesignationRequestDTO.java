@@ -13,4 +13,5 @@ public class DesignationRequestDTO {
     private String name;
     private  UUID id;
     private UUID b2bUnitId;
+    private UUID bandId;
 }
