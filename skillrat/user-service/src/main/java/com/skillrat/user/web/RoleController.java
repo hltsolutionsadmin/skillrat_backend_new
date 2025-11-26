@@ -40,14 +40,13 @@ public class RoleController {
         this.projectRoleService = projectRoleService;
     }
 
-    @PostMapping
+    @PostMapping("/create")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Role> createRole(@Valid @RequestBody CreateRoleRequest request) {
         Role role = new Role();
         role.setName(request.getName());
         role.setDescription(request.getDescription());
         role.setB2bUnitId(request.getB2bUnitId());
-        
         Role createdRole = roleService.createRole(role);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdRole);
     }
@@ -75,10 +74,10 @@ public class RoleController {
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/system")
+    @GetMapping("/system/{b2bUnitId}")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<List<Role>> listSystemRoles() {
-        return ResponseEntity.ok(roleService.getSystemRoles());
+    public ResponseEntity<List<Role>> listSystemRoles(@PathVariable UUID b2bUnitId) {
+        return ResponseEntity.ok(roleService.getSystemRoles(b2bUnitId));
     }
 
     @GetMapping("/business/{b2bUnitId}")

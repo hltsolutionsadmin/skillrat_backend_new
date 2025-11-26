@@ -119,9 +119,9 @@ public class RoleService {
      * List all system roles (not specific to any business)
      */
     @Transactional(readOnly = true)
-    public List<Role> getSystemRoles() {
-        List<String> excludedRoles = List.of(Role.ROLE_ADMIN, Role.ROLE_BUSINESS_OWNER);
-        return roleRepository.findByB2bUnitIdIsNullAndNameNotIn(excludedRoles);
+    public List<Role> getSystemRoles(UUID b2bUnitId) {
+        List<String> excludedRoles = List.of("ADMIN", "BUSINESS_ADMIN");
+        return roleRepository.findByB2bUnitIdAndNameNotIn(b2bUnitId, excludedRoles);
     }
     
     /**

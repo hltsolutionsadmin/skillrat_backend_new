@@ -36,7 +36,10 @@ public class IncidentController {
                 req.urgency,
                 req.impact,
                 req.categoryId,
+                req.assigneeId,
+                req.reporterId,
                 req.subCategoryId
+
         );
         return ResponseEntity.ok(incident);
     }
@@ -115,6 +118,8 @@ public class IncidentController {
         @NotNull public IncidentImpact impact;
         public UUID categoryId;
         public UUID subCategoryId;
+        public UUID assigneeId;
+        public UUID reporterId;
     }
 
     public static class AssignUserRequest {
