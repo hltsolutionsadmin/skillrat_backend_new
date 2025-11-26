@@ -18,10 +18,9 @@ public class EmployeeOrgBand {
     @GeneratedValue
     private UUID id;
 
-    @Enumerated(EnumType.STRING) // store enum as string in DB
     @Column(nullable = false)
-    private EmployeeBand name;
+    private String name;
 
     @Column(nullable = false)
-    private String b2bUnitId;
+    private UUID b2bUnitId;
 }

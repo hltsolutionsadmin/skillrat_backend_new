@@ -15,7 +15,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -67,7 +66,7 @@ public class IncidentService {
                            UUID categoryId,
                            UUID subCategoryId,
                            List<MultipartFile> mediaFiles,
-                           List<String> mediaUrls) {
+                           List<String> mediaUrls, UUID assigneeId, UUID reporterId) throws Exception {
         log.info("Creating incident with projectId: {}, title: {}", projectId, title);
 
         // Validate inputs
@@ -104,6 +103,14 @@ public class IncidentService {
         incident.setStatus(IncidentStatus.OPEN);
         incident.setTenantId(tenantId);
 
+        if(assigneeId != null) {
+            incident.setAssigneeId(assigneeId);
+            incident.setAssigneeName(userClient.getUserById(assigneeId).getFirstName() + " " + userClient.getUserById(assigneeId).getLastName());
+        }
+        if(reporterId != null) {
+            incident.setReporterId(reporterId);
+            incident.setReporterName(userClient.getUserById(reporterId).getFirstName() + " " + userClient.getUserById(reporterId).getLastName());
+        }
         // Save the incident first to get an ID
         Incident saved = incidentRepository.save(incident);
         log.info("Incident created id={}, projectId={}, number={}",

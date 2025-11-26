@@ -20,7 +20,7 @@ public class EmployeeBandService {
         return repository.save(band);
     }
 
-    public List<EmployeeOrgBand> getBandsByB2bUnit(String b2bUnitId) {
+    public List<EmployeeOrgBand> getBandsByB2bUnit(UUID b2bUnitId) {
         return repository.findByB2bUnitId(b2bUnitId);
     }
 
@@ -29,7 +29,7 @@ public class EmployeeBandService {
                 .orElseThrow(() -> new IllegalArgumentException("Band not found"));
     }
 
-    public EmployeeOrgBand updateBand(UUID id, EmployeeBand name) {
+    public EmployeeOrgBand updateBand(UUID id, String name) {
         EmployeeOrgBand band = getBand(id);
         band.setName(name);
         return repository.save(band);

@@ -26,7 +26,7 @@ public class EmployeeBandController {
     }
 
     @GetMapping
-    public ResponseEntity<List<EmployeeOrgBand>> getBandsByB2bUnit(@RequestParam String b2bUnitId) {
+    public ResponseEntity<List<EmployeeOrgBand>> getBandsByB2bUnit(@RequestParam UUID b2bUnitId) {
         return ResponseEntity.ok(service.getBandsByB2bUnit(b2bUnitId));
     }
 
@@ -38,7 +38,7 @@ public class EmployeeBandController {
     @PutMapping("/{id}")
     public ResponseEntity<EmployeeOrgBand> updateBand(
             @PathVariable UUID id,
-            @RequestParam EmployeeBand name) {
+            @RequestParam String name) {
         return ResponseEntity.ok(service.updateBand(id, name));
     }
 

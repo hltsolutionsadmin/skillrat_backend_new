@@ -27,9 +27,9 @@ public class Employee extends User {
     @Column(length = 128)
     private String department;
 
-    @Enumerated(EnumType.STRING)
-    @Column(length = 32)
-    private EmployeeBand band;
+    @ManyToOne
+    @JoinColumn(name = "band_id")
+    private EmployeeOrgBand band;
 
     private LocalDate hireDate;
 
@@ -90,14 +90,14 @@ public class Employee extends User {
         this.reportingManager = reportingManager;
     }
 
-    public EmployeeBand getBand() {
+    public EmployeeOrgBand getBand() {
         return band;
     }
 
-    public void setBand(EmployeeBand band) {
+    public void setBand(EmployeeOrgBand band) {
         this.band = band;
     }
-    
+
     // Default constructor
     public Employee() {
         // Default constructor
