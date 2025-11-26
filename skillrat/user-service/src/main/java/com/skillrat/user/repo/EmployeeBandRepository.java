@@ -11,5 +11,5 @@ import java.util.UUID;
 
 public interface EmployeeBandRepository extends JpaRepository<EmployeeOrgBand, UUID> {
 
-    List<EmployeeOrgBand> findByB2bUnitId(String b2bUnitId);
+    List<EmployeeOrgBand> findByB2bUnitId(UUID b2bUnitId);
 }

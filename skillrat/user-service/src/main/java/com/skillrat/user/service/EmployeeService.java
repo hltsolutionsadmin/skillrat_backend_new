@@ -2,6 +2,7 @@ package com.skillrat.user.service;
 
 import com.skillrat.common.tenant.TenantContext;
 import com.skillrat.user.domain.*;
+import com.skillrat.user.repo.EmployeeBandRepository;
 import com.skillrat.user.repo.EmployeeRepository;
 import com.skillrat.user.repo.RoleRepository;
 import com.skillrat.user.repo.UserRepository;
@@ -16,11 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 public class EmployeeService {
@@ -32,17 +29,19 @@ public class EmployeeService {
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final MailService mailService;
-
+    private final EmployeeBandService service;
     public EmployeeService(EmployeeRepository employeeRepository,
                            UserRepository userRepository,
                            RoleRepository roleRepository,
                            PasswordEncoder passwordEncoder,
-                           MailService mailService) {
+                           MailService mailService,EmployeeBandService service) {
         this.employeeRepository = employeeRepository;
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
         this.mailService = mailService;
+        this.service = service;
+
     }
 
     @Transactional(readOnly = true)
@@ -72,8 +71,8 @@ public class EmployeeService {
                            EmploymentType employmentType,
                            LocalDate hireDate,
                            UUID reportingManagerId,
-                           EmployeeBand band,
-                           java.util.List<UUID> roleIds) {
+                           EmployeeOrgBand band,
+                           List<UUID> roleIds) {
         String tenantId = Optional.ofNullable(TenantContext.getTenantId()).orElse("default");
         // Admin validations: unique email/mobile, name present
         userRepository.findByEmailIgnoreCase(email).ifPresent(u -> { throw new IllegalArgumentException("Email already in use"); });
@@ -89,8 +88,10 @@ public class EmployeeService {
         e.setDesignation(designation);
         e.setDepartment(department);
         e.setEmploymentType(employmentType);
-        e.setBand(band);
-        e.setHireDate(hireDate);
+        if(band.getId()!=null){
+           e.setBand(service.getBand(band.getId()));
+        }
+          e.setHireDate(hireDate);
         if (reportingManagerId != null) {
             User rm = userRepository.findById(reportingManagerId).orElseThrow(() -> new IllegalArgumentException("Reporting manager not found"));
             e.setReportingManager(rm);
@@ -127,7 +128,7 @@ public class EmployeeService {
                            EmploymentType employmentType,
                            LocalDate hireDate,
                            UUID reportingManagerId,
-                           EmployeeBand band) {
+                           EmployeeOrgBand band) {
         Employee e = employeeRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Employee not found"));
         if (firstName != null && !firstName.isBlank()) e.setFirstName(firstName.trim());
         if (lastName != null && !lastName.isBlank()) e.setLastName(lastName.trim());
@@ -144,8 +145,9 @@ public class EmployeeService {
         if (designation != null) e.setDesignation(designation);
         if (department != null) e.setDepartment(department);
         if (employmentType != null) e.setEmploymentType(employmentType);
-        if (band != null) e.setBand(band);
-        if (hireDate != null) e.setHireDate(hireDate);
+        if(band.getId()!=null){
+            e.setBand(service.getBand(band.getId()));
+        }        if (hireDate != null) e.setHireDate(hireDate);
         if (reportingManagerId != null) {
             User rm = userRepository.findById(reportingManagerId).orElseThrow(() -> new IllegalArgumentException("Reporting manager not found"));
             e.setReportingManager(rm);

@@ -37,7 +37,7 @@ public class IncidentController {
     @PostMapping(value = "/projects/{projectId}/incidents", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Incident> create(
             @PathVariable("projectId") UUID projectId,
-            @Valid @ModelAttribute CreateIncidentRequest request) {
+            @Valid @ModelAttribute CreateIncidentRequest request) throws Exception {
 
 
         try {
@@ -50,7 +50,9 @@ public class IncidentController {
                     request.getCategoryId(),
                     request.getSubCategoryId(),
                     request.getMediaFiles(),
-                    request.getMediaUrls()
+                    request.getMediaUrls(),
+                    request.getAssigneeId(),
+                    request.getReporterId()
             );
             return ResponseEntity.ok(incident);
         } catch (Exception e) {
@@ -147,6 +149,10 @@ public class IncidentController {
         private List<MultipartFile> mediaFiles = new ArrayList<>();
 
         private List<String> mediaUrls = new ArrayList<>();
+
+        private UUID assigneeId;
+
+        private UUID reporterId;
 
         // Getters and setters
         public List<MultipartFile> getMediaFiles() {
