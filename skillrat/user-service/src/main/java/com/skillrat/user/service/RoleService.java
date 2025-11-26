@@ -120,7 +120,8 @@ public class RoleService {
      */
     @Transactional(readOnly = true)
     public List<Role> getSystemRoles() {
-        return roleRepository.findByB2bUnitIdIsNull();
+        List<String> excludedRoles = List.of(Role.ROLE_ADMIN, Role.ROLE_BUSINESS_OWNER);
+        return roleRepository.findByB2bUnitIdIsNullAndNameNotIn(excludedRoles);
     }
     
     /**

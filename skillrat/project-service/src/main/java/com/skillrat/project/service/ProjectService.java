@@ -50,7 +50,7 @@ public class ProjectService {
                                  ProjectType projectType,
                                  ProjectSLAType status,
                                  ProjectStatus projectStatus ,
-                                 String createdBy) {
+                                 boolean taskManagement, boolean projectManagement, String createdBy) {
     	String tenant = Optional.ofNullable(TenantContext.getTenantId())
                 .filter(t -> !t.isBlank())
                 .orElse("default");
@@ -69,6 +69,8 @@ public class ProjectService {
         p.setEndDate(end);
         p.setTenantId(tenant);
         p.setDescription(description);
+        p.setTaskManagement(taskManagement);
+        p.setProjectManagement(projectManagement);
         if (ProjectType.SUPPORT.equals(projectType)) {
             p.setProjectType(projectType);
             if (ProjectSLAType.ENTERPRISE.equals(status)) {
@@ -78,7 +80,6 @@ public class ProjectService {
         if (projectStatus != null) {
             p.setProjectStatus(projectStatus);
         }
-        p.setProjectStatus(ProjectStatus.ACTIVE);
         if (clientName != null && !clientName.isBlank()) {
             ProjectClient client = new ProjectClient();
             client.setName(clientName);
@@ -107,7 +108,7 @@ public class ProjectService {
                                  String clientName,
                                  String clientPrimaryEmail,
                                  String clientSecondaryEmail,
-                                 ProjectType projectType, ProjectSLAType status,ProjectStatus projectStatus , String updatedBy) {
+                                 ProjectType projectType, ProjectSLAType status, ProjectStatus projectStatus , boolean taskManagement, boolean projectManagement, String updatedBy) {
         Project p = projectRepository.findById(projectId)
                 .orElseThrow(() -> new IllegalArgumentException("Project not found"));
 
@@ -124,6 +125,8 @@ public class ProjectService {
         if (description != null) p.setDescription(description);
         if (start != null) p.setStartDate(start);
         if (end != null) p.setEndDate(end);
+        p.setTaskManagement(taskManagement);
+        p.setProjectManagement(projectManagement);
         if (ProjectType.SUPPORT.equals(projectType)) {
             p.setProjectType(projectType);
             if (ProjectSLAType.ENTERPRISE.equals(status)) {

@@ -1,10 +1,7 @@
 package com.skillrat.user.service;
 
 import com.skillrat.common.tenant.TenantContext;
-import com.skillrat.user.domain.Employee;
-import com.skillrat.user.domain.EmploymentType;
-import com.skillrat.user.domain.Role;
-import com.skillrat.user.domain.User;
+import com.skillrat.user.domain.*;
 import com.skillrat.user.repo.EmployeeRepository;
 import com.skillrat.user.repo.RoleRepository;
 import com.skillrat.user.repo.UserRepository;
@@ -75,6 +72,7 @@ public class EmployeeService {
                            EmploymentType employmentType,
                            LocalDate hireDate,
                            UUID reportingManagerId,
+                           EmployeeBand band,
                            java.util.List<UUID> roleIds) {
         String tenantId = Optional.ofNullable(TenantContext.getTenantId()).orElse("default");
         // Admin validations: unique email/mobile, name present
@@ -91,21 +89,23 @@ public class EmployeeService {
         e.setDesignation(designation);
         e.setDepartment(department);
         e.setEmploymentType(employmentType);
+        e.setBand(band);
         e.setHireDate(hireDate);
         if (reportingManagerId != null) {
             User rm = userRepository.findById(reportingManagerId).orElseThrow(() -> new IllegalArgumentException("Reporting manager not found"));
             e.setReportingManager(rm);
         }
         e.setEmployeeCode("EMP-" + UUID.randomUUID().toString().substring(0,8).toUpperCase());
-        e.setPasswordHash(passwordEncoder.encode(UUID.randomUUID().toString()));
+        String defaultPassword = "Password@123";
+        e.setPasswordHash(passwordEncoder.encode(defaultPassword));
         e.setActive(true);
         e.setTenantId(tenantId);
         e.setB2bUnitId(b2bUnitId);
         e.setPasswordNeedsReset(true);
         e.setPasswordSetupToken(UUID.randomUUID().toString());
         e.setPasswordSetupTokenExpires(Instant.now().plus(7, ChronoUnit.DAYS));
-        if (roleIds != null && !roleIds.isEmpty()) {
-            Set<Role> roles = new HashSet<>(roleRepository.findAllById(roleIds));
+        if (designation != null ) {
+            Set<Role> roles = new HashSet<>(roleRepository.findAllByName(designation));
             e.setRoles(roles);
         }
         Employee saved = employeeRepository.save(e);
@@ -126,7 +126,8 @@ public class EmployeeService {
                            String department,
                            EmploymentType employmentType,
                            LocalDate hireDate,
-                           UUID reportingManagerId) {
+                           UUID reportingManagerId,
+                           EmployeeBand band) {
         Employee e = employeeRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Employee not found"));
         if (firstName != null && !firstName.isBlank()) e.setFirstName(firstName.trim());
         if (lastName != null && !lastName.isBlank()) e.setLastName(lastName.trim());
@@ -136,9 +137,14 @@ public class EmployeeService {
                     .ifPresent(u -> { throw new IllegalArgumentException("Mobile already in use"); });
             e.setMobile(mobile);
         }
+        if (designation != null) {
+            Set<Role> roles = new HashSet<>(roleRepository.findAllByName(designation));
+            e.setRoles(roles);
+        }
         if (designation != null) e.setDesignation(designation);
         if (department != null) e.setDepartment(department);
         if (employmentType != null) e.setEmploymentType(employmentType);
+        if (band != null) e.setBand(band);
         if (hireDate != null) e.setHireDate(hireDate);
         if (reportingManagerId != null) {
             User rm = userRepository.findById(reportingManagerId).orElseThrow(() -> new IllegalArgumentException("Reporting manager not found"));
@@ -146,7 +152,6 @@ public class EmployeeService {
         }
         return employeeRepository.save(e);
     }
-
 
     @Transactional
     public void deleteUser(UUID userId) {

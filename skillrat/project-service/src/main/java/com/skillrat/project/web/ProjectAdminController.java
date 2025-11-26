@@ -8,6 +8,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
@@ -52,6 +53,8 @@ public class ProjectAdminController {
                 req.projectType,
                 req.status,
                 req.projectStatus,
+                req.taskManagement,
+                req.projectManagement,
                 userId
         );
         return ResponseEntity.ok(p);
@@ -85,6 +88,8 @@ public class ProjectAdminController {
                 req.projectType,
                 req.status,
                 req.projectStatus,
+                req.taskManagement,
+                req.projectManagement,
                 userId
         );
         return ResponseEntity.ok(p);
@@ -142,7 +147,9 @@ public class ProjectAdminController {
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(defaultValue = "10") @Min(1) int size,
             @RequestParam(value = "fromDate", required = false) LocalDate fromDate,
-            @RequestParam(value = "toDate", required = false) LocalDate toDate) {
+            @RequestParam(value = "toDate", required = false) LocalDate toDate,
+            @RequestParam(value = "status", required = false) ProjectStatus status
+    ) {
 
         String email = getCurrentUserId();
         List<String> roles = getCurrentUserRoles();
@@ -158,20 +165,18 @@ public class ProjectAdminController {
             projects = service.listProjectsForUser(email, pageRequest);
         }
 
-        if (fromDate != null || toDate != null) {
             List<Project> filtered = projects.getContent().stream()
                     .filter(p -> {
+                        boolean statusMatch = (status == null) || (p.getProjectStatus() == status);
                         LocalDate s = p.getStartDate();
                         LocalDate e = p.getEndDate();
                         boolean afterFrom = (fromDate == null) || (e == null || !e.isBefore(fromDate));
                         boolean beforeTo = (toDate == null) || (s == null || !s.isAfter(toDate));
-                        return afterFrom && beforeTo; // overlap logic
+                        return statusMatch && afterFrom && beforeTo;
                     })
                     .collect(Collectors.toList());
-            projects = new org.springframework.data.domain.PageImpl<>(filtered, pageRequest, filtered.size());
-        }
-
-        return ResponseEntity.ok(projects);
+            Page<Project> finalResult = new PageImpl<>(filtered, pageRequest, filtered.size());
+            return ResponseEntity.ok(finalResult);
     }
 
     // Get basic user details for all members of a project
@@ -235,6 +240,9 @@ public class ProjectAdminController {
         public ProjectType projectType;
         public ProjectSLAType status;
         public ProjectStatus projectStatus;
+        public boolean taskManagement;
+        public boolean projectManagement;
+
     }
 
     public static class CreateWbsRequest {
@@ -276,6 +284,8 @@ public class ProjectAdminController {
         public ProjectType projectType;
         public ProjectSLAType status;
         public ProjectStatus projectStatus;
+        public boolean taskManagement;
+        public boolean projectManagement;
     }
 
 }

@@ -1,6 +1,7 @@
 package com.skillrat.user.web;
 
 import com.skillrat.user.domain.Employee;
+import com.skillrat.user.domain.EmployeeBand;
 import com.skillrat.user.domain.EmploymentType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import com.skillrat.user.security.B2BUnitAccessValidator;
@@ -85,6 +86,7 @@ public class AdminEmployeeController {
                 req.employmentType,
                 req.hireDate,
                 req.reportingManagerId,
+                req.band,
                 req.roleIds
         );
         return ResponseEntity.ok(e);
@@ -103,15 +105,18 @@ public class AdminEmployeeController {
                 req.department,
                 req.employmentType,
                 req.hireDate,
-                req.reportingManagerId
+                req.reportingManagerId,
+                req.band
         );
         return ResponseEntity.ok(e);
     }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteUser(@PathVariable UUID id) {
         employeeService.deleteUser(id);
         return ResponseEntity.ok("User deleted successfully");
     }
+
 
     public static class CreateEmployeeRequest {
         @NotNull public UUID b2bUnitId;
@@ -124,6 +129,7 @@ public class AdminEmployeeController {
         public EmploymentType employmentType;
         public LocalDate hireDate;
         public UUID reportingManagerId;
+        public EmployeeBand band;
         @NotEmpty public List<UUID> roleIds;
     }
 
@@ -136,6 +142,7 @@ public class AdminEmployeeController {
         public EmploymentType employmentType;
         public LocalDate hireDate;
         public UUID reportingManagerId;
+        public EmployeeBand band;
     }
 
     private EmployeeSummaryDto toSummary(Employee e) {
