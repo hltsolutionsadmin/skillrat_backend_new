@@ -28,7 +28,7 @@ public class IncidentController {
 
     @PostMapping("/projects/{projectId}/incidents")
     public ResponseEntity<Incident> create(@PathVariable("projectId") UUID projectId,
-                                           @RequestBody @Valid CreateIncidentRequest req) {
+                                           @RequestBody @Valid CreateIncidentRequest req) throws Exception {
         Incident incident = incidentService.create(
                 projectId,
                 req.title,
