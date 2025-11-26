@@ -24,6 +24,10 @@ public class Designation {
     @Column(nullable = false)
     private UUID b2bUnitId;
 
+    @ManyToOne
+    @JoinColumn(name = "band_id")
+    private EmployeeOrgBand band;
+
     @OneToMany(mappedBy = "designation")
     private Set<Employee> employees = new HashSet<>();
 }

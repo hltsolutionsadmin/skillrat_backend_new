@@ -18,11 +18,13 @@ public class DesignationService {
 
     private final DesignationRepository designationRepository;
     private final EmployeeRepository employeeRepository;
+    private final EmployeeBandService service;
 
     public DesignationService(DesignationRepository designationRepository,
-                              EmployeeRepository employeeRepository) {
+                              EmployeeRepository employeeRepository, EmployeeBandService service) {
         this.designationRepository = designationRepository;
         this.employeeRepository = employeeRepository;
+        this.service = service;
     }
     public List<DesignationDTO> getDesignations(UUID b2bUnitId) {
         return employeeRepository.findDesignationWithBandAndResourceCount(b2bUnitId);
@@ -51,6 +53,9 @@ public class DesignationService {
         }
         Designation desig = new Designation();
         desig.setName(request.getName());
+        if(request.getBandId() != null) {
+            desig.setBand(service.getBand(request.getBandId()));
+        }
         desig.setB2bUnitId(request.getB2bUnitId());
         return designationRepository.save(desig);
     }
@@ -59,7 +64,12 @@ public class DesignationService {
     public Designation updateDesignation(UUID id, DesignationRequestDTO request) {
         Designation desig = designationRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Designation not found"));
-        desig.setName(request.getName());
+        if (request.getName() != null) {
+            desig.setName(request.getName());
+        }
+        if (request.getBandId() != null) {
+            desig.setBand(service.getBand(request.getBandId()));
+        }
         return designationRepository.save(desig);
     }
 
