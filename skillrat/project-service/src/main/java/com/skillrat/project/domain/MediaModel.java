@@ -1,11 +1,13 @@
 package com.skillrat.project.domain;
 
+import com.skillrat.common.orm.BaseEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.envers.Audited;
 
 import java.util.Date;
+import java.util.UUID;
 
 @Entity
 @Table(name = "media", indexes = {
@@ -14,13 +16,7 @@ import java.util.Date;
 @Audited
 @Getter
 @Setter
-public class MediaModel {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-
+public class MediaModel extends BaseEntity {
 
     @Column(name = "url", nullable = false)
     private String url;
@@ -42,18 +38,15 @@ public class MediaModel {
     @Column(name = "active", nullable = false)
     private boolean active = true;
 
-    @Column(name = "customer_id")
-    private Long customerId;
+    @Column(name = "customer_id", length = 36)
+    private String customerId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "incident_id")
     private Incident incident;
-    
-    @Column(name = "incident_id", insertable = false, updatable = false)
-    private Long incidentId;
 
-    @Column(name = "created_by")
-    private Long createdBy;
+    @Column(name = "created_by", length = 36)
+    private String createdBy;
 
     @Column(name = "creation_time", nullable = false)
     private Date creationTime;

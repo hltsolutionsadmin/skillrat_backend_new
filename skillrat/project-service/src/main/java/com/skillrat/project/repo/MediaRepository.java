@@ -16,9 +16,5 @@ public interface MediaRepository extends JpaRepository<MediaModel, Long> {
 
     List<MediaModel> findByIncidentId(Long incidentId);
     
-    // Standard JpaRepository methods already available:
-    // - save()
-    // - findById()
-    // - findAll()
-    // - deleteById()
+
 }
