@@ -49,4 +49,6 @@ public interface EmployeeRepository extends JpaRepository<Employee, UUID> {
                           Pageable pageable);
 
     List<Employee> findByB2bUnitId(UUID b2bUnitId);
+
+    void deleteById(UUID userId);
 }

@@ -15,7 +15,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -60,7 +59,7 @@ public class IncidentService {
                            IncidentUrgency urgency,
                            IncidentImpact impact,
                            UUID categoryId,
-                           UUID subCategoryId) {
+                           UUID assigneeId, UUID reporterId, UUID subCategoryId) throws Exception {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new IllegalArgumentException("Project not found"));
         String tenantId = TenantContext.getTenantId();
@@ -91,6 +90,14 @@ public class IncidentService {
         incident.setSubCategory(subCategory);
         incident.setStatus(IncidentStatus.OPEN);
         incident.setTenantId(tenantId);
+        incident.setAssigneeId(assigneeId);
+        if(assigneeId != null) {
+            incident.setAssigneeName(userClient.getUserById(assigneeId).getFirstName() + " " + userClient.getUserById(assigneeId).getLastName());
+        }
+        if(reporterId != null) {
+            incident.setReporterId(reporterId);
+            incident.setReporterName(userClient.getUserById(reporterId).getFirstName() + " " + userClient.getUserById(reporterId).getLastName());
+        }
         Incident saved = incidentRepository.save(incident);
         log.info("Incident created id={}, projectId={}, number={}, createdBy={}",
                 saved.getId(), projectId, saved.getIncidentNumber(), saved.getCreatedBy());

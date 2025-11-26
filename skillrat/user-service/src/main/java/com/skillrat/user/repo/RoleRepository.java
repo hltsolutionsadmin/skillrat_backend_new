@@ -40,5 +40,6 @@ public interface RoleRepository extends JpaRepository<Role, UUID> {
      */
     List<Role> findByB2bUnitIdIsNull();
 
-    List<Role> findByB2bUnitIdIsNullAndNameNotIn(List<String> excludedRoles);
+    List<Role> findByB2bUnitIdAndNameNotIn(UUID b2bUnitId, List<String> excludedRoles);
+
 }

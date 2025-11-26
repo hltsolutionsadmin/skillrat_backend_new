@@ -28,7 +28,7 @@ public class IncidentController {
 
     @PostMapping("/projects/{projectId}/incidents")
     public ResponseEntity<Incident> create(@PathVariable("projectId") UUID projectId,
-                                           @RequestBody @Valid CreateIncidentRequest req) {
+                                           @RequestBody @Valid CreateIncidentRequest req) throws Exception {
         Incident incident = incidentService.create(
                 projectId,
                 req.title,
@@ -36,7 +36,10 @@ public class IncidentController {
                 req.urgency,
                 req.impact,
                 req.categoryId,
+                req.assigneeId,
+                req.reporterId,
                 req.subCategoryId
+
         );
         return ResponseEntity.ok(incident);
     }
@@ -115,6 +118,8 @@ public class IncidentController {
         @NotNull public IncidentImpact impact;
         public UUID categoryId;
         public UUID subCategoryId;
+        public UUID assigneeId;
+        public UUID reporterId;
     }
 
     public static class AssignUserRequest {
