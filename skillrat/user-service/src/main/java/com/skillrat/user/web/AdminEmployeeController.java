@@ -125,7 +125,7 @@ public class AdminEmployeeController {
         @NotBlank public String lastName;
         @NotBlank @Email public String email;
         public String mobile;
-        public String designation;
+        public UUID designation;
         public String department;
         public EmploymentType employmentType;
         public LocalDate hireDate;
@@ -138,7 +138,7 @@ public class AdminEmployeeController {
         public String firstName;
         public String lastName;
         public String mobile;
-        public String designation;
+        public UUID designation;
         public String department;
         public EmploymentType employmentType;
         public LocalDate hireDate;
@@ -162,7 +162,7 @@ public class AdminEmployeeController {
                 e.getEmail(),
                 e.getMobile(),
                 e.getEmployeeCode(),
-                e.getDesignation(),
+                e.getDesignation().getName(),
                 e.getDepartment(),
                 e.getHireDate(),
                 e.getEmploymentType(),
