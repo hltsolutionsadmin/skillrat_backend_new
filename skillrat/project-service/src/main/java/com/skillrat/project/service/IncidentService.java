@@ -15,10 +15,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.persistence.EntityManager;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -36,13 +38,16 @@ public class IncidentService {
     private final EntityManager entityManager;
     private final AuditClient auditClient;
     private final UserClient userClient;
+    private final IncidentMediaService incidentMediaService;
 
     public IncidentService(ProjectRepository projectRepository,
                            IncidentRepository incidentRepository,
                            IncidentCategoryRepository categoryRepository,
                            IncidentSubCategoryRepository subCategoryRepository,
                            EntityManager entityManager,
-                           AuditClient auditClient, UserClient userClient) {
+                           AuditClient auditClient,
+                           UserClient userClient,
+                           IncidentMediaService incidentMediaService) {
         this.projectRepository = projectRepository;
         this.incidentRepository = incidentRepository;
         this.categoryRepository = categoryRepository;
@@ -50,6 +55,7 @@ public class IncidentService {
         this.entityManager = entityManager;
         this.auditClient = auditClient;
         this.userClient = userClient;
+        this.incidentMediaService = incidentMediaService;
     }
 
     @Transactional
@@ -59,25 +65,32 @@ public class IncidentService {
                            IncidentUrgency urgency,
                            IncidentImpact impact,
                            UUID categoryId,
-                           UUID assigneeId, UUID reporterId, UUID subCategoryId) throws Exception {
+                           UUID subCategoryId,
+                           List<MultipartFile> mediaFiles,
+                           List<String> mediaUrls) {
+        log.info("Creating incident with projectId: {}, title: {}", projectId, title);
+
+        // Validate inputs
         Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new IllegalArgumentException("Project not found"));
+                .orElseThrow(() -> new IllegalArgumentException("Project not found with id: " + projectId));
+
         String tenantId = TenantContext.getTenantId();
-        IncidentCategoryEntity category = null;
-        if (categoryId != null) {
-            category = categoryRepository.findByIdAndTenantId(categoryId, tenantId)
-                    .orElseThrow(() -> new IllegalArgumentException("Category not found"));
-        } else {
-            throw new IllegalArgumentException("categoryId is required");
-        }
+
+        // Validate category
+        IncidentCategoryEntity category = categoryRepository.findByIdAndTenantId(categoryId, tenantId)
+                .orElseThrow(() -> new IllegalArgumentException("Category not found with id: " + categoryId));
+
+        // Validate subcategory if provided
         IncidentSubCategoryEntity subCategory = null;
         if (subCategoryId != null) {
             subCategory = subCategoryRepository.findByIdAndTenantId(subCategoryId, tenantId)
-                    .orElseThrow(() -> new IllegalArgumentException("SubCategory not found"));
+                    .orElseThrow(() -> new IllegalArgumentException("SubCategory not found with id: " + subCategoryId));
             if (!Objects.equals(subCategory.getCategory().getId(), category.getId())) {
-                throw new IllegalArgumentException("SubCategory does not belong to Category");
+                throw new IllegalArgumentException("SubCategory does not belong to the specified Category");
             }
         }
+
+        // Create and save the incident
         Incident incident = new Incident();
         incident.setProject(project);
         incident.setIncidentNumber(generateIncidentNumber(project));
@@ -90,17 +103,24 @@ public class IncidentService {
         incident.setSubCategory(subCategory);
         incident.setStatus(IncidentStatus.OPEN);
         incident.setTenantId(tenantId);
-        incident.setAssigneeId(assigneeId);
-        if(assigneeId != null) {
-            incident.setAssigneeName(userClient.getUserById(assigneeId).getFirstName() + " " + userClient.getUserById(assigneeId).getLastName());
-        }
-        if(reporterId != null) {
-            incident.setReporterId(reporterId);
-            incident.setReporterName(userClient.getUserById(reporterId).getFirstName() + " " + userClient.getUserById(reporterId).getLastName());
-        }
+
+        // Save the incident first to get an ID
         Incident saved = incidentRepository.save(incident);
-        log.info("Incident created id={}, projectId={}, number={}, createdBy={}",
-                saved.getId(), projectId, saved.getIncidentNumber(), saved.getCreatedBy());
+        log.info("Incident created id={}, projectId={}, number={}",
+                saved.getId(), projectId, saved.getIncidentNumber());
+
+        try {
+            // Handle media files and URLs
+            List<MediaModel> savedMedia = incidentMediaService.handleIncidentMedia(saved, mediaFiles, mediaUrls);
+            saved.getMedia().addAll(savedMedia);
+            saved = incidentRepository.save(saved);
+
+        } catch (Exception e) {
+            log.error("Error processing media for incident: {}", saved.getId(), e);
+            // Don't fail the entire request if media processing fails
+        }
+
+        // Log the change
         auditClient.logChange(
                 "Incident",
                 saved.getId(),
