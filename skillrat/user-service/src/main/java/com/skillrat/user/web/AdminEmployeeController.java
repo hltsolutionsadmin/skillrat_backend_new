@@ -1,6 +1,8 @@
 package com.skillrat.user.web;
 
 import com.skillrat.user.domain.Employee;
+import com.skillrat.user.domain.EmployeeBand;
+import com.skillrat.user.domain.EmployeeOrgBand;
 import com.skillrat.user.domain.EmploymentType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import com.skillrat.user.security.B2BUnitAccessValidator;
@@ -39,7 +41,7 @@ public class AdminEmployeeController {
 
     // List employees with filters and pagination, scoped to a B2B unit
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN','BUSINESS_ADMIN','HR_ADMIN')")
+    @PreAuthorize("isAuthenticated()")
     public PageResponse<EmployeeSummaryDto> search(@RequestParam("b2bUnitId") UUID b2bUnitId,
                                                    @RequestParam(value = "q", required = false) String q,
                                                    @RequestParam(value = "employmentType", required = false) EmploymentType employmentType,
@@ -85,6 +87,7 @@ public class AdminEmployeeController {
                 req.employmentType,
                 req.hireDate,
                 req.reportingManagerId,
+                req.band,
                 req.roleIds
         );
         return ResponseEntity.ok(e);
@@ -103,10 +106,18 @@ public class AdminEmployeeController {
                 req.department,
                 req.employmentType,
                 req.hireDate,
-                req.reportingManagerId
+                req.reportingManagerId,
+                req.band
         );
         return ResponseEntity.ok(e);
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deleteUser(@PathVariable UUID id) {
+        employeeService.deleteUser(id);
+        return ResponseEntity.ok("User deleted successfully");
+    }
+
 
     public static class CreateEmployeeRequest {
         @NotNull public UUID b2bUnitId;
@@ -114,11 +125,12 @@ public class AdminEmployeeController {
         @NotBlank public String lastName;
         @NotBlank @Email public String email;
         public String mobile;
-        public String designation;
+        public UUID designation;
         public String department;
         public EmploymentType employmentType;
         public LocalDate hireDate;
         public UUID reportingManagerId;
+        public EmployeeOrgBand band;
         @NotEmpty public List<UUID> roleIds;
     }
 
@@ -126,11 +138,12 @@ public class AdminEmployeeController {
         public String firstName;
         public String lastName;
         public String mobile;
-        public String designation;
+        public UUID designation;
         public String department;
         public EmploymentType employmentType;
         public LocalDate hireDate;
         public UUID reportingManagerId;
+        public EmployeeOrgBand band;
     }
 
     private EmployeeSummaryDto toSummary(Employee e) {
@@ -149,7 +162,7 @@ public class AdminEmployeeController {
                 e.getEmail(),
                 e.getMobile(),
                 e.getEmployeeCode(),
-                e.getDesignation(),
+                e.getDesignation().getName(),
                 e.getDepartment(),
                 e.getHireDate(),
                 e.getEmploymentType(),

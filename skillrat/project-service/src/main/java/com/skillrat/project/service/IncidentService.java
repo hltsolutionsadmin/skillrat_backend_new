@@ -1,9 +1,15 @@
 package com.skillrat.project.service;
 
+import com.skillrat.common.dto.UserDTO;
 import com.skillrat.common.tenant.TenantContext;
+import com.skillrat.project.client.UserClient;
 import com.skillrat.project.domain.*;
 import com.skillrat.project.repo.IncidentRepository;
 import com.skillrat.project.repo.ProjectRepository;
+import com.skillrat.project.repo.IncidentCategoryRepository;
+import com.skillrat.project.repo.IncidentSubCategoryRepository;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import org.hibernate.envers.AuditReader;
 import org.hibernate.envers.AuditReaderFactory;
 import org.slf4j.Logger;
@@ -15,8 +21,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.persistence.EntityManager;
-import java.util.List;
-import java.util.UUID;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 
 @Service
 public class IncidentService {
@@ -25,17 +34,29 @@ public class IncidentService {
 
     private final ProjectRepository projectRepository;
     private final IncidentRepository incidentRepository;
+    private final IncidentCategoryRepository categoryRepository;
+    private final IncidentSubCategoryRepository subCategoryRepository;
     private final EntityManager entityManager;
     private final AuditClient auditClient;
+    private final UserClient userClient;
+    private final IncidentMediaService incidentMediaService;
 
     public IncidentService(ProjectRepository projectRepository,
                            IncidentRepository incidentRepository,
+                           IncidentCategoryRepository categoryRepository,
+                           IncidentSubCategoryRepository subCategoryRepository,
                            EntityManager entityManager,
-                           AuditClient auditClient) {
+                           AuditClient auditClient,
+                           UserClient userClient,
+                           IncidentMediaService incidentMediaService) {
         this.projectRepository = projectRepository;
         this.incidentRepository = incidentRepository;
+        this.categoryRepository = categoryRepository;
+        this.subCategoryRepository = subCategoryRepository;
         this.entityManager = entityManager;
         this.auditClient = auditClient;
+        this.userClient = userClient;
+        this.incidentMediaService = incidentMediaService;
     }
 
     @Transactional
@@ -44,10 +65,33 @@ public class IncidentService {
                            String shortDescription,
                            IncidentUrgency urgency,
                            IncidentImpact impact,
-                           IncidentCategory category,
-                           String subCategory) {
+                           UUID categoryId,
+                           UUID subCategoryId,
+                           List<MultipartFile> mediaFiles,
+                           List<String> mediaUrls, UUID assigneeId, UUID reporterId) throws Exception {
+        log.info("Creating incident with projectId: {}, title: {}", projectId, title);
+
+        // Validate inputs
         Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new IllegalArgumentException("Project not found"));
+                .orElseThrow(() -> new IllegalArgumentException("Project not found with id: " + projectId));
+
+        String tenantId = TenantContext.getTenantId();
+
+        // Validate category
+        IncidentCategoryEntity category = categoryRepository.findByIdAndTenantId(categoryId, tenantId)
+                .orElseThrow(() -> new IllegalArgumentException("Category not found with id: " + categoryId));
+
+        // Validate subcategory if provided
+        IncidentSubCategoryEntity subCategory = null;
+        if (subCategoryId != null) {
+            subCategory = subCategoryRepository.findByIdAndTenantId(subCategoryId, tenantId)
+                    .orElseThrow(() -> new IllegalArgumentException("SubCategory not found with id: " + subCategoryId));
+            if (!Objects.equals(subCategory.getCategory().getId(), category.getId())) {
+                throw new IllegalArgumentException("SubCategory does not belong to the specified Category");
+            }
+        }
+
+        // Create and save the incident
         Incident incident = new Incident();
         incident.setProject(project);
         incident.setIncidentNumber(generateIncidentNumber(project));
@@ -56,13 +100,36 @@ public class IncidentService {
         incident.setUrgency(urgency);
         incident.setImpact(impact);
         incident.setPriority(computePriority(urgency, impact));
-        incident.setCategory(category == null ? IncidentCategory.OTHER : category);
+        incident.setCategory(category);
         incident.setSubCategory(subCategory);
         incident.setStatus(IncidentStatus.OPEN);
-        incident.setTenantId(TenantContext.getTenantId());
+        incident.setTenantId(tenantId);
+
+        if(assigneeId != null) {
+            incident.setAssigneeId(assigneeId);
+            incident.setAssigneeName(userClient.getUserById(assigneeId).getFirstName() + " " + userClient.getUserById(assigneeId).getLastName());
+        }
+        if(reporterId != null) {
+            incident.setReporterId(reporterId);
+            incident.setReporterName(userClient.getUserById(reporterId).getFirstName() + " " + userClient.getUserById(reporterId).getLastName());
+        }
+        // Save the incident first to get an ID
         Incident saved = incidentRepository.save(incident);
-        log.info("Incident created id={}, projectId={}, number={}, createdBy={}",
-                saved.getId(), projectId, saved.getIncidentNumber(), saved.getCreatedBy());
+        log.info("Incident created id={}, projectId={}, number={}",
+                saved.getId(), projectId, saved.getIncidentNumber());
+
+        try {
+            // Handle media files and URLs
+            List<MediaModel> savedMedia = incidentMediaService.handleIncidentMedia(saved, mediaFiles, mediaUrls);
+            saved.getMedia().addAll(savedMedia);
+            saved = incidentRepository.save(saved);
+
+        } catch (Exception e) {
+            log.error("Error processing media for incident: {}", saved.getId(), e);
+            // Don't fail the entire request if media processing fails
+        }
+
+        // Log the change
         auditClient.logChange(
                 "Incident",
                 saved.getId(),
@@ -76,20 +143,16 @@ public class IncidentService {
     }
 
     private String generateIncidentNumber(Project project) {
-        String prefix = (project.getCode() != null && !project.getCode().isBlank()) ? project.getCode() : "INC";
-        Incident last = incidentRepository.findTopByProjectAndIncidentNumberStartingWithOrderByIncidentNumberDesc(project, prefix);
-        int nextNumber = 1;
-        if (last != null) {
-            String lastNumber = last.getIncidentNumber();
-            String numericPart = lastNumber.substring(prefix.length());
-            try {
-                nextNumber = Integer.parseInt(numericPart) + 1;
-            } catch (NumberFormatException ignored) {
-                nextNumber = 1;
-            }
+
+        if (project == null) {
+            throw new IllegalArgumentException("Project cannot be null");
         }
-        return prefix + String.format("%04d", nextNumber);
+
+        return  (project.getCode() != null && !project.getCode().isBlank())
+                ? project.getCode()
+                : "INC"+ DateTimeFormatter.ofPattern("yyyy").format(LocalDateTime.now());
     }
+
 
     @Transactional(readOnly = true)
     public Page<Incident> listByProject(UUID projectId, Pageable pageable) {
@@ -100,7 +163,7 @@ public class IncidentService {
     public Page<Incident> listByProjectFiltered(
             UUID projectId,
             IncidentPriority priority,
-            IncidentCategory category,
+            UUID categoryId,
             IncidentStatus status,
             String search,
             Pageable pageable
@@ -111,8 +174,8 @@ public class IncidentService {
             if (priority != null) {
                 predicates.add(cb.equal(root.get("priority"), priority));
             }
-            if (category != null) {
-                predicates.add(cb.equal(root.get("category"), category));
+            if (categoryId != null) {
+                predicates.add(cb.equal(root.get("category").get("id"), categoryId));
             }
             if (status != null) {
                 predicates.add(cb.equal(root.get("status"), status));
@@ -132,11 +195,16 @@ public class IncidentService {
     }
 
     @Transactional
-    public Incident assignAssignee(UUID incidentId, UUID assigneeId) {
+    public Incident assignAssignee(UUID incidentId, UUID assigneeId) throws Exception {
         Incident incident = incidentRepository.findById(incidentId)
                 .orElseThrow(() -> new IllegalArgumentException("Incident not found"));
         UUID oldAssignee = incident.getAssigneeId();
+        UserDTO user=userClient.getUserById(assigneeId);
+        if(user==null){
+            throw new Exception("User not found with id: " + assigneeId);
+        }
         incident.setAssigneeId(assigneeId);
+        incident.setAssigneeName(user.getFirstName()+" "+user.getLastName());
         Incident saved = incidentRepository.save(incident);
         log.info("Incident assignee updated id={}, oldAssigneeId={}, newAssigneeId={}, updatedBy={}",
                 saved.getId(),
@@ -156,11 +224,17 @@ public class IncidentService {
     }
 
     @Transactional
-    public Incident assignReporter(UUID incidentId, UUID reporterId) {
+    public Incident assignReporter(UUID incidentId, UUID reporterId) throws Exception {
         Incident incident = incidentRepository.findById(incidentId)
                 .orElseThrow(() -> new IllegalArgumentException("Incident not found"));
         UUID oldReporter = incident.getReporterId();
+        UserDTO user=userClient.getUserById(reporterId);
+        if(user==null){
+            throw new Exception("User not found with id: " + reporterId);
+        }
         incident.setReporterId(reporterId);
+        incident.setAssigneeName(user.getFirstName()+" "+user.getLastName());
+
         Incident saved = incidentRepository.save(incident);
         log.info("Incident reporter updated id={}, oldReporterId={}, newReporterId={}, updatedBy={}",
                 saved.getId(),
@@ -180,12 +254,39 @@ public class IncidentService {
     }
 
     @Transactional
-    public Incident updateStatus(UUID incidentId, IncidentStatus status) {
+    public Incident updateStatus(UUID incidentId, IncidentStatus status, @NotBlank(message = "Title is required") String discription, @NotNull(message = "Urgency is required") IncidentUrgency urgency, @NotNull(message = "Impact is required") IncidentImpact impact, List<MultipartFile> mediaFiles, List<String> mediaUrls) {
         Incident incident = incidentRepository.findById(incidentId)
                 .orElseThrow(() -> new IllegalArgumentException("Incident not found"));
+
+
         IncidentStatus oldStatus = incident.getStatus();
         incident.setStatus(status);
+        incident.setShortDescription(discription);
+        if (urgency != null) {
+            incident.setUrgency(urgency);
+        }
+        if (impact != null) {
+            incident.setImpact(impact);
+        }
+        if (impact != null && urgency != null) {
+            incident.setPriority(computePriority(urgency, impact));
+        }
         Incident saved = incidentRepository.save(incident);
+        log.info("Incident created id={}, projectId={}, number={}",
+                saved.getId(), saved.getProject().getId(), saved.getIncidentNumber());
+        if (mediaFiles != null && mediaFiles.size() > 0) {
+            try {
+                // Handle media files and URLs
+                List<MediaModel> savedMedia = incidentMediaService.handleIncidentMedia(saved, mediaFiles, mediaUrls);
+                saved.getMedia().addAll(savedMedia);
+                saved = incidentRepository.save(saved);
+
+            } catch (Exception e) {
+                log.error("Error processing media for incident: {}", saved.getId(), e);
+                // Don't fail the entire request if media processing fails
+            }
+
+        }
         log.info("Incident status updated id={}, oldStatus={}, newStatus={}, updatedBy={}",
                 saved.getId(),
                 oldStatus,
@@ -246,16 +347,39 @@ public class IncidentService {
     }
 
     @Transactional(readOnly = true)
-    public Page<Incident> listByReporter(UUID reporterId, Pageable pageable) {
-        return incidentRepository.findByReporterId(reporterId, pageable);
+    public Page<Incident> listByReporter(UUID projectId, Pageable pageable) {
+
+        Map<String, Object> me = userClient.me();
+        if (me == null || me.get("id") == null) {
+            throw new IllegalStateException("Logged-in user not found");
+        }
+
+        UUID loggedInUserId = UUID.fromString(me.get("id").toString());
+
+        Specification<Incident> spec = (root, query, cb) -> cb.and(
+                cb.equal(root.get("project").get("id"), projectId),
+                cb.equal(root.get("reporterId"), loggedInUserId)
+        );
+
+        return incidentRepository.findAll(spec, pageable);
     }
 
     @Transactional(readOnly = true)
-    public Page<Incident> listByProjectAndAssignee(UUID projectId, UUID assigneeId, Pageable pageable) {
+    public Page<Incident> listByProjectAndLoggedInUser(UUID projectId, Pageable pageable) {
+
+        Map<String, Object> me = userClient.me();
+        if (me == null || me.get("id") == null) {
+            throw new IllegalStateException("Logged-in user not found");
+        }
+
+        UUID loggedInUserId = UUID.fromString(me.get("id").toString());
+
         Specification<Incident> spec = (root, query, cb) -> cb.and(
                 cb.equal(root.get("project").get("id"), projectId),
-                cb.equal(root.get("assigneeId"), assigneeId)
+                cb.equal(root.get("assigneeId"), loggedInUserId)
         );
+
         return incidentRepository.findAll(spec, pageable);
     }
+
 }

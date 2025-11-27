@@ -8,7 +8,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDate;
-
 @Entity
 @Table(
         name = "wbs_element",
@@ -25,7 +24,6 @@ public class WBSElement extends BaseEntity {
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "project_id")
-    @JsonBackReference
     private Project project;
 
     @Column(nullable = false, length = 200)
@@ -40,4 +38,7 @@ public class WBSElement extends BaseEntity {
 
     private LocalDate startDate;
     private LocalDate endDate;
+
+    @Column(name = "disabled", nullable = false)
+    private boolean disabled = false;
 }

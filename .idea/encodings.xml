@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="Encoding">
+    <file url="file://$PROJECT_DIR$/skillrat/asset-service/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/skillrat/audit-service/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/skillrat/auth-service/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/skillrat/common-orm/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/skillrat/config-service/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/skillrat/discovery-service/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/skillrat/expense-service/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/skillrat/gateway-service/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/skillrat/infra/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/skillrat/infra/src/main/resources" charset="UTF-8" />

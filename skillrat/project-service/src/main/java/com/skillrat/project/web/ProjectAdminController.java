@@ -1,5 +1,6 @@
 package com.skillrat.project.web;
 
+import com.skillrat.common.dto.UserDTO;
 import com.skillrat.project.domain.*;
 import com.skillrat.project.service.ProjectService;
 import jakarta.validation.Valid;
@@ -7,6 +8,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
@@ -48,6 +50,11 @@ public class ProjectAdminController {
                 req.client != null ? req.client.name : null,
                 req.client != null ? req.client.primaryContactEmail : null,
                 req.client != null ? req.client.secondaryContactEmail : null,
+                req.projectType,
+                req.status,
+                req.projectStatus,
+                req.taskManagement,
+                req.projectManagement,
                 userId
         );
         return ResponseEntity.ok(p);
@@ -78,6 +85,11 @@ public class ProjectAdminController {
                 req.client != null ? req.client.name : null,
                 req.client != null ? req.client.primaryContactEmail : null,
                 req.client != null ? req.client.secondaryContactEmail : null,
+                req.projectType,
+                req.status,
+                req.projectStatus,
+                req.taskManagement,
+                req.projectManagement,
                 userId
         );
         return ResponseEntity.ok(p);
@@ -94,13 +106,15 @@ public class ProjectAdminController {
     }
 
     // Allocate member to a WBS (assignment that controls time entry eligibility)
-    @PostMapping("/members/{memberId}/allocations")
+    @PostMapping("/members/{projectId}/allocations/{userId}")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<WBSAllocation> allocate(@PathVariable("memberId") UUID memberId,
+    public ResponseEntity<WBSAllocation> allocate(@PathVariable("projectId") UUID projectId,
+                                                  @PathVariable("userId") UUID userId,
                                                   @RequestBody @Valid AllocateRequest req) {
-        WBSAllocation a = service.allocateMemberToWbs(memberId, req.wbsId, req.startDate, req.endDate);
+        WBSAllocation a = service.allocateMemberToWbs(projectId,userId, req.wbsId, req.startDate, req.endDate);
         return ResponseEntity.ok(a);
     }
+
 
     @GetMapping("/{projectId}")
     public ResponseEntity<Project> getProject(@PathVariable("projectId") UUID projectId) {
@@ -133,7 +147,9 @@ public class ProjectAdminController {
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(defaultValue = "10") @Min(1) int size,
             @RequestParam(value = "fromDate", required = false) LocalDate fromDate,
-            @RequestParam(value = "toDate", required = false) LocalDate toDate) {
+            @RequestParam(value = "toDate", required = false) LocalDate toDate,
+            @RequestParam(value = "status", required = false) ProjectStatus status
+    ) {
 
         String email = getCurrentUserId();
         List<String> roles = getCurrentUserRoles();
@@ -149,22 +165,50 @@ public class ProjectAdminController {
             projects = service.listProjectsForUser(email, pageRequest);
         }
 
-        if (fromDate != null || toDate != null) {
             List<Project> filtered = projects.getContent().stream()
                     .filter(p -> {
+                        boolean statusMatch = (status == null) || (p.getProjectStatus() == status);
                         LocalDate s = p.getStartDate();
                         LocalDate e = p.getEndDate();
                         boolean afterFrom = (fromDate == null) || (e == null || !e.isBefore(fromDate));
                         boolean beforeTo = (toDate == null) || (s == null || !s.isAfter(toDate));
-                        return afterFrom && beforeTo; // overlap logic
+                        return statusMatch && afterFrom && beforeTo;
                     })
                     .collect(Collectors.toList());
-            projects = new org.springframework.data.domain.PageImpl<>(filtered, pageRequest, filtered.size());
-        }
-
-        return ResponseEntity.ok(projects);
+            Page<Project> finalResult = new PageImpl<>(filtered, pageRequest, filtered.size());
+            return ResponseEntity.ok(finalResult);
     }
 
+    // Get basic user details for all members of a project
+    @GetMapping("/{projectId}/members/users")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<UserDTO>> listMemberUsers(@PathVariable UUID projectId) {
+        return ResponseEntity.ok(service.listMemberUsers(projectId));
+    }
+    @PutMapping("/wbs/{wbsId}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<WBSElement> updateWbs(@PathVariable UUID wbsId, @RequestBody @Valid UpdateWbsRequest req) {
+        WBSElement w = service.updateWbs(wbsId, req.name, req.code, req.category, req.startDate, req.endDate,req.projectId,req.disabled);
+        return ResponseEntity.ok(w);
+    }
+
+    @DeleteMapping("/{projectId}/removeMember/{employeeId}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Void> removeMember(@PathVariable UUID projectId,
+                                             @PathVariable UUID employeeId) {
+        service.removeMember(projectId, employeeId);
+        return ResponseEntity.noContent().build();
+    }
+
+    public static class UpdateWbsRequest {
+        public String name;
+        public String code;
+        public UUID projectId;
+        public WBSCategory category;
+        public LocalDate startDate;
+        public LocalDate endDate;
+        public boolean disabled;
+    }
     // Helper methods to get current user info
     private String getCurrentUserId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -193,6 +237,12 @@ public class ProjectAdminController {
         public LocalDate endDate;
         public String description;
         public ProjectClientRequest client;
+        public ProjectType projectType;
+        public ProjectSLAType status;
+        public ProjectStatus projectStatus;
+        public boolean taskManagement;
+        public boolean projectManagement;
+
     }
 
     public static class CreateWbsRequest {
@@ -231,6 +281,11 @@ public class ProjectAdminController {
         public LocalDate startDate;
         public LocalDate endDate;
         public ProjectClientRequest client;
+        public ProjectType projectType;
+        public ProjectSLAType status;
+        public ProjectStatus projectStatus;
+        public boolean taskManagement;
+        public boolean projectManagement;
     }
 
 }

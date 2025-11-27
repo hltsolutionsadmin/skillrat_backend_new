@@ -1,13 +1,12 @@
 package com.skillrat.user.service;
 
 import com.skillrat.common.tenant.TenantContext;
-import com.skillrat.user.domain.Employee;
-import com.skillrat.user.domain.EmploymentType;
-import com.skillrat.user.domain.Role;
-import com.skillrat.user.domain.User;
+import com.skillrat.user.domain.*;
 import com.skillrat.user.repo.EmployeeRepository;
 import com.skillrat.user.repo.RoleRepository;
 import com.skillrat.user.repo.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -17,28 +16,33 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 public class EmployeeService {
+
+    private static final Logger log = LoggerFactory.getLogger(EmployeeService.class);
 
     private final EmployeeRepository employeeRepository;
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
-
+    private final MailService mailService;
+    private final EmployeeBandService service;
+    private final DesignationService designationService;
     public EmployeeService(EmployeeRepository employeeRepository,
                            UserRepository userRepository,
                            RoleRepository roleRepository,
-                           PasswordEncoder passwordEncoder) {
+                           PasswordEncoder passwordEncoder,
+                           MailService mailService, EmployeeBandService service, DesignationService designationService) {
         this.employeeRepository = employeeRepository;
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
+        this.mailService = mailService;
+        this.service = service;
+
+        this.designationService = designationService;
     }
 
     @Transactional(readOnly = true)
@@ -63,12 +67,13 @@ public class EmployeeService {
                            String lastName,
                            String email,
                            String mobile,
-                           String designation,
+                           UUID designation,
                            String department,
                            EmploymentType employmentType,
                            LocalDate hireDate,
                            UUID reportingManagerId,
-                           java.util.List<UUID> roleIds) {
+                           EmployeeOrgBand band,
+                           List<UUID> roleIds) {
         String tenantId = Optional.ofNullable(TenantContext.getTenantId()).orElse("default");
         // Admin validations: unique email/mobile, name present
         userRepository.findByEmailIgnoreCase(email).ifPresent(u -> { throw new IllegalArgumentException("Email already in use"); });
@@ -81,27 +86,34 @@ public class EmployeeService {
         e.setUsername(email.toLowerCase());
         e.setEmail(email.toLowerCase());
         e.setMobile(mobile);
-        e.setDesignation(designation);
         e.setDepartment(department);
         e.setEmploymentType(employmentType);
-        e.setHireDate(hireDate);
+        if(band.getId()!=null){
+           e.setBand(service.getBand(band.getId()));
+        }
+          e.setHireDate(hireDate);
         if (reportingManagerId != null) {
             User rm = userRepository.findById(reportingManagerId).orElseThrow(() -> new IllegalArgumentException("Reporting manager not found"));
             e.setReportingManager(rm);
         }
         e.setEmployeeCode("EMP-" + UUID.randomUUID().toString().substring(0,8).toUpperCase());
-        e.setPasswordHash(passwordEncoder.encode(UUID.randomUUID().toString()));
+        String defaultPassword = "Password@123";
+        e.setPasswordHash(passwordEncoder.encode(defaultPassword));
         e.setActive(true);
         e.setTenantId(tenantId);
         e.setB2bUnitId(b2bUnitId);
         e.setPasswordNeedsReset(true);
         e.setPasswordSetupToken(UUID.randomUUID().toString());
         e.setPasswordSetupTokenExpires(Instant.now().plus(7, ChronoUnit.DAYS));
-        if (roleIds != null && !roleIds.isEmpty()) {
-            Set<Role> roles = new HashSet<>(roleRepository.findAllById(roleIds));
-            e.setRoles(roles);
+        Designation design = designationService.findById(designation);
+        e.setDesignation(design);
+        Employee saved = employeeRepository.save(e);
+        try {
+            mailService.sendPasswordSetupEmail(saved.getEmail(), saved.getFirstName(), saved.getPasswordSetupToken());
+        } catch (Exception ex) {
+            log.info("Failed to send password setup email to {}", saved.getEmail());
         }
-        return employeeRepository.save(e);
+        return saved;
     }
 
     @Transactional
@@ -109,11 +121,12 @@ public class EmployeeService {
                            String firstName,
                            String lastName,
                            String mobile,
-                           String designation,
+                           UUID designation,
                            String department,
                            EmploymentType employmentType,
                            LocalDate hireDate,
-                           UUID reportingManagerId) {
+                           UUID reportingManagerId,
+                           EmployeeOrgBand band) {
         Employee e = employeeRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Employee not found"));
         if (firstName != null && !firstName.isBlank()) e.setFirstName(firstName.trim());
         if (lastName != null && !lastName.isBlank()) e.setLastName(lastName.trim());
@@ -123,14 +136,30 @@ public class EmployeeService {
                     .ifPresent(u -> { throw new IllegalArgumentException("Mobile already in use"); });
             e.setMobile(mobile);
         }
-        if (designation != null) e.setDesignation(designation);
+        if (designation != null) {
+            e.setDesignation((designationService.findById(designation)));
+        }
         if (department != null) e.setDepartment(department);
         if (employmentType != null) e.setEmploymentType(employmentType);
-        if (hireDate != null) e.setHireDate(hireDate);
+        if(band.getId()!=null){
+            e.setBand(service.getBand(band.getId()));
+        }        if (hireDate != null) e.setHireDate(hireDate);
         if (reportingManagerId != null) {
             User rm = userRepository.findById(reportingManagerId).orElseThrow(() -> new IllegalArgumentException("Reporting manager not found"));
             e.setReportingManager(rm);
         }
         return employeeRepository.save(e);
+    }
+
+    @Transactional
+    public void deleteUser(UUID userId) {
+
+        if (!userRepository.existsById(userId)) {
+            throw new IllegalArgumentException("User not found with id: " + userId);
+        }
+        // Step 1: Remove dependent mapping first
+        employeeRepository.deleteById(userId);
+        // Step 2: Delete User
+        userRepository.deleteById(userId);
     }
 }

@@ -1,12 +1,12 @@
 package com.skillrat.project.service;
 
+import com.skillrat.common.dto.UserDTO;
 import com.skillrat.common.tenant.TenantContext;
 import com.skillrat.project.client.UserClient;
 import com.skillrat.project.domain.*;
 import com.skillrat.project.repo.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -15,10 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.*;
-import java.util.stream.Collectors;
-
-import jakarta.persistence.criteria.Join;
-import jakarta.persistence.criteria.Predicate;
 
 @Service
 public class ProjectService {
@@ -43,15 +39,18 @@ public class ProjectService {
 
     @Transactional
     public Project createProject(String name,
-                               String code,
-                               String description,
-                               String b2bUnitId,
-                               LocalDate start,
-                               LocalDate end,
-                               String clientName,
-                               String clientPrimaryEmail,
-                               String clientSecondaryEmail,
-                               String createdBy) {
+                                 String code,
+                                 String description,
+                                 String b2bUnitId,
+                                 LocalDate start,
+                                 LocalDate end,
+                                 String clientName,
+                                 String clientPrimaryEmail,
+                                 String clientSecondaryEmail,
+                                 ProjectType projectType,
+                                 ProjectSLAType status,
+                                 ProjectStatus projectStatus ,
+                                 boolean taskManagement, boolean projectManagement, String createdBy) {
     	String tenant = Optional.ofNullable(TenantContext.getTenantId())
                 .filter(t -> !t.isBlank())
                 .orElse("default");
@@ -70,6 +69,17 @@ public class ProjectService {
         p.setEndDate(end);
         p.setTenantId(tenant);
         p.setDescription(description);
+        p.setTaskManagement(taskManagement);
+        p.setProjectManagement(projectManagement);
+        if (ProjectType.SUPPORT.equals(projectType)) {
+            p.setProjectType(projectType);
+            if (ProjectSLAType.ENTERPRISE.equals(status)) {
+                p.setStatus(ProjectSLAType.ENTERPRISE);
+            }
+        }
+        if (projectStatus != null) {
+            p.setProjectStatus(projectStatus);
+        }
         if (clientName != null && !clientName.isBlank()) {
             ProjectClient client = new ProjectClient();
             client.setName(clientName);
@@ -98,7 +108,7 @@ public class ProjectService {
                                  String clientName,
                                  String clientPrimaryEmail,
                                  String clientSecondaryEmail,
-                                 String updatedBy) {
+                                 ProjectType projectType, ProjectSLAType status, ProjectStatus projectStatus , boolean taskManagement, boolean projectManagement, String updatedBy) {
         Project p = projectRepository.findById(projectId)
                 .orElseThrow(() -> new IllegalArgumentException("Project not found"));
 
@@ -115,6 +125,17 @@ public class ProjectService {
         if (description != null) p.setDescription(description);
         if (start != null) p.setStartDate(start);
         if (end != null) p.setEndDate(end);
+        p.setTaskManagement(taskManagement);
+        p.setProjectManagement(projectManagement);
+        if (ProjectType.SUPPORT.equals(projectType)) {
+            p.setProjectType(projectType);
+            if (ProjectSLAType.ENTERPRISE.equals(status)) {
+                p.setStatus(ProjectSLAType.ENTERPRISE);
+            }
+        }
+        if (projectStatus != null) {
+            p.setProjectStatus(projectStatus);
+        }
 
         if (clientName != null || clientPrimaryEmail != null || clientSecondaryEmail != null) {
             ProjectClient client = p.getClient();
@@ -187,6 +208,33 @@ public class ProjectService {
     }
 
     @Transactional
+    public WBSElement updateWbs(UUID wbsId, String name, String code, WBSCategory category, LocalDate start, LocalDate end, UUID projectId, boolean disabled) {
+        WBSElement wbs = wbsRepository.findById(wbsId)
+                .orElseThrow(() -> new IllegalArgumentException("WBS not found"));
+        String tenant = TenantContext.getTenantId();
+        if (code != null && !code.isBlank()) {
+            Optional<WBSElement> existingTenant = wbsRepository.findByCodeAndTenantId(code, tenant);
+            if (existingTenant.isPresent() && !existingTenant.get().getId().equals(wbsId)) {
+                throw new IllegalStateException("WBS code already exists for tenant");
+            }
+            Optional<WBSElement> existingAny = wbsRepository.findByCode(code);
+            if (existingAny.isPresent() && !existingAny.get().getId().equals(wbsId)) {
+                throw new IllegalStateException("WBS code already exists");
+            }
+            wbs.setCode(code);
+        }
+        if (disabled) wbs.setDisabled(disabled);
+        if (name != null && !name.isBlank()) wbs.setName(name);
+        if (category != null) wbs.setCategory(category);
+        if (start != null) wbs.setStartDate(start);
+        if (end != null) wbs.setEndDate(end);
+        if (projectId != null) wbs.setProject(projectRepository.findById(projectId)
+                .orElseThrow(() -> new IllegalArgumentException("Project not found")));
+
+        return wbsRepository.save(wbs);
+    }
+
+    @Transactional
     public ProjectMember addOrUpdateMember(UUID projectId, UUID employeeId, ProjectRole role, UUID reportingManagerId,
                                            LocalDate start, LocalDate end, boolean active) {
         Project project = projectRepository.findById(projectId)
@@ -210,12 +258,15 @@ public class ProjectService {
     }
 
     @Transactional
-    public WBSAllocation allocateMemberToWbs(UUID memberId, UUID wbsId, LocalDate start, LocalDate end) {
-        ProjectMember member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new IllegalArgumentException("Project member not found"));
+    public WBSAllocation allocateMemberToWbs(UUID projectId,UUID userId, UUID wbsId, LocalDate start, LocalDate end) {
+        Optional<ProjectMember> projectMember = memberRepository.findByProject_IdAndEmployeeId(projectId, userId);
+        if (projectMember.isEmpty()) {
+            throw new IllegalArgumentException("Member not found");
+        }
+        ProjectMember member = projectMember.get();
         WBSElement wbs = wbsRepository.findById(wbsId)
                 .orElseThrow(() -> new IllegalArgumentException("WBS not found"));
-        // Validate project match
+// Validate project match
         if (!wbs.getProject().getId().equals(member.getProject().getId())) {
             throw new IllegalStateException("WBS and Member must belong to the same project");
         }
@@ -252,6 +303,37 @@ public class ProjectService {
     @Transactional(readOnly = true)
     public Page<WBSElement> listWbs(UUID projectId, Pageable pageable) {
         return wbsRepository.findByProject_Id(projectId, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ProjectMember> listMembersByProject(UUID projectId) {
+        return memberRepository.findByProject_Id(projectId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<UserDTO> listMemberUsers(UUID projectId) {
+        List<ProjectMember> members = memberRepository.findByProject_Id(projectId);
+        if (members == null || members.isEmpty()) return java.util.Collections.emptyList();
+        List<UUID> ids = members.stream()
+                .map(ProjectMember::getEmployeeId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(java.util.stream.Collectors.toList());
+        if (ids.isEmpty()) return java.util.Collections.emptyList();
+        java.util.Map<String, java.util.List<UUID>> body = java.util.Map.of("ids", ids);
+        return userClient.getUsersByIds(body);
+    }
+
+    @Transactional
+    public void removeMember(UUID projectId, UUID employeeId) {
+        ProjectMember member = memberRepository.findByProject_IdAndEmployeeId(projectId, employeeId)
+                .orElseThrow(() -> new IllegalArgumentException("Project member not found"));
+        // Remove allocations linked to this member to maintain referential integrity
+        List<WBSAllocation> allocations = allocationRepository.findByMember_Id(member.getId());
+        if (allocations != null && !allocations.isEmpty()) {
+            allocationRepository.deleteAll(allocations);
+        }
+        memberRepository.delete(member);
     }
 
     @Transactional(readOnly = true)
