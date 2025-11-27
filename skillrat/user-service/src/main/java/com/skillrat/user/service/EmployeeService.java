@@ -101,7 +101,11 @@ public class EmployeeService {
         e.setPasswordHash(passwordEncoder.encode(defaultPassword));
         e.setActive(true);
         e.setTenantId(tenantId);
-        e.setB2bUnitId(b2bUnitId);
+        if (b2bUnitId != null) {
+            com.skillrat.user.organisation.domain.B2BUnit bu = new com.skillrat.user.organisation.domain.B2BUnit();
+            bu.setId(b2bUnitId);
+            e.setB2bUnit(bu);
+        }
         e.setPasswordNeedsReset(true);
         e.setPasswordSetupToken(UUID.randomUUID().toString());
         e.setPasswordSetupTokenExpires(Instant.now().plus(7, ChronoUnit.DAYS));

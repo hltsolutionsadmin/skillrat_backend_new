@@ -8,6 +8,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface EmployeePayslipDao extends JpaRepository<EmployeePayslip, UUID> {
-    Optional<EmployeePayslip> findByEmployeeIdAndMonthAndYear(UUID employeeId, int month, int year);
-    List<EmployeePayslip> findByEmployeeIdOrderByYearDescMonthDesc(UUID employeeId);
+    Optional<EmployeePayslip> findByEmployee_IdAndMonthAndYear(UUID employeeId, int month, int year);
+    List<EmployeePayslip> findByEmployee_IdOrderByYearDescMonthDesc(UUID employeeId);
 }

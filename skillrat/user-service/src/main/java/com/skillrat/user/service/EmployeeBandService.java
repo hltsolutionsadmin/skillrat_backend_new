@@ -21,7 +21,7 @@ public class EmployeeBandService {
     }
 
     public List<EmployeeOrgBand> getBandsByB2bUnit(UUID b2bUnitId) {
-        return repository.findByB2bUnitId(b2bUnitId);
+        return repository.findByB2bUnit_Id(b2bUnitId);
     }
 
     public EmployeeOrgBand getBand(UUID id) {

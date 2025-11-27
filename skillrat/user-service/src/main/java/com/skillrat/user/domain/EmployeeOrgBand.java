@@ -1,5 +1,6 @@
 package com.skillrat.user.domain;
 
+import com.skillrat.user.organisation.domain.B2BUnit;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -30,6 +31,7 @@ public class EmployeeOrgBand {
     @Column
     private Double salary;
 
-    @Column(nullable = false)
-    private UUID b2bUnitId;
+    @OneToOne
+    @JoinColumn(name = "b2b_unit_id", nullable = false)
+    private B2BUnit b2bUnit;
 }

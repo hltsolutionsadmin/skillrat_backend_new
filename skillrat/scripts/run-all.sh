@@ -8,7 +8,6 @@ LOG_DIR="$ROOT_DIR/.local-logs"
 SERVICES=(
   "auth-service"
   "user-service"
-  "organisation-service"
   "placement-service"
   "project-service"
   "wallet-service"

@@ -8,6 +8,14 @@ import com.skillrat.user.service.OrganisationClient;
 import com.skillrat.user.service.OtpService;
 import com.skillrat.user.web.dto.OtpRequest;
 import com.skillrat.user.web.dto.OtpVerificationRequest;
+import com.skillrat.user.web.dto.SignupRequest;
+import com.skillrat.user.web.dto.LoginRequest;
+import com.skillrat.user.web.dto.CreateBusinessAdminRequest;
+import com.skillrat.user.web.dto.AssignBusinessAdminRequest;
+import com.skillrat.user.web.dto.InviteEmployeeRequest;
+import com.skillrat.user.web.dto.SetupPasswordRequest;
+import com.skillrat.user.web.dto.IdsRequest;
+import com.skillrat.user.validation.UserValidator;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -33,13 +41,16 @@ public class UserController {
     private final UserService userService;
     private final OrganisationClient organisationClient;
     private final OtpService otpService;
+    private final UserValidator userValidator;
 
     public UserController(UserService userService, 
                          OrganisationClient organisationClient,
-                         OtpService otpService) {
+                         OtpService otpService,
+                         UserValidator userValidator) {
         this.userService = userService;
         this.organisationClient = organisationClient;
         this.otpService = otpService;
+        this.userValidator = userValidator;
     }
 
     /**
@@ -118,7 +129,7 @@ public class UserController {
     public ResponseEntity<?> myBusiness(Authentication auth) {
         return userService.findByEmail(auth.getName())
                 .<ResponseEntity<?>>map(u -> {
-                    java.util.UUID b2bUnitId = u.getB2bUnitId();
+                    java.util.UUID b2bUnitId = (u.getB2bUnit() != null) ? u.getB2bUnit().getId() : null;
                     Object businessDetails = null;
                     if (b2bUnitId != null) {
                         businessDetails = organisationClient.getB2BUnit(b2bUnitId);
@@ -141,9 +152,15 @@ public class UserController {
     }
 
     @PostMapping("/signup")
-    public ResponseEntity<User> signup(@RequestBody SignupRequest req) {
-        User u = userService.signup(req.firstName, req.lastName, req.email, req.mobile, req.password);
-        return ResponseEntity.ok(u);
+    public ResponseEntity<UserDTO> signup(@RequestBody SignupRequest req) {
+        userValidator.validateSignup(req.email, req.mobile, req.password);
+        User u = userService.signup(req);
+        UserDTO dto = new UserDTO();
+        dto.setId(u.getId());
+        dto.setFirstName(u.getFirstName());
+        dto.setLastName(u.getLastName());
+        dto.setEmail(u.getEmail());
+        return ResponseEntity.ok(dto);
     }
 
     @PostMapping("/login")
@@ -163,9 +180,14 @@ public class UserController {
     // Security: only the authenticated end-user can assign themselves (JWT sub must match email)
     @PostMapping("/internal/business-admin/assign")
     @PreAuthorize("#req.email != null && #req.email.equalsIgnoreCase(authentication.token.subject)")
-    public ResponseEntity<User> assignBusinessAdmin(@RequestBody AssignBusinessAdminRequest req) {
+    public ResponseEntity<UserDTO> assignBusinessAdmin(@RequestBody AssignBusinessAdminRequest req) {
         User u = userService.assignBusinessAdmin(req.b2bUnitId, req.email);
-        return ResponseEntity.ok(u);
+        UserDTO dto = new UserDTO();
+        dto.setId(u.getId());
+        dto.setFirstName(u.getFirstName());
+        dto.setLastName(u.getLastName());
+        dto.setEmail(u.getEmail());
+        return ResponseEntity.ok(dto);
     }
 
     // Internal endpoint for cross-service user lookup by email
@@ -173,7 +195,7 @@ public class UserController {
     public ResponseEntity<?> getByEmail(@PathVariable("email") String email) {
         return userService.findByEmail(email)
                 .map(u -> {
-                    UUID b2bUnitId = u.getB2bUnitId();
+                    UUID b2bUnitId = (u.getB2bUnit() != null) ? u.getB2bUnit().getId() : null;
                     Object businessDetails = null;
 
                     if (b2bUnitId != null) {
@@ -211,15 +233,26 @@ public class UserController {
     // Business admin invites an employee and assigns roles
     @PostMapping("/{b2bUnitId}/employees/invite")
     @RequiresBusinessOrHrAdmin
-    public ResponseEntity<Employee> inviteEmployee(@PathVariable("b2bUnitId") UUID b2bUnitId,
-                                                   @RequestBody InviteEmployeeRequest req) {
-        Employee e = userService.inviteEmployee(b2bUnitId, req.firstName, req.lastName, req.email, req.mobile, req.roleIds);
-        return ResponseEntity.ok(e);
+    public ResponseEntity<UserDTO> inviteEmployee(@PathVariable("b2bUnitId") UUID b2bUnitId,
+                                                  @RequestBody InviteEmployeeRequest req) {
+        userValidator.validateInviteEmployee(req.email);
+        Employee e = userService.inviteEmployee(b2bUnitId, req);
+        UserDTO dto = new UserDTO();
+        dto.setId(e.getId());
+        dto.setFirstName(e.getFirstName());
+        dto.setLastName(e.getLastName());
+        dto.setEmail(e.getEmail());
+        return ResponseEntity.ok(dto);
     }
 
     // Employee sets password first time using setup token
     @PostMapping("/password/setup")
     public ResponseEntity<?> setupPassword(@RequestBody SetupPasswordRequest req) {
+        try {
+            userValidator.validatePasswordSetup(req.token, req.newPassword);
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
+        }
         boolean ok = userService.setupPassword(req.token, req.newPassword);
         return ok ? ResponseEntity.ok(Map.of("status", "ok")) : ResponseEntity.badRequest().body(Map.of("error", "Invalid or expired token"));
     }
@@ -238,46 +271,5 @@ public class UserController {
         return userService.getUserById(userId);
     }
 
-    public static class SignupRequest {
-        @NotBlank public String firstName;
-        @NotBlank public String lastName;
-        @NotBlank @Email public String email;
-        public String mobile;
-        @NotBlank public String password;
-    }
-
-    public static class LoginRequest {
-        @NotBlank public String emailOrMobile;
-        @NotBlank public String password;
-    }
-
-    public static class CreateBusinessAdminRequest {
-        @NotBlank public String firstName;
-        @NotBlank public String lastName;
-        @NotBlank @Email public String email;
-        public String mobile;
-        public java.util.UUID b2bUnitId;
-    }
-
-    public static class AssignBusinessAdminRequest {
-        @NotBlank @Email public String email;
-        public java.util.UUID b2bUnitId;
-    }
-
-    public static class InviteEmployeeRequest {
-        @NotBlank public String firstName;
-        @NotBlank public String lastName;
-        @NotBlank @Email public String email;
-        public String mobile;
-        @NotEmpty public java.util.List<java.util.UUID> roleIds;
-    }
-
-    public static class SetupPasswordRequest {
-        @NotBlank public String token;
-        @NotBlank public String newPassword;
-    }
-
-    public static class IdsRequest {
-        @NotEmpty public List<UUID> ids;
-    }
+    
 }

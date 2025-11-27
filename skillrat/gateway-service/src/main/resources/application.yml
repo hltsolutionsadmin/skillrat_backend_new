@@ -15,9 +15,17 @@ spring:
           predicates:
             - Path=/api/roles/**
         - id: org
-          uri: http://localhost:8082
+          uri: http://localhost:8081
           predicates:
             - Path=/api/organisations/**
+        - id: org-b2b
+          uri: http://localhost:8081
+          predicates:
+            - Path=/api/b2b/**
+        - id: org-departments
+          uri: http://localhost:8081
+          predicates:
+            - Path=/api/departments/**
         - id: placement
           uri: http://localhost:8083
           predicates:

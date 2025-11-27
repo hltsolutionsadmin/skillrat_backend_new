@@ -5,7 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
-import java.util.UUID;
+ 
 
 @Getter
 @Setter
@@ -16,11 +16,13 @@ import java.util.UUID;
 @Table(name = "employee_salary_components")
 public class EmployeeSalaryComponent extends BaseEntity {
 
-    @Column(nullable = false)
-    private UUID salaryStructureId;
+    @OneToOne
+    @JoinColumn(name = "salary_structure_id", nullable = false)
+    private EmployeeSalaryStructure salaryStructure;
 
-    @Column(nullable = false)
-    private UUID componentId;
+    @OneToOne
+    @JoinColumn(name = "component_id", nullable = false)
+    private SalaryComponent component;
 
     @Column(nullable = false, precision = 15, scale = 2)
     private BigDecimal amount;

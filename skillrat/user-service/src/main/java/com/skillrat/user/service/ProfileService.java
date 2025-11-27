@@ -43,7 +43,7 @@ public class ProfileService {
 
     private UUID currentUserB2BUnitIdByEmail(String email) {
         return userRepository.findByEmailIgnoreCase(email)
-                .map(User::getB2bUnitId)
+                .map(u -> u.getB2bUnit() != null ? u.getB2bUnit().getId() : null)
                 .orElse(null);
     }
 
@@ -59,7 +59,7 @@ public class ProfileService {
         String tenantId = user.getTenantId() != null ? user.getTenantId() : "default";
 
         ProfileExperience e = new ProfileExperience();
-        e.setUserId(user.getId());
+        e.setUser(user);
         e.setTenantId(tenantId);  // Set the tenant ID on the experience
         e.setType(type);
         e.setTitle(title);
@@ -79,15 +79,17 @@ public class ProfileService {
     @Transactional(readOnly = true)
     public List<ProfileExperience> myExperiences(String email) {
         UUID userId = currentUserIdByEmail(email);
-        return experienceRepository.findByUserId(userId);
+        return experienceRepository.findByUser_Id(userId);
     }
 
     @Transactional
     public Optional<ProfileExperience> requestVerification(UUID expId, UUID verifierB2bUnitId, String email) {
         UUID userId = currentUserIdByEmail(email);
         return experienceRepository.findById(expId).map(e -> {
-            if (!e.getUserId().equals(userId)) throw new IllegalArgumentException("Cannot request verification for other user's experience");
-            e.setVerifierB2bUnitId(verifierB2bUnitId);
+            if (e.getUser() == null || !e.getUser().getId().equals(userId)) throw new IllegalArgumentException("Cannot request verification for other user's experience");
+            com.skillrat.user.organisation.domain.B2BUnit bu = new com.skillrat.user.organisation.domain.B2BUnit();
+            bu.setId(verifierB2bUnitId);
+            e.setVerifierB2bUnit(bu);
             e.setVerificationStatus(VerificationStatus.PENDING);
             return experienceRepository.save(e);
         });
@@ -97,12 +99,15 @@ public class ProfileService {
     public Optional<ProfileExperience> verifyExperience(UUID expId, boolean approve, String verifierEmail) {
         UUID callerB2B = currentUserB2BUnitIdByEmail(verifierEmail);
         return experienceRepository.findById(expId).map(e -> {
-            if (e.getVerifierB2bUnitId() == null || callerB2B == null || !e.getVerifierB2bUnitId().equals(callerB2B)) {
+            UUID verifierUnitId = e.getVerifierB2bUnit() != null ? e.getVerifierB2bUnit().getId() : null;
+            if (verifierUnitId == null || callerB2B == null || !verifierUnitId.equals(callerB2B)) {
                 throw new IllegalArgumentException("Not authorized to verify this experience");
             }
             e.setVerificationStatus(approve ? VerificationStatus.VERIFIED : VerificationStatus.REJECTED);
             e.setVerifiedAt(Instant.now());
-            e.setVerifiedByUserId(currentUserIdByEmail(verifierEmail));
+            User verifier = new User();
+            verifier.setId(currentUserIdByEmail(verifierEmail));
+            e.setVerifiedBy(verifier);
             return experienceRepository.save(e);
         });
     }

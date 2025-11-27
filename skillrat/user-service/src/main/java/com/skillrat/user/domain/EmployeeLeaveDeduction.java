@@ -1,15 +1,17 @@
 package com.skillrat.user.domain;
 
 import com.skillrat.common.orm.BaseEntity;
+import com.skillrat.user.organisation.domain.B2BUnit;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
-import java.util.UUID;
 
 @Entity
 @Table(name = "employee_leave_deduction")
@@ -18,11 +20,13 @@ import java.util.UUID;
 @NoArgsConstructor
 public class EmployeeLeaveDeduction extends BaseEntity {
 
-    @Column(nullable = false)
-    private UUID employeeId;
+    @OneToOne
+    @JoinColumn(name = "employee_id", nullable = false)
+    private Employee employee;
 
-    @Column(nullable = false)
-    private UUID b2bUnitId;
+    @OneToOne
+    @JoinColumn(name = "b2b_unit_id", nullable = false)
+    private B2BUnit b2bUnit;
 
     @Column(nullable = false)
     private int year;

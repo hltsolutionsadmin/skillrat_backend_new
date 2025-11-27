@@ -32,7 +32,6 @@
     <module>common-orm</module>
     <module>auth-service</module>
     <module>user-service</module>
-    <module>organisation-service</module>
     <module>placement-service</module>
     <module>wallet-service</module>
     <module>gateway-service</module>

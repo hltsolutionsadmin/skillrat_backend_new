@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.UUID;
 
 public interface EmployeeLeaveDao extends JpaRepository<EmployeeLeave, UUID> {
-    List<EmployeeLeave> findByEmployeeId(UUID employeeId);
-    List<EmployeeLeave> findByEmployeeIdAndStatus(UUID employeeId, LeaveStatus status);
-    List<EmployeeLeave> findByEmployeeIdAndStatusAndStartDateLessThanEqualAndEndDateGreaterThanEqual(UUID employeeId, LeaveStatus status, LocalDate end, LocalDate start);
+    List<EmployeeLeave> findByEmployee_Id(UUID employeeId);
+    List<EmployeeLeave> findByEmployee_IdAndStatus(UUID employeeId, LeaveStatus status);
+    List<EmployeeLeave> findByEmployee_IdAndStatusAndStartDateLessThanEqualAndEndDateGreaterThanEqual(UUID employeeId, LeaveStatus status, LocalDate end, LocalDate start);
 }

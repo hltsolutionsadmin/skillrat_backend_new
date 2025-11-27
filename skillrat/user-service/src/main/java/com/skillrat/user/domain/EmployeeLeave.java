@@ -5,7 +5,6 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDate;
-import java.util.UUID;
 
 @Getter
 @Setter
@@ -16,8 +15,9 @@ import java.util.UUID;
 @Table(name = "employee_leaves")
 public class EmployeeLeave extends BaseEntity {
 
-    @Column(nullable = false)
-    private UUID employeeId;
+    @OneToOne
+    @JoinColumn(name = "employee_id", nullable = false)
+    private Employee employee;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -32,7 +32,4 @@ public class EmployeeLeave extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private LeaveStatus status;
-
-
-
 }

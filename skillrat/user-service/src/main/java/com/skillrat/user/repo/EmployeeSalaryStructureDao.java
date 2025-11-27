@@ -9,6 +9,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface EmployeeSalaryStructureDao extends JpaRepository<EmployeeSalaryStructure, UUID> {
-    List<EmployeeSalaryStructure> findByEmployeeIdOrderByEffectiveFromDesc(UUID employeeId);
-    Optional<EmployeeSalaryStructure> findFirstByEmployeeIdAndEffectiveFromLessThanEqualOrderByEffectiveFromDesc(UUID employeeId, LocalDate effectiveFrom);
+    List<EmployeeSalaryStructure> findByEmployee_IdOrderByEffectiveFromDesc(UUID employeeId);
+    Optional<EmployeeSalaryStructure> findFirstByEmployee_IdAndEffectiveFromLessThanEqualOrderByEffectiveFromDesc(UUID employeeId, LocalDate effectiveFrom);
 }

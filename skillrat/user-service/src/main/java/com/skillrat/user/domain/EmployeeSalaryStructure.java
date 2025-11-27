@@ -7,7 +7,6 @@ import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
-import java.util.UUID;
 
 @Getter
 @Setter
@@ -18,8 +17,9 @@ import java.util.UUID;
 @Table(name = "employee_salary_structures")
 public class EmployeeSalaryStructure extends BaseEntity {
 
-    @Column(nullable = false)
-    private UUID employeeId;
+    @OneToOne
+    @JoinColumn(name = "employee_id", nullable = false)
+    private Employee employee;
 
     @Column(nullable = false, precision = 15, scale = 2)
     private BigDecimal ctc;

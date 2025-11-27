@@ -20,7 +20,7 @@ public class EmployeeBandController {
     @PostMapping("/create")
     public ResponseEntity<EmployeeOrgBand> createBand(@RequestBody EmployeeOrgBand orgBand) {
         EmployeeOrgBand band=new EmployeeOrgBand();
-        band.setB2bUnitId(orgBand.getB2bUnitId());
+        band.setB2bUnit(orgBand.getB2bUnit());
         band.setName(orgBand.getName());
         band.setExperienceMin(orgBand.getExperienceMin());
         band.setExperienceMax(orgBand.getExperienceMax());

@@ -5,7 +5,6 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
-import java.util.UUID;
 
 @Getter
 @Setter
@@ -16,8 +15,9 @@ import java.util.UUID;
 @Table(name = "employee_payslip_components")
 public class EmployeePayslipComponent extends BaseEntity {
 
-    @Column(nullable = false)
-    private UUID payslipId;
+    @OneToOne
+    @JoinColumn(name = "payslip_id", nullable = false)
+    private EmployeePayslip payslip;
 
     @Column(nullable = false)
     private String componentName;

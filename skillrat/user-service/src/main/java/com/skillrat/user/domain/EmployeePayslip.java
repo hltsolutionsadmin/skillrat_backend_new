@@ -6,7 +6,6 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
-import java.util.UUID;
 
 @Getter
 @Setter
@@ -14,11 +13,12 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 @Entity
-@Table(name = "employee_payslips", uniqueConstraints = @UniqueConstraint(columnNames = {"employeeId","month","year"}))
+@Table(name = "employee_payslips", uniqueConstraints = @UniqueConstraint(columnNames = {"employee_id","month","year"}))
 public class EmployeePayslip extends BaseEntity {
 
-    @Column(nullable = false)
-    private UUID employeeId;
+    @OneToOne
+    @JoinColumn(name = "employee_id", nullable = false)
+    private Employee employee;
 
     @Column(nullable = false)
     private int month;

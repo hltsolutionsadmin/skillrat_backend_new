@@ -36,7 +36,7 @@ public class B2BUnitAccessValidator {
         String finalEmail = email;
         userService.findByEmail(finalEmail)
                 .ifPresentOrElse(u -> {
-                    UUID userB2b = u.getB2bUnitId();
+                    UUID userB2b = (u.getB2bUnit() != null) ? u.getB2bUnit().getId() : null;
                     if (userB2b == null || !userB2b.equals(b2bUnitId)) {
                         throw new AccessDeniedException("Forbidden for this business unit");
                     }

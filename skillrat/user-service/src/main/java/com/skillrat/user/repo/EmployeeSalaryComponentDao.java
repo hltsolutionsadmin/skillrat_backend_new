@@ -7,5 +7,5 @@ import java.util.List;
 import java.util.UUID;
 
 public interface EmployeeSalaryComponentDao extends JpaRepository<EmployeeSalaryComponent, UUID> {
-    List<EmployeeSalaryComponent> findBySalaryStructureId(UUID salaryStructureId);
+    List<EmployeeSalaryComponent> findBySalaryStructure_Id(UUID salaryStructureId);
 }

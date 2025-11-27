@@ -1,20 +1,5 @@
 package com.skillrat.user.service;
 
-import com.skillrat.common.dto.UserDTO;
-import com.skillrat.common.tenant.TenantContext;
-import com.skillrat.user.domain.Employee;
-import com.skillrat.user.domain.Role;
-import com.skillrat.user.domain.User;
-import com.skillrat.user.repo.RoleRepository;
-import com.skillrat.user.repo.UserRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
@@ -22,9 +7,25 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.skillrat.common.dto.UserDTO;
+import com.skillrat.common.tenant.TenantContext;
+import com.skillrat.user.domain.Employee;
+import com.skillrat.user.domain.Role;
+import com.skillrat.user.domain.User;
+import com.skillrat.user.repo.RoleRepository;
+import com.skillrat.user.repo.UserRepository;
 
 @Service
 public class UserService {
@@ -41,33 +42,35 @@ public class UserService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    @Transactional
-    public User signup(String firstName, String lastName, String email, String mobile, String rawPassword) {
-        if (email == null || email.isBlank()) {
-            throw new IllegalArgumentException("Email is required");
-        }
-        if (rawPassword == null || rawPassword.length() < 8) {
-            throw new IllegalArgumentException("Password must be at least 8 characters long");
-        }
+    private String currentTenant() {
+        return Optional.ofNullable(TenantContext.getTenantId()).orElse("default");
+    }
 
-        String tenantId = Optional.ofNullable(TenantContext.getTenantId()).orElse("default");
-        
-        // Check for existing user
-        if (userRepository.existsByEmailIgnoreCase(email)) {
-            throw new IllegalArgumentException("Email already in use");
+    private void setB2BUnitIfPresent(User u, UUID b2bUnitId) {
+        if (b2bUnitId != null) {
+            com.skillrat.user.organisation.domain.B2BUnit bu = new com.skillrat.user.organisation.domain.B2BUnit();
+            bu.setId(b2bUnitId);
+            u.setB2bUnit(bu);
         }
-        if (mobile != null && !mobile.isBlank() && userRepository.existsByMobile(mobile)) {
-            throw new IllegalArgumentException("Mobile number already in use");
-        }
+    }
+
+    private Role ensureRole(String name, String description, UUID b2bUnitId) {
+        return roleRepository.findByNameAndB2bUnitId(name, b2bUnitId)
+            .orElseGet(() -> roleRepository.save(new Role(name, description, b2bUnitId)));
+    }
+
+    @Transactional
+    public User signup(com.skillrat.user.web.dto.SignupRequest req) {
+        String tenantId = currentTenant();
 
         // Create and save user
         User user = new User();
-        user.setFirstName(firstName != null ? firstName.trim() : null);
-        user.setLastName(lastName != null ? lastName.trim() : null);
-        user.setUsername(email.toLowerCase().trim());
-        user.setEmail(email.toLowerCase().trim());
-        user.setMobile(mobile != null ? mobile.trim() : null);
-        user.setPasswordHash(passwordEncoder.encode(rawPassword));
+        user.setFirstName(req.firstName != null ? req.firstName.trim() : null);
+        user.setLastName(req.lastName != null ? req.lastName.trim() : null);
+        user.setUsername(req.email.toLowerCase().trim());
+        user.setEmail(req.email.toLowerCase().trim());
+        user.setMobile(req.mobile != null ? req.mobile.trim() : null);
+        user.setPasswordHash(passwordEncoder.encode(req.password));
         user.setActive(true);
         user.setTenantId(tenantId);
         
@@ -82,11 +85,7 @@ public class UserService {
 
     @Transactional
     public User adminCreateUser(UUID b2bUnitId, String firstName, String lastName, String email, String mobile, List<UUID> roleIds) {
-        String tenantId = Optional.ofNullable(TenantContext.getTenantId()).orElse("default");
-        userRepository.findByEmailIgnoreCase(email).ifPresent(u -> { throw new IllegalArgumentException("Email already in use"); });
-        if (mobile != null && !mobile.isBlank()) {
-            userRepository.findByMobile(mobile).ifPresent(u -> { throw new IllegalArgumentException("Mobile already in use"); });
-        }
+        String tenantId = currentTenant();
         User u = new User();
         u.setFirstName(firstName);
         u.setLastName(lastName);
@@ -96,22 +95,12 @@ public class UserService {
         u.setPasswordHash(passwordEncoder.encode(UUID.randomUUID().toString()));
         u.setActive(true);
         u.setTenantId(tenantId);
-        u.setB2bUnitId(b2bUnitId);
+        setB2BUnitIfPresent(u, b2bUnitId);
         u.setPasswordNeedsReset(true);
         u.setPasswordSetupToken(UUID.randomUUID().toString());
         u.setPasswordSetupTokenExpires(Instant.now().plus(7, ChronoUnit.DAYS));
-        Role r = roleRepository.findByNameAndB2bUnitId("BUSINESS_ADMIN", b2bUnitId)
-                .orElseGet(() -> {
-                    Role newRole = new Role();
-                    newRole.setName("BUSINESS_ADMIN");
-                    newRole.setB2bUnitId(b2bUnitId);
-                    newRole.setTenantId(tenantId);
-                    return roleRepository.save(newRole);
-                });
-        Set<Role> roles = Optional.ofNullable(u.getRoles())
-                .orElseGet(HashSet::new);
-        roles.add(r);
-        u.setRoles(roles);
+        Role r = ensureRole("BUSINESS_ADMIN", "Business Admin", b2bUnitId);
+        Set<Role> roles = Optional.ofNullable(u.getRoles()).orElseGet(HashSet::new);
         roles.add(r);
         u.setRoles(roles);
         return userRepository.save(u);
@@ -159,7 +148,7 @@ public class UserService {
             
             // Ensure the user always has at least the ROLE_USER
             if (roles.stream().noneMatch(role -> "ROLE_USER".equals(role.getName()))) {
-                Role userRole = getOrCreateRole("ROLE_USER", "Default role for all users", user.getB2bUnitId());
+                Role userRole = getOrCreateRole("ROLE_USER", "Default role for all users", (user.getB2bUnit() != null ? user.getB2bUnit().getId() : null));
                 roles.add(userRole);
             }
             
@@ -167,7 +156,7 @@ public class UserService {
         }
         
         // Update audit fields
-        user.setUpdatedAt(Instant.now());
+        user.setUpdatedDate(Instant.now());
         
         // Get current user for audit
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -244,12 +233,7 @@ public class UserService {
 
     @Transactional
     public User createBusinessAdmin(UUID b2bUnitId, String firstName, String lastName, String email, String mobile) {
-        String tenantId = Optional.ofNullable(TenantContext.getTenantId()).orElse("default");
-        
-        // Check if email already exists
-        userRepository.findByEmailIgnoreCase(email).ifPresent(u -> { 
-            throw new IllegalArgumentException("Email already in use"); 
-        });
+        String tenantId = currentTenant();
         
         // Create new user
         User admin = new User();
@@ -261,17 +245,13 @@ public class UserService {
         admin.setPasswordHash(passwordEncoder.encode(UUID.randomUUID().toString()));
         admin.setActive(true);
         admin.setTenantId(tenantId);
-        admin.setB2bUnitId(b2bUnitId);
+        setB2BUnitIfPresent(admin, b2bUnitId);
         admin.setPasswordNeedsReset(true);
         admin.setPasswordSetupToken(UUID.randomUUID().toString());
         admin.setPasswordSetupTokenExpires(Instant.now().plus(7, ChronoUnit.DAYS));
 
         // Ensure ROLE_ADMIN exists for this business
-        Role adminRole = roleRepository.findByNameAndB2bUnitId("ROLE_ADMIN", b2bUnitId)
-            .orElseGet(() -> {
-                Role role = new Role("ROLE_ADMIN", "Business Administrator", b2bUnitId);
-                return roleRepository.save(role);
-            });
+        Role adminRole = ensureRole("ROLE_ADMIN", "Business Administrator", b2bUnitId);
             
         // Assign roles
         Set<Role> roles = new HashSet<>();
@@ -279,10 +259,7 @@ public class UserService {
         
         // Ensure user also has ROLE_USER
         Role userRole = roleRepository.findByName("ROLE_USER")
-            .orElseGet(() -> {
-                Role role = new Role("ROLE_USER", "Default role for all users", null);
-                return roleRepository.save(role);
-            });
+            .orElseGet(() -> roleRepository.save(new Role("ROLE_USER", "Default role for all users", null)));
         roles.add(userRole);
         
         admin.setRoles(roles);
@@ -305,11 +282,7 @@ public class UserService {
         log.debug("Assigning BUSINESS_ADMIN role to user: {}", email);
 
         // Ensure ROLE_BUSINESS_ADMIN exists for this business
-        Role businessAdminRole = roleRepository.findByNameAndB2bUnitId("ROLE_BUSINESS_ADMIN", b2bUnitId)
-            .orElseGet(() -> {
-                Role role = new Role("ROLE_BUSINESS_ADMIN", "Business Administrator", b2bUnitId);
-                return roleRepository.save(role);
-            });
+        Role businessAdminRole = ensureRole("ROLE_BUSINESS_ADMIN", "Business Administrator", b2bUnitId);
 
         // Get existing roles or create a new set if none exists
         Set<Role> roles = new HashSet<>(user.getRoles());
@@ -329,7 +302,7 @@ public class UserService {
         
         // Update user roles and business unit
         user.setRoles(roles);
-        user.setB2bUnitId(b2bUnitId);
+        setB2BUnitIfPresent(user, b2bUnitId);
         
         // Save the updated user
         User saved = userRepository.save(user);
@@ -341,26 +314,26 @@ public class UserService {
     }
 
     @Transactional
-    public Employee inviteEmployee(UUID b2bUnitId, String firstName, String lastName, String email, String mobile, List<UUID> roleIds) {
+    public Employee inviteEmployee(UUID b2bUnitId, com.skillrat.user.web.dto.InviteEmployeeRequest req) {
         String tenantId = Optional.ofNullable(TenantContext.getTenantId()).orElse("default");
         
         // Check if email already exists
-        userRepository.findByEmailIgnoreCase(email).ifPresent(u -> { 
+        userRepository.findByEmailIgnoreCase(req.email).ifPresent(u -> { 
             throw new IllegalArgumentException("Email already in use"); 
         });
         
         // Create new employee
         Employee emp = new Employee();
-        emp.setFirstName(firstName);
-        emp.setLastName(lastName);
-        emp.setUsername(email.toLowerCase());
-        emp.setEmail(email.toLowerCase());
-        emp.setMobile(mobile);
+        emp.setFirstName(req.firstName);
+        emp.setLastName(req.lastName);
+        emp.setUsername(req.email.toLowerCase());
+        emp.setEmail(req.email.toLowerCase());
+        emp.setMobile(req.mobile);
         emp.setEmployeeCode("EMP-" + UUID.randomUUID().toString().substring(0, 8));
         emp.setPasswordHash(passwordEncoder.encode(UUID.randomUUID().toString()));
         emp.setActive(true);
         emp.setTenantId(tenantId);
-        emp.setB2bUnitId(b2bUnitId);
+        setB2BUnitIfPresent(emp, b2bUnitId);
         emp.setPasswordNeedsReset(true);
         emp.setPasswordSetupToken(UUID.randomUUID().toString());
         emp.setPasswordSetupTokenExpires(Instant.now().plus(7, ChronoUnit.DAYS));
@@ -369,8 +342,8 @@ public class UserService {
         Set<Role> roles = new HashSet<>();
         
         // Add specified roles if any
-        if (roleIds != null && !roleIds.isEmpty()) {
-            Set<Role> specifiedRoles = new HashSet<>(roleRepository.findAllById(roleIds));
+        if (req.roleIds != null && !req.roleIds.isEmpty()) {
+            Set<Role> specifiedRoles = new HashSet<>(roleRepository.findAllById(req.roleIds));
             roles.addAll(specifiedRoles);
         }
         
@@ -468,7 +441,6 @@ public class UserService {
             log.warn("Password setup failed: Token is required");
             return false;
         }
-        
         if (newPassword == null || newPassword.length() < 8) {
             log.warn("Password setup failed: New password must be at least 8 characters long");
             return false;
@@ -476,18 +448,12 @@ public class UserService {
         
         // Find user by token
         Optional<User> userOpt = userRepository.findByPasswordSetupToken(token);
-        if (userOpt.isEmpty()) {
-            log.warn("Password setup failed: Invalid or expired token");
-            return false;
-        }
-        
+        if (userOpt.isEmpty()) { log.warn("Password setup failed: Invalid or expired token"); return false; }
         User user = userOpt.get();
         
         // Check if token is expired
-        if (user.getPasswordSetupTokenExpires() == null || 
-            user.getPasswordSetupTokenExpires().isBefore(Instant.now())) {
-            log.warn("Password setup failed: Token expired for user id={}, email={}", 
-                user.getId(), user.getEmail());
+        if (user.getPasswordSetupTokenExpires() == null || user.getPasswordSetupTokenExpires().isBefore(Instant.now())) {
+            log.warn("Password setup failed: Token expired for user id={}, email={}", user.getId(), user.getEmail());
             return false;
         }
         
@@ -496,7 +462,6 @@ public class UserService {
         user.setPasswordNeedsReset(false);
         user.setPasswordSetupToken(null);
         user.setPasswordSetupTokenExpires(null);
-        user.setUpdatedAt(Instant.now());
         
         // Update updatedBy if there's an authenticated user
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -539,14 +504,10 @@ public class UserService {
     @Transactional(readOnly = true)
     public List<UserDTO> getUsersByIds(List<UUID> ids) {
         if (ids == null || ids.isEmpty()) return java.util.Collections.emptyList();
-        List<User> users = userRepository.findAllById(ids);
-        List<UserDTO> result = new java.util.ArrayList<>(users.size());
-        for (User u : users) {
-            if (u == null) continue;
+        return userRepository.findAllById(ids).stream().filter(java.util.Objects::nonNull).map(u -> {
             UserDTO dto = new UserDTO();
             populateUser(dto, u);
-            result.add(dto);
-        }
-        return result;
+            return dto;
+        }).toList();
     }
 }

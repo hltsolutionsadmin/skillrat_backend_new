@@ -27,7 +27,4 @@ public class Designation {
     @ManyToOne
     @JoinColumn(name = "band_id")
     private EmployeeOrgBand band;
-
-    @OneToMany(mappedBy = "designation")
-    private Set<Employee> employees = new HashSet<>();
 }

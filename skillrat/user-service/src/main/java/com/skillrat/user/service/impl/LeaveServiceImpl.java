@@ -28,8 +28,10 @@ public class LeaveServiceImpl implements LeaveService {
         if (req.getStartDate().isAfter(req.getEndDate())) {
             throw new IllegalArgumentException("startDate must be on/before endDate");
         }
+        com.skillrat.user.domain.Employee empRef = new com.skillrat.user.domain.Employee();
+        empRef.setId(req.getEmployeeId());
         EmployeeLeave el = EmployeeLeave.builder()
-                .employeeId(req.getEmployeeId())
+                .employee(empRef)
                 .leaveType(req.getLeaveType())
                 .startDate(req.getStartDate())
                 .endDate(req.getEndDate())
@@ -64,14 +66,14 @@ public class LeaveServiceImpl implements LeaveService {
     @Override
     @Transactional(readOnly = true)
     public List<LeaveDTO> listByEmployee(UUID employeeId) {
-        return leaveDao.findByEmployeeId(employeeId).stream().map(this::toResp).collect(Collectors.toList());
+        return leaveDao.findByEmployee_Id(employeeId).stream().map(this::toResp).collect(Collectors.toList());
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<LeaveDTO> listApprovedOverlapping(UUID employeeId, LocalDate from, LocalDate to) {
         return leaveDao
-                .findByEmployeeIdAndStatusAndStartDateLessThanEqualAndEndDateGreaterThanEqual(
+                .findByEmployee_IdAndStatusAndStartDateLessThanEqualAndEndDateGreaterThanEqual(
                         employeeId, LeaveStatus.APPROVED, to, from)
                 .stream()
                 .map(this::toResp)
@@ -81,7 +83,7 @@ public class LeaveServiceImpl implements LeaveService {
     private LeaveDTO toResp(EmployeeLeave el) {
         return LeaveDTO.builder()
                 .id(el.getId())
-                .employeeId(el.getEmployeeId())
+                .employeeId(el.getEmployee() != null ? el.getEmployee().getId() : null)
                 .leaveType(el.getLeaveType())
                 .startDate(el.getStartDate())
                 .endDate(el.getEndDate())

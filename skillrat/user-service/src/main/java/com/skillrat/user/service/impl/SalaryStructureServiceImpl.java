@@ -35,19 +35,23 @@ public class SalaryStructureServiceImpl implements SalaryStructureService {
     @Override
     public SalaryStructureDtos.StructureResponse upsert(SalaryStructureDtos.UpsertRequest req) {
         // Create new structure version
+        com.skillrat.user.domain.Employee empRef = new com.skillrat.user.domain.Employee();
+        empRef.setId(req.getEmployeeId());
         EmployeeSalaryStructure es = EmployeeSalaryStructure.builder()
-                .employeeId(req.getEmployeeId())
+                .employee(empRef)
                 .ctc(req.getCtc())
                 .grossSalary(req.getGrossSalary())
                 .effectiveFrom(req.getEffectiveFrom())
                 .build();
         es = structureDao.save(es);
 
-        final UUID sid = es.getId();
+        final EmployeeSalaryStructure structRef = es;
         for (SalaryStructureDtos.ComponentAmount ca : req.getComponents()) {
+            SalaryComponent comp = componentDao.findById(ca.getComponentId())
+                    .orElseThrow(() -> new IllegalArgumentException("Salary component not found: " + ca.getComponentId()));
             EmployeeSalaryComponent esc = EmployeeSalaryComponent.builder()
-                    .salaryStructureId(sid)
-                    .componentId(ca.getComponentId())
+                    .salaryStructure(structRef)
+                    .component(comp)
                     .amount(ca.getAmount())
                     .build();
             structureCompDao.save(esc);
@@ -58,15 +62,14 @@ public class SalaryStructureServiceImpl implements SalaryStructureService {
     @Override
     @Transactional(readOnly = true)
     public Optional<SalaryStructureDtos.StructureResponse> getLatestByEmployee(UUID employeeId) {
-        return structureDao.findByEmployeeIdOrderByEffectiveFromDesc(employeeId).stream().findFirst()
+        return structureDao.findByEmployee_IdOrderByEffectiveFromDesc(employeeId).stream().findFirst()
                 .map(this::mapToResponse);
     }
 
     private SalaryStructureDtos.StructureResponse mapToResponse(EmployeeSalaryStructure es) {
-        List<EmployeeSalaryComponent> comps = structureCompDao.findBySalaryStructureId(es.getId());
+        List<EmployeeSalaryComponent> comps = structureCompDao.findBySalaryStructure_Id(es.getId());
         List<SalaryStructureDtos.StructureComponentResp> items = comps.stream().map(c -> {
-            SalaryComponent sc = componentDao.findById(c.getComponentId())
-                    .orElseThrow(() -> new IllegalArgumentException("Salary component not found: " + c.getComponentId()));
+            SalaryComponent sc = c.getComponent();
             return SalaryStructureDtos.StructureComponentResp.builder()
                     .componentId(sc.getId())
                     .code(sc.getCode())
@@ -77,7 +80,7 @@ public class SalaryStructureServiceImpl implements SalaryStructureService {
         }).collect(Collectors.toList());
         return SalaryStructureDtos.StructureResponse.builder()
                 .id(es.getId())
-                .employeeId(es.getEmployeeId())
+                .employeeId(es.getEmployee().getId())
                 .ctc(es.getCtc())
                 .grossSalary(es.getGrossSalary())
                 .effectiveFrom(es.getEffectiveFrom())

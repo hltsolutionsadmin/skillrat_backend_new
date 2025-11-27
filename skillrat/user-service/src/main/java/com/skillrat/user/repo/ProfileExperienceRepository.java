@@ -7,5 +7,5 @@ import java.util.List;
 import java.util.UUID;
 
 public interface ProfileExperienceRepository extends JpaRepository<ProfileExperience, UUID> {
-    List<ProfileExperience> findByUserId(UUID userId);
+    List<ProfileExperience> findByUser_Id(UUID userId);
 }

@@ -40,14 +40,6 @@ services:
       - mysql
       - redis
       - discovery-service
-  organisation-service:
-    build: ../organisation-service
-    ports:
-      - "8082:8082"
-    depends_on:
-      - mysql
-      - redis
-      - discovery-service
   placement-service:
     build: ../placement-service
     ports:
@@ -71,6 +63,5 @@ services:
     depends_on:
       - auth-service
       - user-service
-      - organisation-service
       - placement-service
       - wallet-service

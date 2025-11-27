@@ -1,14 +1,12 @@
 package com.skillrat.user.domain;
 
+import java.util.UUID;
+
 import com.skillrat.common.orm.BaseEntity;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
-import java.util.UUID;
 
 @Entity
 @Table(name = "user_coins")
