@@ -41,10 +41,7 @@ public class B2BUnitController {
     @PostMapping("/onboard/admin")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<B2BUnit> adminOnboard(@RequestBody @Validated AdminOnboardRequest req) {
-        Address addr = OnboardingMapper.toEntity(req.getAddress());
-        B2BUnit unit = service.adminOnboard(
-                req.getName(), req.getType(), req.getContactEmail(), req.getContactPhone(), req.getWebsite(), addr, req.getGroupName(), req.getApprover(),
-                req.getAdminFirstName(), req.getAdminLastName(), req.getAdminEmail(), req.getAdminMobile());
+        B2BUnit unit = service.adminOnboard(req);
         return ResponseEntity.ok(unit);
     }
 
