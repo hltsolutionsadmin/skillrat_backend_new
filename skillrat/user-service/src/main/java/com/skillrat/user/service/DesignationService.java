@@ -93,6 +93,8 @@ public class DesignationService {
             DesignationDTO dto=new DesignationDTO();
             dto.setDesignationId(desig.getId());
             dto.setDesignationName(desig.getName());
+            dto.setBandName(desig.getBand().getName());
+            dto.setResourceCount((long) desig.getEmployees().size());
             list.add(dto);
         }
         return list;
