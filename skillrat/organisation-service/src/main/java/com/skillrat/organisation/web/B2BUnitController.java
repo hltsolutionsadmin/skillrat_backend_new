@@ -1,20 +1,25 @@
 package com.skillrat.organisation.web;
 
-import com.skillrat.organisation.domain.B2BUnit;
-import com.skillrat.organisation.domain.B2BUnitType;
-import com.skillrat.organisation.service.B2BUnitService;
-import com.skillrat.organisation.domain.Address;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.security.access.prepost.PreAuthorize;
-
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.skillrat.organisation.domain.Address;
+import com.skillrat.organisation.domain.B2BUnit;
+import com.skillrat.organisation.service.B2BUnitService;
+import com.skillrat.organisation.web.dto.AdminOnboardRequest;
+import com.skillrat.organisation.web.dto.SelfOnboardRequest;
+import com.skillrat.organisation.web.mapper.OnboardingMapper;
 
 @RestController
 @RequestMapping("/api/b2b")
@@ -28,38 +33,18 @@ public class B2BUnitController {
     @PostMapping("/onboard/self")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<B2BUnit> selfOnboard(@RequestBody @Validated SelfOnboardRequest req) {
-        Address addr = null;
-        if (req.address != null) {
-            addr = new Address();
-            addr.setLine1(req.address.line1);
-            addr.setLine2(req.address.line2);
-            addr.setCity(req.address.city);
-            addr.setState(req.address.state);
-            addr.setCountry(req.address.country);
-            addr.setPostalCode(req.address.postalCode);
-            addr.setFullText(req.address.fullText);
-        }
-        B2BUnit unit = service.selfSignup(req.name, req.type, req.contactEmail, req.contactPhone, req.website, addr, req.groupName);
+        Address addr = OnboardingMapper.toEntity(req.getAddress());
+        B2BUnit unit = service.selfSignup(req.getName(), req.getType(), req.getContactEmail(), req.getContactPhone(), req.getWebsite(), addr, req.getGroupName());
         return ResponseEntity.ok(unit);
     }
 
     @PostMapping("/onboard/admin")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<B2BUnit> adminOnboard(@RequestBody @Validated AdminOnboardRequest req) {
-        Address addr = null;
-        if (req.address != null) {
-            addr = new Address();
-            addr.setLine1(req.address.line1);
-            addr.setLine2(req.address.line2);
-            addr.setCity(req.address.city);
-            addr.setState(req.address.state);
-            addr.setCountry(req.address.country);
-            addr.setPostalCode(req.address.postalCode);
-            addr.setFullText(req.address.fullText);
-        }
+        Address addr = OnboardingMapper.toEntity(req.getAddress());
         B2BUnit unit = service.adminOnboard(
-                req.name, req.type, req.contactEmail, req.contactPhone, req.website, addr, req.groupName, req.approver,
-                req.adminFirstName, req.adminLastName, req.adminEmail, req.adminMobile);
+                req.getName(), req.getType(), req.getContactEmail(), req.getContactPhone(), req.getWebsite(), addr, req.getGroupName(), req.getApprover(),
+                req.getAdminFirstName(), req.getAdminLastName(), req.getAdminEmail(), req.getAdminMobile());
         return ResponseEntity.ok(unit);
     }
 
@@ -84,37 +69,5 @@ public class B2BUnitController {
         return service.findById(id)
                 .<ResponseEntity<?>>map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
-    }
-
-    @GetMapping("/test")
-    public String secureTest() {
-        return " b2bunit working!";
-    }
-    public static class SelfOnboardRequest {
-        @NotBlank public String name;
-        @NotNull public B2BUnitType type;
-        @Email public String contactEmail;
-        public String contactPhone;
-        public String website;
-        public AddressDTO address;
-        public String groupName; // optional: associate to a group by name
-    }
-
-    public static class AdminOnboardRequest extends SelfOnboardRequest {
-        public String approver;
-        public String adminFirstName;
-        public String adminLastName;
-        @Email public String adminEmail;
-        public String adminMobile;
-    }
-
-    public static class AddressDTO {
-        public String line1;
-        public String line2;
-        public String city;
-        public String state;
-        public String country;
-        public String postalCode;
-        public String fullText; // optional: server may derive this if not provided
     }
 }
