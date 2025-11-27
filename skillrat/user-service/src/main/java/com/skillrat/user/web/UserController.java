@@ -176,19 +176,7 @@ public class UserController {
                 .orElseGet(() -> ResponseEntity.status(401).body(Map.of("error", "Invalid credentials")));
     }
 
-    // Internal endpoint to assign existing user as business admin (unit-scoped)
-    // Security: only the authenticated end-user can assign themselves (JWT sub must match email)
-    @PostMapping("/internal/business-admin/assign")
-    @PreAuthorize("#req.email != null && #req.email.equalsIgnoreCase(authentication.token.subject)")
-    public ResponseEntity<UserDTO> assignBusinessAdmin(@RequestBody AssignBusinessAdminRequest req) {
-        User u = userService.assignBusinessAdmin(req.b2bUnitId, req.email);
-        UserDTO dto = new UserDTO();
-        dto.setId(u.getId());
-        dto.setFirstName(u.getFirstName());
-        dto.setLastName(u.getLastName());
-        dto.setEmail(u.getEmail());
-        return ResponseEntity.ok(dto);
-    }
+    
 
     // Internal endpoint for cross-service user lookup by email
     @GetMapping("/internal/byEmail/{email}")

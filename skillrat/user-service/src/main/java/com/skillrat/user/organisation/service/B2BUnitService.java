@@ -10,16 +10,13 @@ import com.skillrat.user.organisation.repo.B2BUnitRepository;
 import com.skillrat.user.organisation.repo.B2BGroupRepository;
 import com.skillrat.user.domain.User;
 import com.skillrat.user.repo.UserRepository;
+import com.skillrat.user.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.RestTemplate;
 
 import java.time.Instant;
 import java.util.List;
@@ -33,14 +30,14 @@ public class B2BUnitService {
 
     private final B2BUnitRepository repository;
     private final B2BGroupRepository groupRepository;
-    private final RestTemplate restTemplate;
     private final UserRepository userRepository;
+    private final UserService userService;
 
-    public B2BUnitService(B2BUnitRepository repository, B2BGroupRepository groupRepository, RestTemplate restTemplate, UserRepository userRepository) {
+    public B2BUnitService(B2BUnitRepository repository, B2BGroupRepository groupRepository, UserRepository userRepository, UserService userService) {
         this.repository = repository;
         this.groupRepository = groupRepository;
-        this.restTemplate = restTemplate;
         this.userRepository = userRepository;
+        this.userService = userService;
     }
 
     @Transactional
@@ -76,31 +73,20 @@ public class B2BUnitService {
         unit = repository.save(unit);
         log.info("B2BUnit self signup created id={}, name={}, tenantId={}", unit.getId(), unit.getName(), tenantId);
 
+        // Assign the current user as BUSINESS_ADMIN for this unit directly via UserService
+        String callerEmail = email;
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth instanceof JwtAuthenticationToken jwtAuth) {
+            String sub = jwtAuth.getToken().getSubject();
+            if (sub != null && !sub.isBlank()) {
+                callerEmail = sub;
+            }
+        }
         try {
-            // Derive onboarding user identity and token from current JWT
-            String callerEmail = email;
-            String bearerToken = null;
-            var auth = SecurityContextHolder.getContext().getAuthentication();
-            if (auth instanceof JwtAuthenticationToken jwtAuth) {
-                bearerToken = jwtAuth.getToken().getTokenValue();
-                String sub = jwtAuth.getToken().getSubject();
-                if (sub != null && !sub.isBlank()) {
-                    callerEmail = sub;
-                }
-            }
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.add("X-Skillrat-Tenant", tenantId);
-            if (bearerToken != null) {
-                headers.add(HttpHeaders.AUTHORIZATION, "Bearer " + bearerToken);
-            }
-            java.util.Map<String, Object> payload = new java.util.HashMap<>();
-            payload.put("b2bUnitId", unit.getId());
-            payload.put("email", callerEmail);
-            restTemplate.postForEntity("http://localhost:8081/api/users/internal/business-admin/assign", new HttpEntity<>(payload, headers), Void.class);
-            log.info("Requested business-admin assignment for unitId={}, email={}", unit.getId(), callerEmail);
+            userService.assignBusinessAdmin(unit.getId(), callerEmail);
+            log.info("Assigned BUSINESS_ADMIN via service for unitId={}, email={}", unit.getId(), callerEmail);
         } catch (Exception ex) {
-            log.warn("Failed to notify user-service for business-admin assignment unitId={}, email={}", unit.getId(), email, ex);
+            log.warn("Failed to assign business-admin via service unitId={}, email={}", unit.getId(), callerEmail, ex);
         }
         return unit;
     }
@@ -146,17 +132,8 @@ public class B2BUnitService {
         log.info("B2BUnit admin onboarded id={}, name={}, tenantId={}, approvedBy={}", unit.getId(), unit.getName(), tenantId, unit.getApprovedBy());
 
         if (adminEmail != null && !adminEmail.isBlank()) {
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.add("X-Skillrat-Tenant", tenantId);
-            java.util.Map<String, Object> payload = new java.util.HashMap<>();
-            payload.put("b2bUnitId", unit.getId());
-            payload.put("firstName", adminFirstName);
-            payload.put("lastName", adminLastName);
-            payload.put("email", adminEmail);
-            payload.put("mobile", adminMobile);
             try {
-                restTemplate.postForEntity("http://user-service:8080/api/users/internal/business-admin", new HttpEntity<>(payload, headers), Void.class);
+                userService.createBusinessAdmin(unit.getId(), adminFirstName, adminLastName, adminEmail, adminMobile);
             } catch (Exception ex) {
                 // Intentionally not failing org onboarding; admin creation can be retried separately
                 log.warn("Failed to create admin user for unitId={}, adminEmail={}", unit.getId(), adminEmail, ex);
