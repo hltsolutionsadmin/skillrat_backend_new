@@ -4,9 +4,17 @@ import com.skillrat.common.dto.UserDTO;
 import com.skillrat.common.tenant.TenantContext;
 import com.skillrat.project.client.UserClient;
 import com.skillrat.project.domain.*;
+
+
+
 import com.skillrat.project.repo.*;
+import com.skillrat.project.web.request.CreateProjectRequest;
+import com.skillrat.project.web.request.CreateWbsRequest;
+import com.skillrat.project.web.request.UpdateProjectRequest;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -38,64 +46,60 @@ public class ProjectService {
     }
 
     @Transactional
-    public Project createProject(String name,
-                                 String code,
-                                 String description,
-                                 String b2bUnitId,
-                                 LocalDate start,
-                                 LocalDate end,
-                                 String clientName,
-                                 String clientPrimaryEmail,
-                                 String clientSecondaryEmail,
-                                 ProjectType projectType,
-                                 ProjectSLAType status,
-                                 ProjectStatus projectStatus ,
-                                 boolean taskManagement, boolean projectManagement, String createdBy) {
-    	String tenant = Optional.ofNullable(TenantContext.getTenantId())
+    public ProjectDTO createProject(CreateProjectRequest req, String createdBy) {
+        String tenant = Optional.ofNullable(TenantContext.getTenantId())
                 .filter(t -> !t.isBlank())
                 .orElse("default");
+
+        String code = req.getCode();
         if (code != null && !code.isBlank() && projectRepository.findByCodeAndTenantId(code, tenant).isPresent()) {
             throw new IllegalStateException("Project code already exists for tenant");
         }
-        Optional<Project> project = projectRepository.findByCode(code);
-        if (project.isPresent()) {
+        Optional<Project> dup = projectRepository.findByCode(code);
+        if (dup.isPresent()) {
             throw new IllegalStateException("Project code already exists");
         }
+
         Project p = new Project();
-        p.setName(name);
+        p.setName(req.getName());
         p.setCode(code);
-        p.setB2bUnitId(UUID.fromString(normalizeUuidString(b2bUnitId)));
-        p.setStartDate(start);
-        p.setEndDate(end);
+        p.setB2bUnitId(req.getB2bUnitId());
+        p.setStartDate(req.getStartDate());
+        p.setEndDate(req.getEndDate());
         p.setTenantId(tenant);
-        p.setDescription(description);
-        p.setTaskManagement(taskManagement);
-        p.setProjectManagement(projectManagement);
-        if (ProjectType.SUPPORT.equals(projectType)) {
-            p.setProjectType(projectType);
-            if (ProjectSLAType.ENTERPRISE.equals(status)) {
+        p.setDescription(req.getDescription());
+        p.setTaskManagement(req.isTaskManagement());
+        p.setProjectManagement(req.isProjectManagement());
+
+        if (ProjectType.SUPPORT.equals(req.getProjectType())) {
+            p.setProjectType(req.getProjectType());
+            if (ProjectSLAType.ENTERPRISE.equals(req.getProjectType())) {
                 p.setStatus(ProjectSLAType.ENTERPRISE);
             }
         }
-        if (projectStatus != null) {
-            p.setProjectStatus(projectStatus);
+        if (req.getProjectStatus() != null) {
+            p.setProjectStatus(req.getProjectStatus());
         }
-        if (clientName != null && !clientName.isBlank()) {
+
+        if (req.getClient() != null && req.getClient().getName() != null && !req.getClient().getName().isBlank()) {
             ProjectClient client = new ProjectClient();
-            client.setName(clientName);
-            if (clientPrimaryEmail != null && !clientPrimaryEmail.isBlank()) {
-                client.setPrimaryContactEmail(clientPrimaryEmail);
+            client.setName(req.getClient().getName());
+            if (req.getClient().getPrimaryContactEmail() != null && !req.getClient().getPrimaryContactEmail().isBlank()) {
+                client.setPrimaryContactEmail(req.getClient().getPrimaryContactEmail());
             }
-            if (clientSecondaryEmail != null && !clientSecondaryEmail.isBlank()) {
-                client.setSecondaryContactEmail(clientSecondaryEmail);
+            if (req.getClient().getSecondaryContactEmail() != null && !req.getClient().getSecondaryContactEmail().isBlank()) {
+                client.setSecondaryContactEmail(req.getClient().getSecondaryContactEmail());
             }
             client.setTenantId(tenant);
             applyAuditFromCurrentUser(client);
             p.setClient(client);
         }
+
         p.setCreatedBy(createdBy);
         p.setUpdatedBy(createdBy);
-        return projectRepository.save(p);
+
+        Project saved = projectRepository.save(p);
+        return toDto(saved);
     }
 
     @Transactional
@@ -156,6 +160,29 @@ public class ProjectService {
         return projectRepository.save(p);
     }
 
+    // Wrapper that accepts request DTO and delegates to existing update method (no functionality change)
+    @Transactional
+    public ProjectDTO updateProject(UUID projectId, UpdateProjectRequest req, String updatedBy) {
+        Project updated = updateProject(
+                projectId,
+                req.getName(),
+                req.getCode(),
+                req.getDescription(),
+                req.getStartDate(),
+                req.getEndDate(),
+                req.getClient() != null ? req.getClient().getName() : null,
+                req.getClient() != null ? req.getClient().getPrimaryContactEmail() : null,
+                req.getClient() != null ? req.getClient().getSecondaryContactEmail() : null,
+                req.getProjectType(),
+                req.getStatus(),
+                req.getProjectStatus(),
+                Boolean.TRUE.equals(req.getTaskManagement()),
+                Boolean.TRUE.equals(req.getProjectManagement()),
+                updatedBy
+        );
+        return toDto(updated);
+    }
+
     private String normalizeUuidString(String raw) {
         if (raw == null) {
             throw new IllegalArgumentException("b2bUnitId is required");
@@ -182,9 +209,7 @@ public class ProjectService {
     }
 
     @Transactional
-    public WBSElement createWbs(UUID projectId, String name, String code, WBSCategory category, LocalDate start, LocalDate end) {
-        Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new IllegalArgumentException("Project not found"));
+    public WBSElement createWbs(UUID b2bUnitId, String name, String code, WBSCategory category, LocalDate start, LocalDate end) {
         String tenant = TenantContext.getTenantId();
         if (code != null && !code.isBlank()) {
             Optional<WBSElement> existing = wbsRepository.findByCodeAndTenantId(code, tenant);
@@ -197,14 +222,20 @@ public class ProjectService {
             }
         }
         WBSElement wbs = new WBSElement();
-        wbs.setProject(project);
         wbs.setName(name);
         wbs.setCode(code);
         wbs.setCategory(category == null ? WBSCategory.OTHER : category);
         wbs.setStartDate(start);
         wbs.setEndDate(end);
         wbs.setTenantId(tenant);
+        wbs.setB2bUnitId(b2bUnitId);
         return wbsRepository.save(wbs);
+    }
+
+    // Wrapper that accepts request DTO for WBS creation
+    @Transactional
+    public WBSElement createWbs(UUID b2bUnitId, CreateWbsRequest req) {
+        return createWbs(b2bUnitId, req.getName(), req.getCode(), req.getCategory(), req.getStartDate(), req.getEndDate());
     }
 
     @Transactional
@@ -257,6 +288,20 @@ public class ProjectService {
         return memberRepository.save(member);
     }
 
+    // Wrapper that accepts request DTO for member upsert
+    @Transactional
+    public ProjectMember addOrUpdateMember(UUID projectId, com.skillrat.project.web.request.UpsertMemberRequest req) {
+        return addOrUpdateMember(
+                projectId,
+                req.getEmployeeId(),
+                req.getRole(),
+                req.getReportingManagerId(),
+                req.getStartDate(),
+                req.getEndDate(),
+                req.getActive() != null ? req.getActive() : true
+        );
+    }
+
     @Transactional
     public WBSAllocation allocateMemberToWbs(UUID projectId,UUID userId, UUID wbsId, LocalDate start, LocalDate end) {
         Optional<ProjectMember> projectMember = memberRepository.findByProject_IdAndEmployeeId(projectId, userId);
@@ -288,6 +333,12 @@ public class ProjectService {
         return allocationRepository.save(alloc);
     }
 
+    // Wrapper that accepts request DTO for allocation
+    @Transactional
+    public WBSAllocation allocateMemberToWbs(UUID projectId, UUID userId, com.skillrat.project.web.request.AllocateRequest req) {
+        return allocateMemberToWbs(projectId, userId, req.getWbsId(), req.getStartDate(), req.getEndDate());
+    }
+
     @Transactional(readOnly = true)
     public Project getProject(UUID id) {
         return projectRepository.findById(id)
@@ -298,6 +349,12 @@ public class ProjectService {
     public WBSElement getWbs(UUID id) {
         return wbsRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("WBS not found"));
+    }
+
+    // Wrapper that accepts request DTO for WBS update
+    @Transactional
+    public WBSElement updateWbs(UUID wbsId, com.skillrat.project.web.request.UpdateWbsRequest req) {
+        return updateWbs(wbsId, req.getName(), req.getCode(), req.getCategory(), req.getStartDate(), req.getEndDate(), req.getProjectId(), req.isDisabled());
     }
 
     @Transactional(readOnly = true)
@@ -340,7 +397,7 @@ public class ProjectService {
     public Page<Project> listProjectsForUser(String email, Pageable pageable) {
         UUID userId = null;
         try {
-            org.springframework.http.ResponseEntity<java.util.Map<String, Object>> resp = userClient.getByEmail(email);
+            ResponseEntity<Map<String, Object>> resp = userClient.getByEmail(email);
             if (resp != null && resp.getStatusCode().is2xxSuccessful() && resp.getBody() != null) {
                 Object v = resp.getBody().get("id");
                 if (v != null) {
@@ -452,5 +509,91 @@ public class ProjectService {
                 }
             }
         }
+    }
+
+    public ProjectDTO toDto(Project p) {
+        ProjectDTO dto = new ProjectDTO();
+        dto.setId(p.getId());
+        dto.setName(p.getName());
+        dto.setCode(p.getCode());
+        dto.setDescription(p.getDescription());
+        dto.setB2bUnitId(p.getB2bUnitId());
+        dto.setHolidayCalendarId(p.getHolidayCalendarId());
+        dto.setStartDate(p.getStartDate());
+        dto.setEndDate(p.getEndDate());
+        dto.setProjectType(p.getProjectType());
+        if (p.getClient() != null) {
+            ProjectClientDTO c = new ProjectClientDTO();
+            c.setName(p.getClient().getName());
+            c.setPrimaryContactEmail(p.getClient().getPrimaryContactEmail());
+            c.setSecondaryContactEmail(p.getClient().getSecondaryContactEmail());
+            dto.setClient(c);
+        }
+        dto.setStatus(p.getStatus());
+        dto.setProjectStatus(p.getProjectStatus());
+        dto.setTaskManagement(p.isTaskManagement());
+        dto.setProjectManagement(p.isProjectManagement());
+        dto.setCreatedBy(p.getCreatedBy());
+        dto.setUpdatedBy(p.getUpdatedBy());
+        // For creation, nested lists can be empty; populate elsewhere when needed
+        dto.setWbsElements(java.util.Collections.emptyList());
+        dto.setMembers(java.util.Collections.emptyList());
+        return dto;
+    }
+
+    @Transactional(readOnly = true)
+    public ProjectDTO getProjectDTO(UUID id) {
+        return toDto(getProject(id));
+    }
+
+    public WBSElementDTO toWbsDto(WBSElement w) {
+        if (w == null) return null;
+        WBSElementDTO dto = new WBSElementDTO();
+        dto.setId(w.getId());
+        if(w.getProject() != null) {
+            dto.setProjectId(w.getProject().getId());
+            dto.setProject(toDto(w.getProject()));
+        }
+        dto.setName(w.getName());
+        dto.setCode(w.getCode());
+        dto.setCategory(w.getCategory());
+        dto.setStartDate(w.getStartDate());
+        dto.setEndDate(w.getEndDate());
+        dto.setDisabled(w.isDisabled());
+        return dto;
+    }
+
+    public ProjectMemberDTO toMemberDto(ProjectMember m) {
+        if (m == null) return null;
+        ProjectMemberDTO dto = new ProjectMemberDTO();
+        dto.setId(m.getId());
+        dto.setProjectId(m.getProject() != null ? m.getProject().getId() : null);
+        dto.setEmployeeId(m.getEmployeeId());
+        dto.setRole(m.getRole());
+        dto.setReportingManagerId(m.getReportingManagerId());
+        dto.setStartDate(m.getStartDate());
+        dto.setEndDate(m.getEndDate());
+        dto.setActive(m.isActive());
+        dto.setCreatedBy(m.getCreatedBy());
+        dto.setUpdatedBy(m.getUpdatedBy());
+        return dto;
+    }
+
+    public WBSAllocationDTO toAllocationDto(WBSAllocation a) {
+        if (a == null) return null;
+        WBSAllocationDTO dto = new WBSAllocationDTO();
+        dto.setId(a.getId());
+        dto.setMemberId(a.getMember() != null ? a.getMember().getId() : null);
+        dto.setWbsElementId(a.getWbsElement() != null ? a.getWbsElement().getId() : null);
+        dto.setStartDate(a.getStartDate());
+        dto.setEndDate(a.getEndDate());
+        dto.setActive(a.isActive());
+        dto.setCreatedBy(a.getCreatedBy());
+        dto.setUpdatedBy(a.getUpdatedBy());
+        return dto;
+    }
+
+    public Page<WBSElement> listWbsByB2BUnitId(UUID b2bUnitId, PageRequest pageRequest) {
+        return wbsRepository.findByB2bUnitId(b2bUnitId, pageRequest);
     }
 }

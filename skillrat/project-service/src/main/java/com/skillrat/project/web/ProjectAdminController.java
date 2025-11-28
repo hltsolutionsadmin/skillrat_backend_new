@@ -3,6 +3,7 @@ package com.skillrat.project.web;
 import com.skillrat.common.dto.UserDTO;
 import com.skillrat.project.domain.*;
 import com.skillrat.project.service.ProjectService;
+import com.skillrat.project.web.request.*;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -37,113 +38,94 @@ public class ProjectAdminController {
 
     // Create Project - Only organization admin can create projects
     @PostMapping
-    //@PreAuthorize("hasRole('BUSINESS_ADMIN')")
-    public ResponseEntity<Project> createProject(@RequestBody @Valid CreateProjectRequest req) {
+    public ResponseEntity<ProjectDTO> createProject(@RequestBody @Valid CreateProjectRequest req) {
         String userId = getCurrentUserId();
-        Project p = service.createProject(
-                req.name,
-                req.code,
-                req.description,
-                req.b2bUnitId,
-                req.startDate,
-                req.endDate,
-                req.client != null ? req.client.name : null,
-                req.client != null ? req.client.primaryContactEmail : null,
-                req.client != null ? req.client.secondaryContactEmail : null,
-                req.projectType,
-                req.status,
-                req.projectStatus,
-                req.taskManagement,
-                req.projectManagement,
-                userId
-        );
-        return ResponseEntity.ok(p);
+        ProjectDTO dto = service.createProject(req, userId);
+        return ResponseEntity.ok(dto);
     }
 
     // Create WBS under a project
-    @PostMapping("/{projectId}/wbs")
+    @PostMapping("/{b2bUnitId}/wbs")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<WBSElement> createWbs(@PathVariable("projectId") UUID projectId,
-                                                @RequestBody @Valid CreateWbsRequest req) {
-        WBSElement w = service.createWbs(projectId, req.name, req.code, req.category, req.startDate, req.endDate);
-        return ResponseEntity.ok(w);
+    public ResponseEntity<WBSElementDTO> createWbs(@PathVariable("b2bUnitId") UUID b2bUnitId,
+                                                   @RequestBody @Valid CreateWbsRequest req) {
+        WBSElement w = service.createWbs(b2bUnitId, req);
+        return ResponseEntity.ok(service.toWbsDto(w));
     }
 
     // Update Project - Only organization admin can update projects
     @PutMapping("/{projectId}")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Project> updateProject(@PathVariable("projectId") UUID projectId,
-                                                 @RequestBody @Valid UpdateProjectRequest req) {
+    public ResponseEntity<ProjectDTO> updateProject(@PathVariable("projectId") UUID projectId,
+                                                    @RequestBody @Valid UpdateProjectRequest req) {
         String userId = getCurrentUserId();
-        Project p = service.updateProject(
-                projectId,
-                req.name,
-                req.code,
-                req.description,
-                req.startDate,
-                req.endDate,
-                req.client != null ? req.client.name : null,
-                req.client != null ? req.client.primaryContactEmail : null,
-                req.client != null ? req.client.secondaryContactEmail : null,
-                req.projectType,
-                req.status,
-                req.projectStatus,
-                req.taskManagement,
-                req.projectManagement,
-                userId
-        );
-        return ResponseEntity.ok(p);
+        ProjectDTO dto = service.updateProject(projectId, req, userId);
+        return ResponseEntity.ok(dto);
     }
 
     // Add or update project member (with project role and reporting manager)
     @PutMapping("/{projectId}/members")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<ProjectMember> upsertMember(@PathVariable("projectId") UUID projectId,
-                                                      @RequestBody @Valid UpsertMemberRequest req) {
-        ProjectMember m = service.addOrUpdateMember(projectId, req.employeeId, req.role, req.reportingManagerId,
-                req.startDate, req.endDate, req.active != null ? req.active : true);
-        return ResponseEntity.ok(m);
+    public ResponseEntity<ProjectMemberDTO> upsertMember(@PathVariable("projectId") UUID projectId,
+                                                         @RequestBody @Valid UpsertMemberRequest req) {
+        ProjectMember m = service.addOrUpdateMember(projectId, req);
+        return ResponseEntity.ok(service.toMemberDto(m));
     }
 
     // Allocate member to a WBS (assignment that controls time entry eligibility)
     @PostMapping("/members/{projectId}/allocations/{userId}")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<WBSAllocation> allocate(@PathVariable("projectId") UUID projectId,
-                                                  @PathVariable("userId") UUID userId,
-                                                  @RequestBody @Valid AllocateRequest req) {
-        WBSAllocation a = service.allocateMemberToWbs(projectId,userId, req.wbsId, req.startDate, req.endDate);
-        return ResponseEntity.ok(a);
+    public ResponseEntity<WBSAllocationDTO> allocate(@PathVariable("projectId") UUID projectId,
+                                                     @PathVariable("userId") UUID userId,
+                                                     @RequestBody @Valid AllocateRequest req) {
+        WBSAllocation a = service.allocateMemberToWbs(projectId, userId, req);
+        return ResponseEntity.ok(service.toAllocationDto(a));
     }
 
 
     @GetMapping("/{projectId}")
-    public ResponseEntity<Project> getProject(@PathVariable("projectId") UUID projectId) {
-        Project p = service.getProject(projectId);
+    public ResponseEntity<ProjectDTO> getProject(@PathVariable("projectId") UUID projectId) {
+        ProjectDTO p = service.getProjectDTO(projectId);
         return ResponseEntity.ok(p);
     }
 
     // Get WBS element by ID
     @GetMapping("/wbs/{wbsId}")
-    public ResponseEntity<WBSElement> getWbs(@PathVariable("wbsId") UUID wbsId) {
+    public ResponseEntity<WBSElementDTO> getWbs(@PathVariable("wbsId") UUID wbsId) {
         WBSElement w = service.getWbs(wbsId);
-        return ResponseEntity.ok(w);
+        return ResponseEntity.ok(service.toWbsDto(w));
     }
 
     // List WBS elements for a project with pagination
-    @GetMapping("/{projectId}/wbs")
+    @GetMapping("/{projectId}/wbsbyProjectId")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Page<WBSElement>> listWbs(
+    public ResponseEntity<Page<WBSElementDTO>> listWbs(
             @PathVariable("projectId") UUID projectId,
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(defaultValue = "10") @Min(1) int size) {
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by("createdDate").descending());
         Page<WBSElement> wbs = service.listWbs(projectId, pageRequest);
-        return ResponseEntity.ok(wbs);
+        List<WBSElementDTO> mapped = wbs.getContent().stream().map(service::toWbsDto).collect(Collectors.toList());
+        Page<WBSElementDTO> dtoPage = new PageImpl<>(mapped, pageRequest, wbs.getTotalElements());
+        return ResponseEntity.ok(dtoPage);
+    }
+
+    @GetMapping("/{b2bUnitId}/wbs")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Page<WBSElementDTO>> listWbsByB2BUnitId(
+            @PathVariable("b2bUnitId") UUID b2bUnitId,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "10") @Min(1) int size) {
+        PageRequest pageRequest = PageRequest.of(page, size, Sort.by("createdDate").descending());
+        Page<WBSElement> wbs = service.listWbsByB2BUnitId(b2bUnitId, pageRequest);
+        List<WBSElementDTO> mapped = wbs.getContent().stream().map(service::toWbsDto).collect(Collectors.toList());
+        Page<WBSElementDTO> dtoPage = new PageImpl<>(mapped, pageRequest, wbs.getTotalElements());
+        return ResponseEntity.ok(dtoPage);
     }
 
     // List projects with pagination
     @GetMapping
-    public ResponseEntity<Page<Project>> listProjects(
+    public ResponseEntity<Page<ProjectDTO>> listProjects(
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(defaultValue = "10") @Min(1) int size,
             @RequestParam(value = "fromDate", required = false) LocalDate fromDate,
@@ -175,7 +157,8 @@ public class ProjectAdminController {
                         return statusMatch && afterFrom && beforeTo;
                     })
                     .collect(Collectors.toList());
-            Page<Project> finalResult = new PageImpl<>(filtered, pageRequest, filtered.size());
+            List<ProjectDTO> mapped = filtered.stream().map(service::toDto).collect(Collectors.toList());
+            Page<ProjectDTO> finalResult = new PageImpl<>(mapped, pageRequest, mapped.size());
             return ResponseEntity.ok(finalResult);
     }
 
@@ -187,9 +170,9 @@ public class ProjectAdminController {
     }
     @PutMapping("/wbs/{wbsId}")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<WBSElement> updateWbs(@PathVariable UUID wbsId, @RequestBody @Valid UpdateWbsRequest req) {
-        WBSElement w = service.updateWbs(wbsId, req.name, req.code, req.category, req.startDate, req.endDate,req.projectId,req.disabled);
-        return ResponseEntity.ok(w);
+    public ResponseEntity<WBSElementDTO> updateWbs(@PathVariable UUID wbsId, @RequestBody @Valid UpdateWbsRequest req) {
+        WBSElement w = service.updateWbs(wbsId, req);
+        return ResponseEntity.ok(service.toWbsDto(w));
     }
 
     @DeleteMapping("/{projectId}/removeMember/{employeeId}")
@@ -200,15 +183,6 @@ public class ProjectAdminController {
         return ResponseEntity.noContent().build();
     }
 
-    public static class UpdateWbsRequest {
-        public String name;
-        public String code;
-        public UUID projectId;
-        public WBSCategory category;
-        public LocalDate startDate;
-        public LocalDate endDate;
-        public boolean disabled;
-    }
     // Helper methods to get current user info
     private String getCurrentUserId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -229,63 +203,5 @@ public class ProjectAdminController {
         return List.of();
     }
 
-    public static class CreateProjectRequest {
-        @NotBlank public String name;
-        public String code;
-        @NotNull public String b2bUnitId;
-        public LocalDate startDate;
-        public LocalDate endDate;
-        public String description;
-        public ProjectClientRequest client;
-        public ProjectType projectType;
-        public ProjectSLAType status;
-        public ProjectStatus projectStatus;
-        public boolean taskManagement;
-        public boolean projectManagement;
-
-    }
-
-    public static class CreateWbsRequest {
-        @NotBlank public String name;
-        public String code;
-        public WBSCategory category;
-        public LocalDate startDate;
-        public LocalDate endDate;
-    }
-
-    public static class UpsertMemberRequest {
-        @NotNull public UUID employeeId;
-        public ProjectRole role;
-        public UUID reportingManagerId;
-        public LocalDate startDate;
-        public LocalDate endDate;
-        public Boolean active;
-    }
-
-    public static class AllocateRequest {
-        @NotNull public UUID wbsId;
-        public LocalDate startDate;
-        public LocalDate endDate;
-    }
-
-    public static class ProjectClientRequest {
-        @NotBlank public String name;
-        public String primaryContactEmail;
-        public String secondaryContactEmail;
-    }
-
-    public static class UpdateProjectRequest {
-        public String name;
-        public String code;
-        public String description;
-        public LocalDate startDate;
-        public LocalDate endDate;
-        public ProjectClientRequest client;
-        public ProjectType projectType;
-        public ProjectSLAType status;
-        public ProjectStatus projectStatus;
-        public boolean taskManagement;
-        public boolean projectManagement;
-    }
 
 }

@@ -49,9 +49,10 @@ public class Project extends BaseEntity {
     @Column(name = "project_type", nullable = false, length = 32)
     private ProjectType projectType = ProjectType.INTERNAL;
 
-    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonBackReference
+    @OneToMany(mappedBy = "project", orphanRemoval = true)
     private List<WBSElement> wbsElements = new ArrayList<>();
+
 
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference

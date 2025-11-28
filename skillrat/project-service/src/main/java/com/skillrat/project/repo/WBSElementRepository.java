@@ -1,6 +1,7 @@
 package com.skillrat.project.repo;
 
 import com.skillrat.project.domain.WBSElement;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -15,4 +16,6 @@ public interface WBSElementRepository extends JpaRepository<WBSElement, UUID> {
     Page<WBSElement> findByProject_Id(UUID projectId, Pageable pageable);
 
     Optional<WBSElement> findByCode(String code);
+
+    Page<WBSElement> findByB2bUnitId(UUID b2bUnitId, PageRequest pageRequest);
 }

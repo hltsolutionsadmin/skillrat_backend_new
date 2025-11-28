@@ -2,6 +2,8 @@ package com.skillrat.project.web;
 
 import com.skillrat.project.domain.*;
 import com.skillrat.project.service.IncidentService;
+import com.skillrat.project.dto.IncidentDTO;
+import com.skillrat.project.dto.request.IncidentCreateRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -35,26 +37,12 @@ public class IncidentController {
     }
 
     @PostMapping(value = "/projects/{projectId}/incidents", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<Incident> create(
+    public ResponseEntity<IncidentDTO> create(
             @PathVariable("projectId") UUID projectId,
-            @Valid @ModelAttribute CreateIncidentRequest request) throws Exception {
-
-
+            @Valid @ModelAttribute IncidentCreateRequest request) throws Exception {
         try {
-            Incident incident = incidentService.create(
-                    projectId,
-                    request.getTitle(),
-                    request.getShortDescription(),
-                    request.getUrgency(),
-                    request.getImpact(),
-                    request.getCategoryId(),
-                    request.getSubCategoryId(),
-                    request.getMediaFiles(),
-                    request.getMediaUrls(),
-                    request.getAssigneeId(),
-                    request.getReporterId()
-            );
-            return ResponseEntity.ok(incident);
+            Incident incident = incidentService.create(projectId, request);
+            return ResponseEntity.ok(incidentService.toDto(incident));
         } catch (Exception e) {
             throw e;
         }
@@ -62,7 +50,7 @@ public class IncidentController {
 
     @GetMapping("/projects/{projectId}/incidents")
     @PreAuthorize("isAuthenticated()")
-    public Page<Incident> listByProject(@PathVariable("projectId") UUID projectId,
+    public Page<IncidentDTO> listByProject(@PathVariable("projectId") UUID projectId,
                                         @RequestParam(defaultValue = "0") @Min(0) int page,
                                         @RequestParam(defaultValue = "20") @Min(1) int size,
                                         @RequestParam(value = "priority", required = false) IncidentPriority priority,
@@ -71,30 +59,32 @@ public class IncidentController {
                                         @RequestParam(value = "search", required = false) String search) {
         boolean hasFilters = priority != null || categoryId != null || status != null || (search != null && !search.isBlank());
         if (hasFilters) {
-            return incidentService.listByProjectFiltered(projectId, priority, categoryId, status, search, PageRequest.of(page, size));
+            return incidentService.listByProjectFiltered(projectId, priority, categoryId, status, search, PageRequest.of(page, size))
+                    .map(incidentService::toDto);
         }
-        return incidentService.listByProject(projectId, PageRequest.of(page, size));
+        return incidentService.listByProject(projectId, PageRequest.of(page, size))
+                .map(incidentService::toDto);
     }
 
     @PutMapping("/incidents/{incidentId}/assignee")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Incident> assignAssignee(@PathVariable("incidentId") UUID incidentId,
+    public ResponseEntity<IncidentDTO> assignAssignee(@PathVariable("incidentId") UUID incidentId,
                                                    @RequestBody @Valid AssignUserRequest req) throws Exception {
         Incident updated = incidentService.assignAssignee(incidentId, req.userId);
-        return ResponseEntity.ok(updated);
+        return ResponseEntity.ok(incidentService.toDto(updated));
     }
 
     @PutMapping("/incidents/{incidentId}/reporter")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Incident> assignReporter(@PathVariable("incidentId") UUID incidentId,
+    public ResponseEntity<IncidentDTO> assignReporter(@PathVariable("incidentId") UUID incidentId,
                                                    @RequestBody @Valid AssignUserRequest req) throws Exception {
         Incident updated = incidentService.assignReporter(incidentId, req.userId);
-        return ResponseEntity.ok(updated);
+        return ResponseEntity.ok(incidentService.toDto(updated));
     }
 
     @PutMapping("/incidents/{incidentId}/status")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Incident> updateStatus(@PathVariable("incidentId") UUID incidentId,
+    public ResponseEntity<IncidentDTO> updateStatus(@PathVariable("incidentId") UUID incidentId,
                                                  @Valid @ModelAttribute UpdateStatusRequest request) {
         Incident updated = incidentService.updateStatus(incidentId, request.status,
                 request.getShortDescription(),
@@ -102,35 +92,40 @@ public class IncidentController {
                 request.getImpact(),
                 request.getMediaFiles(),
                 request.getMediaUrls());
-        return ResponseEntity.ok(updated);
+        return ResponseEntity.ok(incidentService.toDto(updated));
     }
 
     @GetMapping("/incidents/{incidentId}/history")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<java.util.List<Incident>> history(@PathVariable("incidentId") UUID incidentId) {
-        return ResponseEntity.ok(incidentService.history(incidentId));
+    public ResponseEntity<java.util.List<IncidentDTO>> history(@PathVariable("incidentId") UUID incidentId) {
+        java.util.List<IncidentDTO> list = incidentService.history(incidentId).stream()
+                .map(incidentService::toDto)
+                .toList();
+        return ResponseEntity.ok(list);
     }
 
     @GetMapping("/incidents/{incidentId}")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Incident> getById(@PathVariable("incidentId") UUID incidentId) {
-        return ResponseEntity.ok(incidentService.getById(incidentId));
+    public ResponseEntity<IncidentDTO> getById(@PathVariable("incidentId") UUID incidentId) {
+        return ResponseEntity.ok(incidentService.toDto(incidentService.getById(incidentId)));
     }
 
     @GetMapping("/projects/{projectId}/assignee")
     @PreAuthorize("isAuthenticated()")
-    public Page<Incident> listByAssignee(@PathVariable("projectId") UUID projectId,
+    public Page<IncidentDTO> listByAssignee(@PathVariable("projectId") UUID projectId,
                                          @RequestParam(defaultValue = "0") @Min(0) int page,
                                          @RequestParam(defaultValue = "20") @Min(1) int size) {
-        return incidentService.listByProjectAndLoggedInUser(projectId, PageRequest.of(page, size));
+        return incidentService.listByProjectAndLoggedInUser(projectId, PageRequest.of(page, size))
+                .map(incidentService::toDto);
     }
 
     @GetMapping("/incidents/reporter/{projectId}")
     @PreAuthorize("isAuthenticated()")
-    public Page<Incident> listByReporter(@PathVariable("projectId") UUID projectId,
+    public Page<IncidentDTO> listByReporter(@PathVariable("projectId") UUID projectId,
                                          @RequestParam(defaultValue = "0") @Min(0) int page,
                                          @RequestParam(defaultValue = "20") @Min(1) int size) {
-        return incidentService.listByReporter(projectId, PageRequest.of(page, size));
+        return incidentService.listByReporter(projectId, PageRequest.of(page, size))
+                .map(incidentService::toDto);
     }
     @Data
     public static class CreateIncidentRequest {

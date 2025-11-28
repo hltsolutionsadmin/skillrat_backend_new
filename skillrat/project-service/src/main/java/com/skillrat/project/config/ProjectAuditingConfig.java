@@ -12,7 +12,7 @@ import java.util.Optional;
 @Configuration
 public class ProjectAuditingConfig {
 
-    @Bean(name = "auditorAware")
+    @Bean(name = "projectAuditorAware")
     public AuditorAware<String> auditorAware() {
         return () -> {
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
