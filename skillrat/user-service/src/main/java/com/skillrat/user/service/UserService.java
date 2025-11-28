@@ -74,8 +74,9 @@ public class UserService {
         user.setActive(true);
         user.setTenantId(tenantId);
         
-        // Assign default ROLE_USER
-        Role userRole = getOrCreateRole("ROLE_USER", "Default role for all users", null);
+        // Assign default ROLE_USER (must be pre-seeded by initializer)
+        Role userRole = roleRepository.findByName("ROLE_USER")
+            .orElseThrow(() -> new IllegalStateException("Required role ROLE_USER is not initialized"));
         user.setRoles(Set.of(userRole));
         
         User saved = userRepository.save(user);
@@ -257,9 +258,9 @@ public class UserService {
         Set<Role> roles = new HashSet<>();
         roles.add(adminRole);
         
-        // Ensure user also has ROLE_USER
+        // Ensure user also has ROLE_USER (must be pre-seeded by initializer)
         Role userRole = roleRepository.findByName("ROLE_USER")
-            .orElseGet(() -> roleRepository.save(new Role("ROLE_USER", "Default role for all users", null)));
+            .orElseThrow(() -> new IllegalStateException("Required role ROLE_USER is not initialized"));
         roles.add(userRole);
         
         admin.setRoles(roles);
@@ -290,14 +291,9 @@ public class UserService {
         // Add the business admin role
         roles.add(businessAdminRole);
         
-        // Ensure the user has the ROLE_USER
+        // Ensure the user has the ROLE_USER (must be pre-seeded by initializer)
         Role userRole = roleRepository.findByName("ROLE_USER")
-            .orElseGet(() -> {
-                Role role = new Role();
-                role.setName("ROLE_USER");
-                role.setDescription("Default role for all users");
-                return roleRepository.save(role);
-            });
+            .orElseThrow(() -> new IllegalStateException("Required role ROLE_USER is not initialized"));
         roles.add(userRole);
         
         // Update user roles and business unit
@@ -355,12 +351,9 @@ public class UserService {
             });
         roles.add(employeeRole);
         
-        // Ensure the user has the ROLE_USER
+        // Ensure the user has the ROLE_USER (must be pre-seeded by initializer)
         Role userRole = roleRepository.findByName("ROLE_USER")
-            .orElseGet(() -> {
-                Role role = new Role("ROLE_USER", "Default role for all users", null);
-                return roleRepository.save(role);
-            });
+            .orElseThrow(() -> new IllegalStateException("Required role ROLE_USER is not initialized"));
         roles.add(userRole);
         
         emp.setRoles(roles);
@@ -423,12 +416,9 @@ public class UserService {
             });
         roles.add(employeeRole);
         
-        // Get or create global ROLE_USER
+        // Get global ROLE_USER (must be pre-seeded by initializer)
         Role userRole = roleRepository.findByName("ROLE_USER")
-            .orElseGet(() -> {
-                Role role = new Role("ROLE_USER", "Default role for all users", null);
-                return roleRepository.save(role);
-            });
+            .orElseThrow(() -> new IllegalStateException("Required role ROLE_USER is not initialized"));
         roles.add(userRole);
         
         return roles;

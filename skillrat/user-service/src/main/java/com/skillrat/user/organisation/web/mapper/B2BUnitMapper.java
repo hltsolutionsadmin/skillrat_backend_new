@@ -27,6 +27,17 @@ public class B2BUnitMapper {
         return dto;
     }
 
+    public static B2BUnitDTO toDTOList(B2BUnit unit) {
+        if (unit == null) return null;
+        B2BUnitDTO dto = new B2BUnitDTO();
+        dto.setId(unit.getId());
+        dto.setName(unit.getName());
+        dto.setType(unit.getType());
+        dto.setStatus(unit.getStatus());
+        dto.setWebsite(unit.getWebsite());
+        return dto;
+    }
+
     private static AddressDTO toDTO(Address address) {
         if (address == null) return null;
         AddressDTO dto = new AddressDTO();

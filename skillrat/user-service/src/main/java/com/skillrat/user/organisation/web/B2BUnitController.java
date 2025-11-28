@@ -40,24 +40,25 @@ public class B2BUnitController {
 
     @PostMapping("/{id}/approve")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> approve(@PathVariable("id") @NonNull UUID id, @RequestBody Map<String, String> body) {
+    public ResponseEntity<B2BUnitDTO> approve(@PathVariable("id") @NonNull UUID id, @RequestBody Map<String, String> body) {
         String approver = body != null ? body.getOrDefault("approver", "skillrat-admin") : "skillrat-admin";
         return service.approve(id, approver)
-                .<ResponseEntity<?>>map(ResponseEntity::ok)
+                .<ResponseEntity<B2BUnitDTO>>map(u -> ResponseEntity.ok(B2BUnitMapper.toDTO(u)))
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @GetMapping("/pending")
     @PreAuthorize("hasRole('ADMIN')")
-    public Page<B2BUnit> pending(Pageable pageable) {
-        return service.listPending(pageable);
+    public Page<B2BUnitDTO> pending(Pageable pageable) {
+        Page<B2BUnit> page = service.listPending(pageable);
+        return page.map(B2BUnitMapper::toDTOList);
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<?> getById(@PathVariable("id") @NonNull UUID id) {
+    public ResponseEntity<B2BUnitDTO> getById(@PathVariable("id") @NonNull UUID id) {
         return service.findById(id)
-                .<ResponseEntity<?>>map(ResponseEntity::ok)
+                .<ResponseEntity<B2BUnitDTO>>map(u -> ResponseEntity.ok(B2BUnitMapper.toDTO(u)))
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 }
