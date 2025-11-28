@@ -13,6 +13,7 @@ import java.util.UUID;
 public class WBSElementDTO {
     private UUID id;
     private UUID projectId;
+    private ProjectDTO project;
     private String name;
     private String code;
     private WBSCategory category;

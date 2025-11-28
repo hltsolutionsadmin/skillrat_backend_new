@@ -45,11 +45,11 @@ public class ProjectAdminController {
     }
 
     // Create WBS under a project
-    @PostMapping("/{projectId}/wbs")
+    @PostMapping("/{b2bUnitId}/wbs")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<WBSElementDTO> createWbs(@PathVariable("projectId") UUID projectId,
+    public ResponseEntity<WBSElementDTO> createWbs(@PathVariable("b2bUnitId") UUID b2bUnitId,
                                                    @RequestBody @Valid CreateWbsRequest req) {
-        WBSElement w = service.createWbs(projectId, req);
+        WBSElement w = service.createWbs(b2bUnitId, req);
         return ResponseEntity.ok(service.toWbsDto(w));
     }
 
@@ -97,7 +97,7 @@ public class ProjectAdminController {
     }
 
     // List WBS elements for a project with pagination
-    @GetMapping("/{projectId}/wbs")
+    @GetMapping("/{projectId}/wbsbyProjectId")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Page<WBSElementDTO>> listWbs(
             @PathVariable("projectId") UUID projectId,
@@ -105,6 +105,19 @@ public class ProjectAdminController {
             @RequestParam(defaultValue = "10") @Min(1) int size) {
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by("createdDate").descending());
         Page<WBSElement> wbs = service.listWbs(projectId, pageRequest);
+        List<WBSElementDTO> mapped = wbs.getContent().stream().map(service::toWbsDto).collect(Collectors.toList());
+        Page<WBSElementDTO> dtoPage = new PageImpl<>(mapped, pageRequest, wbs.getTotalElements());
+        return ResponseEntity.ok(dtoPage);
+    }
+
+    @GetMapping("/{b2bUnitId}/wbs")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Page<WBSElementDTO>> listWbsByB2BUnitId(
+            @PathVariable("b2bUnitId") UUID b2bUnitId,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "10") @Min(1) int size) {
+        PageRequest pageRequest = PageRequest.of(page, size, Sort.by("createdDate").descending());
+        Page<WBSElement> wbs = service.listWbsByB2BUnitId(b2bUnitId, pageRequest);
         List<WBSElementDTO> mapped = wbs.getContent().stream().map(service::toWbsDto).collect(Collectors.toList());
         Page<WBSElementDTO> dtoPage = new PageImpl<>(mapped, pageRequest, wbs.getTotalElements());
         return ResponseEntity.ok(dtoPage);

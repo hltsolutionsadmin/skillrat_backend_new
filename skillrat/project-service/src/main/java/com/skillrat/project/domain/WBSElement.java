@@ -8,6 +8,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDate;
+import java.util.UUID;
+
 @Entity
 @Table(
         name = "wbs_element",
@@ -22,8 +24,8 @@ import java.time.LocalDate;
 @NoArgsConstructor
 public class WBSElement extends BaseEntity {
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "project_id")
+    @ManyToOne(optional = true)
+    @JoinColumn(name = "project_id", nullable = true)
     private Project project;
 
     @Column(nullable = false, length = 200)
@@ -41,4 +43,7 @@ public class WBSElement extends BaseEntity {
 
     @Column(name = "disabled", nullable = false)
     private boolean disabled = false;
+
+    @Column(nullable = false)
+    private UUID b2bUnitId;
 }

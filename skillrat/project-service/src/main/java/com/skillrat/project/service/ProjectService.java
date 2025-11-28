@@ -12,7 +12,9 @@ import com.skillrat.project.web.request.CreateProjectRequest;
 import com.skillrat.project.web.request.CreateWbsRequest;
 import com.skillrat.project.web.request.UpdateProjectRequest;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -207,9 +209,7 @@ public class ProjectService {
     }
 
     @Transactional
-    public WBSElement createWbs(UUID projectId, String name, String code, WBSCategory category, LocalDate start, LocalDate end) {
-        Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new IllegalArgumentException("Project not found"));
+    public WBSElement createWbs(UUID b2bUnitId, String name, String code, WBSCategory category, LocalDate start, LocalDate end) {
         String tenant = TenantContext.getTenantId();
         if (code != null && !code.isBlank()) {
             Optional<WBSElement> existing = wbsRepository.findByCodeAndTenantId(code, tenant);
@@ -222,20 +222,20 @@ public class ProjectService {
             }
         }
         WBSElement wbs = new WBSElement();
-        wbs.setProject(project);
         wbs.setName(name);
         wbs.setCode(code);
         wbs.setCategory(category == null ? WBSCategory.OTHER : category);
         wbs.setStartDate(start);
         wbs.setEndDate(end);
         wbs.setTenantId(tenant);
+        wbs.setB2bUnitId(b2bUnitId);
         return wbsRepository.save(wbs);
     }
 
     // Wrapper that accepts request DTO for WBS creation
     @Transactional
-    public WBSElement createWbs(UUID projectId, CreateWbsRequest req) {
-        return createWbs(projectId, req.getName(), req.getCode(), req.getCategory(), req.getStartDate(), req.getEndDate());
+    public WBSElement createWbs(UUID b2bUnitId, CreateWbsRequest req) {
+        return createWbs(b2bUnitId, req.getName(), req.getCode(), req.getCategory(), req.getStartDate(), req.getEndDate());
     }
 
     @Transactional
@@ -397,7 +397,7 @@ public class ProjectService {
     public Page<Project> listProjectsForUser(String email, Pageable pageable) {
         UUID userId = null;
         try {
-            org.springframework.http.ResponseEntity<java.util.Map<String, Object>> resp = userClient.getByEmail(email);
+            ResponseEntity<Map<String, Object>> resp = userClient.getByEmail(email);
             if (resp != null && resp.getStatusCode().is2xxSuccessful() && resp.getBody() != null) {
                 Object v = resp.getBody().get("id");
                 if (v != null) {
@@ -550,7 +550,10 @@ public class ProjectService {
         if (w == null) return null;
         WBSElementDTO dto = new WBSElementDTO();
         dto.setId(w.getId());
-        dto.setProjectId(w.getProject() != null ? w.getProject().getId() : null);
+        if(w.getProject() != null) {
+            dto.setProjectId(w.getProject().getId());
+            dto.setProject(toDto(w.getProject()));
+        }
         dto.setName(w.getName());
         dto.setCode(w.getCode());
         dto.setCategory(w.getCategory());
@@ -588,5 +591,9 @@ public class ProjectService {
         dto.setCreatedBy(a.getCreatedBy());
         dto.setUpdatedBy(a.getUpdatedBy());
         return dto;
+    }
+
+    public Page<WBSElement> listWbsByB2BUnitId(UUID b2bUnitId, PageRequest pageRequest) {
+        return wbsRepository.findByB2bUnitId(b2bUnitId, pageRequest);
     }
 }

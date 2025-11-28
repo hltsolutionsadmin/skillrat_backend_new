@@ -19,7 +19,6 @@ public class CreateProjectRequest {
     private String code;
     private String description;
     
-    @NotBlank(message = "B2B Unit ID is required")
     private UUID b2bUnitId;
     
     private LocalDate startDate;
