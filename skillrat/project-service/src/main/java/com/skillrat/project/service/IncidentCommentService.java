@@ -5,6 +5,7 @@ import com.skillrat.project.domain.Incident;
 import com.skillrat.project.domain.IncidentComment;
 import com.skillrat.project.repo.IncidentCommentRepository;
 import com.skillrat.project.repo.IncidentRepository;
+import com.skillrat.project.dto.response.IncidentCommentResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
@@ -13,6 +14,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -118,6 +121,21 @@ public class IncidentCommentService {
         ensureIncidentExists(incidentId);
         return commentRepository.findById(commentId)
                 .filter(c -> c.getIncident() != null && incidentId.equals(c.getIncident().getId()));
+    }
+
+    // Mapper to DTO
+    public IncidentCommentResponse toDto(IncidentComment c) {
+        if (c == null) return null;
+        LocalDateTime createdAt = c.getCreatedDate() != null ? LocalDateTime.ofInstant(c.getCreatedDate(), ZoneOffset.UTC) : null;
+        LocalDateTime updatedAt = c.getUpdatedDate() != null ? LocalDateTime.ofInstant(c.getUpdatedDate(), ZoneOffset.UTC) : null;
+        return IncidentCommentResponse.builder()
+                .id(c.getId())
+                .comment(c.getBody())
+                .incidentId(c.getIncident() != null ? c.getIncident().getId() : null)
+                .userId(c.getAuthorId())
+                .createdAt(createdAt)
+                .updatedAt(updatedAt)
+                .build();
     }
 
     private Incident ensureIncidentExists(UUID incidentId) {

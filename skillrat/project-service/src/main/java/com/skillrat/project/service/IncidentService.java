@@ -8,6 +8,9 @@ import com.skillrat.project.repo.IncidentRepository;
 import com.skillrat.project.repo.ProjectRepository;
 import com.skillrat.project.repo.IncidentCategoryRepository;
 import com.skillrat.project.repo.IncidentSubCategoryRepository;
+import com.skillrat.project.dto.IncidentDTO;
+import com.skillrat.project.dto.MediaDTO;
+import com.skillrat.project.dto.request.IncidentCreateRequest;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import org.hibernate.envers.AuditReader;
@@ -140,6 +143,24 @@ public class IncidentService {
                 saved.getCreatedBy()
         );
         return saved;
+    }
+
+    // Wrapper that accepts a request DTO instead of individual fields
+    @Transactional
+    public Incident create(UUID projectId, IncidentCreateRequest req) throws Exception {
+        return create(
+                projectId,
+                req.getTitle(),
+                req.getShortDescription(),
+                req.getUrgency(),
+                req.getImpact(),
+                req.getCategoryId(),
+                req.getSubCategoryId(),
+                req.getMediaFiles(),
+                req.getMediaUrls(),
+                req.getAssigneeId(),
+                req.getReporterId()
+        );
     }
 
     private String generateIncidentNumber(Project project) {
@@ -380,6 +401,45 @@ public class IncidentService {
         );
 
         return incidentRepository.findAll(spec, pageable);
+    }
+
+    // Mapping helper to convert entity to DTO
+    public IncidentDTO toDto(Incident i) {
+        if (i == null) return null;
+        com.skillrat.project.dto.IncidentDTO.IncidentDTOBuilder b = com.skillrat.project.dto.IncidentDTO.builder()
+                .id(i.getId())
+                .incidentNumber(i.getIncidentNumber())
+                .projectId(i.getProject() != null ? i.getProject().getId() : null)
+                .projectCode(i.getProject() != null ? i.getProject().getCode() : null)
+                .title(i.getTitle())
+                .shortDescription(i.getShortDescription())
+                .urgency(i.getUrgency())
+                .impact(i.getImpact())
+                .priority(i.getPriority())
+                .categoryId(i.getCategory() != null ? i.getCategory().getId() : null)
+                .categoryName(i.getCategory() != null ? i.getCategory().getName() : null)
+                .subCategoryId(i.getSubCategory() != null ? i.getSubCategory().getId() : null)
+                .subCategoryName(i.getSubCategory() != null ? i.getSubCategory().getName() : null)
+                .status(i.getStatus())
+                .assigneeId(i.getAssigneeId())
+                .assigneeName(i.getAssigneeName())
+                .reporterId(i.getReporterId())
+                .reporterName(i.getReporterName())
+                .createdDate(i.getCreatedDate())
+                .updatedDate(i.getUpdatedDate())
+                .createdBy(i.getCreatedBy())
+                .updatedBy(i.getUpdatedBy());
+        if (i.getMedia() != null && !i.getMedia().isEmpty()) {
+            java.util.List<MediaDTO> media = i.getMedia().stream()
+                    .map(m -> MediaDTO.builder()
+                            .id(m.getId())
+                            .url(m.getUrl())
+                            .mediaType(m.getMediaType())
+                            .build())
+                    .toList();
+            b.media(media);
+        }
+        return b.build();
     }
 
 }
