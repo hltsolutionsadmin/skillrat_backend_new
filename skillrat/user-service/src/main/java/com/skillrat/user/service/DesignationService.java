@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class DesignationService {
@@ -27,7 +28,24 @@ public class DesignationService {
         this.service = service;
     }
     public List<DesignationDTO> getDesignations(UUID b2bUnitId) {
-        return employeeRepository.findDesignationWithBandAndResourceCount(b2bUnitId);
+        List<DesignationDTO> result = employeeRepository.findDesignationWithBandAndResourceCount(b2bUnitId);
+        
+        // If no designations are found with employees, return all designations for the b2bUnit
+        if (result.isEmpty()) {
+            List<Designation> designations = designationRepository.findAllByB2bUnitId(b2bUnitId);
+            return designations.stream()
+                .map(desig -> {
+                    DesignationDTO dto = new DesignationDTO();
+                    dto.setDesignationId(desig.getId());
+                    dto.setDesignationName(desig.getName());
+                    dto.setBandName(desig.getBand() != null ? desig.getBand().getName() : null);
+                    dto.setResourceCount(0L); // Set to 0 since there are no employees
+                    return dto;
+                })
+                .collect(Collectors.toList());
+        }
+        
+        return result;
     }
 
 

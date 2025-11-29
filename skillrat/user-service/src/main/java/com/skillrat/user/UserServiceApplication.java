@@ -16,12 +16,18 @@ import com.skillrat.user.domain.ProfileExperience;
 import com.skillrat.user.domain.Education;
 import com.skillrat.user.domain.UserSkill;
 import com.skillrat.user.domain.TitleRecord;
+import com.skillrat.user.organisation.domain.B2BUnit;
+import com.skillrat.user.organisation.domain.B2BUnitStatus;
+import com.skillrat.user.organisation.domain.B2BUnitType;
+import com.skillrat.user.organisation.repo.B2BUnitRepository;
 import com.skillrat.user.repo.UserRepository;
 import com.skillrat.user.repo.RoleRepository;
 import com.skillrat.user.repo.ProfileExperienceRepository;
 import com.skillrat.user.repo.UserSkillRepository;
 import com.skillrat.user.repo.EducationRepository;
 import com.skillrat.user.repo.TitleRecordRepository;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Bean;
 
 @EnableDiscoveryClient
 @EnableFeignClients(basePackages = "com.skillrat.user.client")
@@ -30,14 +36,28 @@ import com.skillrat.user.repo.TitleRecordRepository;
 @EnableAsync
 @EntityScan(basePackageClasses = {
         User.class, Employee.class, Role.class, ProfileExperience.class,
-        Education.class, UserSkill.class, TitleRecord.class
+        Education.class, UserSkill.class, TitleRecord.class, B2BUnit.class
 })
-@EnableJpaRepositories(basePackageClasses = {
-        UserRepository.class, RoleRepository.class, ProfileExperienceRepository.class,
-        UserSkillRepository.class, EducationRepository.class, TitleRecordRepository.class
+@EnableJpaRepositories(basePackages = {
+        "com.skillrat.user.repo",
+        "com.skillrat.user.organisation.repo"
 })
 public class UserServiceApplication {
     public static void main(String[] args) {
         SpringApplication.run(UserServiceApplication.class, args);
+    }
+
+    @Bean
+    public CommandLineRunner initData(B2BUnitRepository b2bUnitRepository) {
+        return args -> {
+            if (b2bUnitRepository.count() == 0) {
+                B2BUnit defaultUnit = new B2BUnit();
+                defaultUnit.setName("Default Organization");
+                defaultUnit.setType(B2BUnitType.ORGANIZATION);
+                defaultUnit.setStatus(B2BUnitStatus.APPROVED);
+                b2bUnitRepository.save(defaultUnit);
+                System.out.println("Created default B2BUnit with ID: " + defaultUnit.getId());
+            }
+        };
     }
 }

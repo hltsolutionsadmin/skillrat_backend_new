@@ -55,8 +55,27 @@ public class UserService {
     }
 
     private Role ensureRole(String name, String description, UUID b2bUnitId) {
-        return roleRepository.findByNameAndB2bUnitId(name, b2bUnitId)
-            .orElseGet(() -> roleRepository.save(new Role(name, description, b2bUnitId)));
+        // First try to find the role by name and b2bUnitId
+        Optional<Role> existingRole = roleRepository.findByNameAndB2bUnitId(name, b2bUnitId);
+        if (existingRole.isPresent()) {
+            return existingRole.get();
+        }
+        
+        // If not found, check if a role with the same name exists (regardless of b2bUnitId)
+        Optional<Role> roleWithSameName = roleRepository.findByName(name);
+        if (roleWithSameName.isPresent()) {
+            // A role with this name already exists, but with a different b2bUnitId
+            // We need to create a new role with a different name
+            String newName = name + "_" + (b2bUnitId != null ? b2bUnitId.toString().substring(0, 8) : "GLOBAL");
+            log.warn("Role with name '{}' already exists with different b2bUnitId. Creating new role with name: {}", 
+                    name, newName);
+            Role newRole = new Role(newName, description, b2bUnitId);
+            return roleRepository.save(newRole);
+        }
+        
+        // No role with this name exists, create a new one
+        Role role = new Role(name, description, b2bUnitId);
+        return roleRepository.save(role);
     }
 
     @Transactional

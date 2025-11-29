@@ -1,11 +1,13 @@
 package com.skillrat.user.service;
 
-
 import com.skillrat.user.domain.EmployeeBand;
 import com.skillrat.user.domain.EmployeeOrgBand;
+import com.skillrat.user.organisation.domain.B2BUnit;
+import com.skillrat.user.organisation.repo.B2BUnitRepository;
 import com.skillrat.user.repo.EmployeeBandRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -15,8 +17,17 @@ import java.util.UUID;
 public class EmployeeBandService {
 
     private final EmployeeBandRepository repository;
+    private final B2BUnitRepository b2bUnitRepository;
 
+    @Transactional
     public EmployeeOrgBand createBand(EmployeeOrgBand band) {
+        // Fetch the existing B2BUnit from the database
+        B2BUnit existingB2BUnit = b2bUnitRepository.findById(band.getB2bUnit().getId())
+            .orElseThrow(() -> new IllegalArgumentException("B2BUnit not found with id: " + band.getB2bUnit().getId()));
+        
+        // Set the managed entity
+        band.setB2bUnit(existingB2BUnit);
+        
         return repository.save(band);
     }
 

@@ -29,6 +29,7 @@ public class SalaryComponentServiceImpl implements SalaryComponentService {
                 .code(dto.getCode())
                 .type(dto.getType())
                 .description(dto.getDescription())
+                .amount(dto.getAmount())
                 .build();
         sc = dao.save(sc);
         dto.setId(sc.getId());
@@ -44,19 +45,26 @@ public class SalaryComponentServiceImpl implements SalaryComponentService {
                 .code(sc.getCode())
                 .type(sc.getType())
                 .description(sc.getDescription())
+                .amount(sc.getAmount())
                 .build()).collect(Collectors.toList());
     }
 
     @Override
     public SalaryComponentDto update(UUID id, SalaryComponentDto dto) {
         SalaryComponent sc = dao.findById(id).orElseThrow(() -> new IllegalArgumentException("Salary component not found"));
-        if (dto.getName() != null) sc.setName(dto.getName());
+if (dto.getName() != null) sc.setName(dto.getName());
         if (dto.getCode() != null) sc.setCode(dto.getCode());
         if (dto.getType() != null) sc.setType(dto.getType());
         if (dto.getDescription() != null) sc.setDescription(dto.getDescription());
+        if (dto.getAmount() != null) sc.setAmount(dto.getAmount());
         dao.save(sc);
         return SalaryComponentDto.builder()
-                .id(sc.getId()).name(sc.getName()).code(sc.getCode()).type(sc.getType()).description(sc.getDescription())
+                .id(sc.getId())
+                .name(sc.getName())
+                .code(sc.getCode())
+                .type(sc.getType())
+                .description(sc.getDescription())
+                .amount(sc.getAmount())
                 .build();
     }
 

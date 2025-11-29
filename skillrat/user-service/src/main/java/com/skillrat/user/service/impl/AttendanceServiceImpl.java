@@ -77,6 +77,8 @@ public class AttendanceServiceImpl implements AttendanceService {
                 .employeeId(ea.getEmployeeId())
                 .date(ea.getDate())
                 .status(ea.getStatus())
+                .month(ea.getMonth())
+                .year(ea.getYear())
                 .build();
     }
 }
