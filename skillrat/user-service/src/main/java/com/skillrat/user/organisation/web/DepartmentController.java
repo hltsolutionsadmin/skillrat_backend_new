@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.NonNull;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -51,7 +52,7 @@ public class DepartmentController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Department> getDepartmentById(@PathVariable UUID id) {
+    public ResponseEntity<Department> getDepartmentById(@PathVariable @NonNull UUID id) {
         return ResponseEntity.ok(departmentService.getDepartmentById(id));
     }
 
@@ -68,14 +69,14 @@ public class DepartmentController {
 
     @PutMapping("/{id}")
     public ResponseEntity<Department> updateDepartment(
-            @PathVariable UUID id,
+            @PathVariable @NonNull UUID id,
             @RequestBody Department department) {
         department.setId(id);
         return ResponseEntity.ok(departmentService.updateDepartment(id, department));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteDepartment(@PathVariable UUID id) {
+    public ResponseEntity<Void> deleteDepartment(@PathVariable @NonNull UUID id) {
         departmentService.deleteDepartment(id);
         return ResponseEntity.noContent().build();
     }

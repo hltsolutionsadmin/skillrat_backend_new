@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,7 +35,7 @@ public class DepartmentService {
     }
 
     @Transactional(readOnly = true)
-    public Department getDepartmentById(UUID id) {
+    public Department getDepartmentById(@NonNull UUID id) {
         return departmentRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Department not found with id: " + id));
     }
@@ -61,7 +62,7 @@ public class DepartmentService {
     }
 
     @Transactional
-    public Department updateDepartment(UUID id, Department departmentDetails) {
+    public Department updateDepartment(@NonNull UUID id, Department departmentDetails) {
         Department department = getDepartmentById(id);
         
         if (!department.getName().equals(departmentDetails.getName())) {
@@ -89,7 +90,7 @@ public class DepartmentService {
     }
 
     @Transactional
-    public void deleteDepartment(UUID id) {
+    public void deleteDepartment(@NonNull UUID id) {
         Department department = getDepartmentById(id);
         departmentRepository.delete(department);
         log.info("Department deactivated id={}, name={}", department.getId(), department.getName());

@@ -1,22 +1,22 @@
 package com.skillrat.user.config;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.skillrat.user.domain.Permission;
 import com.skillrat.user.domain.Role;
 import com.skillrat.user.repo.PermissionRepository;
 import com.skillrat.user.repo.RoleRepository;
 import com.skillrat.user.service.RoleService;
+
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Profile;
-import org.springframework.core.annotation.Order;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 /**
  * Component that initializes default roles and permissions in the system.

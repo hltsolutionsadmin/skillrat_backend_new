@@ -9,7 +9,9 @@ import jakarta.persistence.Embeddable;
 
 @Embeddable
 public class BusinessUserRoleId implements Serializable {
-    @Column(name = "user_id")
+    private static final long serialVersionUID = 1L;
+
+	@Column(name = "user_id")
     private UUID userId;
     
     @Column(name = "business_id")

@@ -1,14 +1,21 @@
 package com.skillrat.user.domain;
 
+import java.time.Instant;
+import java.time.LocalDate;
+
 import com.skillrat.common.orm.BaseEntity;
 import com.skillrat.user.organisation.domain.B2BUnit;
-import jakarta.persistence.*;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import java.time.LocalDate;
-import java.time.Instant;
-import java.util.Objects;
 
 /**
  * Represents a user's work experience, project, or internship in their profile.
