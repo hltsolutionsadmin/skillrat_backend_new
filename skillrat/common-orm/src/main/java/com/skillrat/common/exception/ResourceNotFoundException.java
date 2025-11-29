@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
  * Exception thrown when a requested resource is not found.
  * This results in an HTTP 404 Not Found response when not handled.
  */
+@SuppressWarnings("serial")
 @ResponseStatus(HttpStatus.NOT_FOUND)
 public class ResourceNotFoundException extends RuntimeException {
 

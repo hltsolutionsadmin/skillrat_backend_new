@@ -10,6 +10,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.NonNull;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -36,7 +37,7 @@ public class IncidentController {
 
     @PostMapping(value = "/projects/{projectId}/incidents", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Incident> create(
-            @PathVariable("projectId") UUID projectId,
+            @PathVariable("projectId") @NonNull UUID projectId,
             @Valid @ModelAttribute CreateIncidentRequest request) throws Exception {
 
 
@@ -78,7 +79,7 @@ public class IncidentController {
 
     @PutMapping("/incidents/{incidentId}/assignee")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Incident> assignAssignee(@PathVariable("incidentId") UUID incidentId,
+    public ResponseEntity<Incident> assignAssignee(@PathVariable("incidentId") @NonNull UUID incidentId,
                                                    @RequestBody @Valid AssignUserRequest req) throws Exception {
         Incident updated = incidentService.assignAssignee(incidentId, req.userId);
         return ResponseEntity.ok(updated);
@@ -86,7 +87,7 @@ public class IncidentController {
 
     @PutMapping("/incidents/{incidentId}/reporter")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Incident> assignReporter(@PathVariable("incidentId") UUID incidentId,
+    public ResponseEntity<Incident> assignReporter(@PathVariable("incidentId") @NonNull UUID incidentId,
                                                    @RequestBody @Valid AssignUserRequest req) throws Exception {
         Incident updated = incidentService.assignReporter(incidentId, req.userId);
         return ResponseEntity.ok(updated);
@@ -94,7 +95,7 @@ public class IncidentController {
 
     @PutMapping("/incidents/{incidentId}/status")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Incident> updateStatus(@PathVariable("incidentId") UUID incidentId,
+    public ResponseEntity<Incident> updateStatus(@PathVariable("incidentId") @NonNull UUID incidentId,
                                                  @Valid @ModelAttribute UpdateStatusRequest request) {
         Incident updated = incidentService.updateStatus(incidentId, request.status,
                 request.getShortDescription(),
@@ -113,7 +114,7 @@ public class IncidentController {
 
     @GetMapping("/incidents/{incidentId}")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Incident> getById(@PathVariable("incidentId") UUID incidentId) {
+    public ResponseEntity<Incident> getById(@PathVariable("incidentId") @NonNull UUID incidentId) {
         return ResponseEntity.ok(incidentService.getById(incidentId));
     }
 

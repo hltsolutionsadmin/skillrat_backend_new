@@ -6,6 +6,8 @@ import com.skillrat.user.organisation.domain.B2BUnit;
 import com.skillrat.user.organisation.repo.B2BUnitRepository;
 import com.skillrat.user.repo.EmployeeBandRepository;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,7 +21,8 @@ public class EmployeeBandService {
     private final EmployeeBandRepository repository;
     private final B2BUnitRepository b2bUnitRepository;
 
-    @Transactional
+    @SuppressWarnings("null")
+	@Transactional
     public EmployeeOrgBand createBand(EmployeeOrgBand band) {
         // Fetch the existing B2BUnit from the database
         B2BUnit existingB2BUnit = b2bUnitRepository.findById(band.getB2bUnit().getId())
@@ -35,12 +38,13 @@ public class EmployeeBandService {
         return repository.findByB2bUnit_Id(b2bUnitId);
     }
 
-    public EmployeeOrgBand getBand(UUID id) {
+    public EmployeeOrgBand getBand(@NonNull UUID id) {
         return repository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Band not found"));
     }
 
-    public EmployeeOrgBand updateBand(UUID id, EmployeeOrgBand orgBand) {
+    @SuppressWarnings("null")
+	public EmployeeOrgBand updateBand(@NonNull UUID id, EmployeeOrgBand orgBand) {
         EmployeeOrgBand band = getBand(id);
         if(orgBand.getName()!=null) {
             band.setName(orgBand.getName());
@@ -57,7 +61,7 @@ public class EmployeeBandService {
         return repository.save(band);
     }
 
-    public void deleteBand(UUID id) {
+    public void deleteBand(@NonNull UUID id) {
         repository.deleteById(id);
     }
 

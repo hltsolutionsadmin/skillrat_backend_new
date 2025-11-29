@@ -33,7 +33,8 @@ public class TokenIntrospectionCacheFilter implements GlobalFilter {
         this.props = props;
     }
 
-    @Override
+    @SuppressWarnings("null")
+	@Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         ServerHttpRequest request = exchange.getRequest();
         String auth = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);

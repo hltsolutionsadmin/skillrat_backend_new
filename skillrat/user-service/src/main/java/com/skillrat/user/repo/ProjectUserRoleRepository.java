@@ -1,16 +1,16 @@
 package com.skillrat.user.repo;
 
-import com.skillrat.user.domain.ProjectUserRole;
-import com.skillrat.user.domain.Role;
-import com.skillrat.user.domain.User;
+import java.util.List;
+import java.util.UUID;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import com.skillrat.user.domain.ProjectUserRole;
+import com.skillrat.user.domain.Role;
+import com.skillrat.user.domain.User;
 
 @Repository
 public interface ProjectUserRoleRepository extends JpaRepository<ProjectUserRole, UUID> {

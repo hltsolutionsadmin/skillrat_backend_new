@@ -17,7 +17,8 @@ public class UserLookupClient {
     private final RestTemplate restTemplate;
     public UserLookupClient(RestTemplate restTemplate) { this.restTemplate = restTemplate; }
 
-    public Optional<UUID> findB2bUnitIdByEmail(String email) {
+    @SuppressWarnings({ "null", "rawtypes" })
+	public Optional<UUID> findB2bUnitIdByEmail(String email) {
         HttpHeaders headers = new HttpHeaders();
         headers.add("X-Skillrat-Tenant", Optional.ofNullable(TenantContext.getTenantId()).orElse("default"));
         ResponseEntity<Map> resp = restTemplate.exchange("http://user-service:8080/api/users/internal/by-email?email=" + email,

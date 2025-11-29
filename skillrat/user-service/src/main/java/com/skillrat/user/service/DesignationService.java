@@ -6,6 +6,8 @@ import com.skillrat.user.dto.DesignationRequestDTO;
 import com.skillrat.user.dto.DesignationResponseDTO;
 import com.skillrat.user.repo.DesignationRepository;
 import com.skillrat.user.repo.EmployeeRepository;
+
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -65,7 +67,8 @@ public class DesignationService {
     }
 
     // Create
-    public Designation createDesignation(DesignationRequestDTO request) {
+    @SuppressWarnings("null")
+	public Designation createDesignation(DesignationRequestDTO request) {
         if (designationRepository.existsByName(request.getName())) {
             throw new IllegalArgumentException("Designation already exists");
         }
@@ -79,7 +82,8 @@ public class DesignationService {
     }
 
     // Update
-    public Designation updateDesignation(UUID id, DesignationRequestDTO request) {
+    @SuppressWarnings("null")
+	public Designation updateDesignation(@NonNull UUID id, DesignationRequestDTO request) {
         Designation desig = designationRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Designation not found"));
         if (request.getName() != null) {
@@ -92,14 +96,14 @@ public class DesignationService {
     }
 
     // Delete
-    public void deleteDesignation(UUID id) {
+    public void deleteDesignation(@NonNull UUID id) {
         if (!designationRepository.existsById(id)) {
             throw new NoSuchElementException("Designation not found");
         }
         designationRepository.deleteById(id);
     }
 
-    public Designation findById(UUID designation) {
+    public Designation findById(@NonNull UUID designation) {
        return designationRepository.findById(designation)
                 .orElseThrow(() -> new NoSuchElementException("Designation not found"));
     }

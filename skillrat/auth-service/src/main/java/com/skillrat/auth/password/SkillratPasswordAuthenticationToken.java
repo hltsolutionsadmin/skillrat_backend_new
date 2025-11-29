@@ -7,6 +7,7 @@ import org.springframework.security.core.GrantedAuthority;
 import java.util.Collection;
 import java.util.Map;
 
+@SuppressWarnings("serial")
 public class SkillratPasswordAuthenticationToken extends AbstractAuthenticationToken {
     private final Authentication clientPrincipal;
     private final String username;

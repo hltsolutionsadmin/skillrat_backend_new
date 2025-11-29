@@ -7,6 +7,7 @@ import com.skillrat.project.service.UserGroupService;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.NonNull;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -63,7 +64,7 @@ public class UserGroupController {
 
     @PostMapping("/{groupId}/members")
     @PreAuthorize("hasAnyRole('BUSINESS_ADMIN','PMO','PROJECT_MANAGER','TEAM_LEAD')")
-    public ResponseEntity<UserGroupMember> addMember(@PathVariable("groupId") UUID groupId, @RequestBody AddMemberRequest req) {
+    public ResponseEntity<UserGroupMember> addMember(@PathVariable("groupId") @NonNull UUID groupId, @RequestBody AddMemberRequest req) {
         return ResponseEntity.ok(service.addMember(groupId, req.userId, req.role));
     }
 

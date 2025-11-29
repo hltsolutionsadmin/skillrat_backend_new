@@ -36,7 +36,8 @@ public class CheckTokenController {
         return doIntrospection(token);
     }
 
-    private ResponseEntity<Map<String, Object>> doIntrospection(String tokenValue) {
+    @SuppressWarnings("null")
+	private ResponseEntity<Map<String, Object>> doIntrospection(String tokenValue) {
         OAuth2Authorization auth = authorizationService.findByToken(tokenValue, OAuth2TokenType.ACCESS_TOKEN);
         Map<String, Object> body = new HashMap<>();
         if (auth == null || auth.getAccessToken() == null || auth.getAccessToken().isInvalidated()) {

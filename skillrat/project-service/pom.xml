@@ -49,7 +49,6 @@
         <dependency>
             <groupId>org.hibernate.orm</groupId>
             <artifactId>hibernate-envers</artifactId>
-            <version>6.4.4.Final</version>
         </dependency>
 
         <dependency>
@@ -71,7 +70,6 @@
         <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-core</artifactId>
-            <version>10.17.0</version>
         </dependency>
 
         <dependency>

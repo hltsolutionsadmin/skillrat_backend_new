@@ -37,7 +37,8 @@ public class DepartmentService {
         return departmentRepository.findByB2bUnitId(b2bUnitId, pageable);
     }
 
-    @Transactional
+    @SuppressWarnings("null")
+	@Transactional
     public Department createDepartment(DepartmentDTO departmentDTO) {
         String tenantId = Optional.ofNullable(TenantContext.getTenantId()).orElse("default");
         
@@ -77,7 +78,8 @@ public class DepartmentService {
         return savedDepartment;
     }
 
-    @Transactional
+    @SuppressWarnings("null")
+	@Transactional
     public Department updateDepartment(@NonNull UUID id, DepartmentDTO departmentDTO) {
         Department existingDepartment = getDepartmentById(id);
         

@@ -3,12 +3,12 @@ package com.skillrat.project.service;
 import com.skillrat.common.tenant.TenantContext;
 import com.skillrat.project.domain.*;
 import com.skillrat.project.repo.*;
+import com.skillrat.project.web.dto.TimeEntryCreateRequest;
 
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -38,14 +38,14 @@ public class TimeEntryService {
         this.allocationRepository = allocationRepository;
     }
 
-    @Transactional
-    public TimeEntry createDraft(@NonNull UUID projectId, @NonNull UUID wbsId, @NonNull UUID memberId, UUID employeeId,
-                                 LocalDate workDate, BigDecimal hours, String notes) {
-        ProjectMember member = memberRepository.findById(memberId)
+    @SuppressWarnings("null")
+	@Transactional
+    public TimeEntry createDraft(@NonNull TimeEntryCreateRequest request) {
+        ProjectMember member = memberRepository.findById(request.getMemberId())
                 .orElseThrow(() -> new IllegalArgumentException("Project member not found"));
-        WBSElement wbs = wbsRepository.findById(wbsId)
+        WBSElement wbs = wbsRepository.findById(request.getWbsId())
                 .orElseThrow(() -> new IllegalArgumentException("WBS not found"));
-        Project project = projectRepository.findById(projectId)
+        Project project = projectRepository.findById(request.getProjectId())
                 .orElseThrow(() -> new IllegalArgumentException("Project not found"));
 
         if (!member.getProject().getId().equals(project.getId())) {
@@ -54,19 +54,19 @@ public class TimeEntryService {
         if (!wbs.getProject().getId().equals(project.getId())) {
             throw new IllegalStateException("WBS does not belong to project");
         }
-        if (!member.getEmployeeId().equals(employeeId)) {
+        if (!member.getEmployeeId().equals(request.getEmployeeId())) {
             throw new IllegalStateException("Employee does not match member");
         }
-        ensureActiveAllocationOnDate(memberId, wbsId, workDate);
+        ensureActiveAllocationOnDate(request.getMemberId(), request.getWbsId(), request.getWorkDate());
 
         TimeEntry te = new TimeEntry();
         te.setProject(project);
         te.setWbsElement(wbs);
         te.setMember(member);
-        te.setEmployeeId(employeeId);
-        te.setWorkDate(workDate);
-        te.setHours(hours);
-        te.setNotes(notes);
+        te.setEmployeeId(request.getEmployeeId());
+        te.setWorkDate(request.getWorkDate());
+        te.setHours(request.getHours());
+        te.setNotes(request.getNotes());
         te.setStatus(TimeEntryStatus.DRAFT);
         te.setTenantId(Optional.ofNullable(TenantContext.getTenantId()).orElse("default"));
         return timeEntryRepository.save(te);

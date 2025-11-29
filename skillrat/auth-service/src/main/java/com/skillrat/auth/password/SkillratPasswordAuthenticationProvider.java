@@ -1,48 +1,44 @@
 package com.skillrat.auth.password;
 
-import com.skillrat.common.tenant.TenantContext;
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationProvider;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
+import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2Token;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
-import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
-import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
-import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
-import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
-import org.springframework.security.oauth2.server.authorization.token.DefaultOAuth2TokenContext;
-import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenContext;
-import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator;
+import org.springframework.security.oauth2.jwt.JwsHeader;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
-import org.springframework.security.oauth2.jwt.JwsHeader;
+import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
+import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AccessTokenAuthenticationToken;
-import org.springframework.security.oauth2.core.OAuth2AccessToken;
+import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
+import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
+import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator;
 import org.springframework.web.client.RestTemplate;
 
-import java.time.Instant;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import com.skillrat.common.tenant.TenantContext;
 
 public class SkillratPasswordAuthenticationProvider implements AuthenticationProvider {
     private static final Logger log = LoggerFactory.getLogger(SkillratPasswordAuthenticationProvider.class);
     private final OAuth2AuthorizationService authorizationService;
     private final RegisteredClientRepository clientRepository;
-    private final OAuth2TokenGenerator<? extends OAuth2Token> tokenGenerator; // kept for future; not used now
     private final JwtEncoder jwtEncoder;
     private final RestTemplate restTemplate = new RestTemplate();
 
@@ -54,11 +50,11 @@ public class SkillratPasswordAuthenticationProvider implements AuthenticationPro
                                                   JwtEncoder jwtEncoder) {
         this.authorizationService = authorizationService;
         this.clientRepository = clientRepository;
-        this.tokenGenerator = tokenGenerator;
         this.jwtEncoder = jwtEncoder;
     }
 
-    @Override
+    @SuppressWarnings({ "rawtypes", "null" })
+	@Override
     public Authentication authenticate(Authentication authentication) {
         if (!(authentication instanceof SkillratPasswordAuthenticationToken tokenRequest)) {
             return null;
@@ -103,8 +99,6 @@ public class SkillratPasswordAuthenticationProvider implements AuthenticationPro
         if (auths.isEmpty()) {
             auths = java.util.List.of(new SimpleGrantedAuthority("ROLE_USER"));
         }
-        UsernamePasswordAuthenticationToken userPrincipal = new UsernamePasswordAuthenticationToken(principalName, "n/a", auths);
-
         // Build authorization and generate access token
         Set<String> authorizedScopes = registeredClient.getScopes();
         Instant issuedAt = Instant.now();

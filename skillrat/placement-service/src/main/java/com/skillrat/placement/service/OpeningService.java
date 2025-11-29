@@ -1,15 +1,20 @@
 package com.skillrat.placement.service;
 
-import com.skillrat.common.tenant.TenantContext;
-import com.skillrat.placement.domain.*;
-import com.skillrat.placement.repo.ApplicationRepository;
-import com.skillrat.placement.repo.OpeningRepository;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+
+import org.springframework.lang.NonNull;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.skillrat.placement.domain.Application;
+import com.skillrat.placement.domain.ApplicationStatus;
+import com.skillrat.placement.domain.Opening;
+import com.skillrat.placement.domain.OpeningStatus;
+import com.skillrat.placement.domain.OpeningType;
+import com.skillrat.placement.repo.ApplicationRepository;
+import com.skillrat.placement.repo.OpeningRepository;
 
 @Service
 public class OpeningService {
@@ -40,7 +45,7 @@ public class OpeningService {
     }
 
     @Transactional(readOnly = true)
-    public Optional<Opening> get(UUID id) { return openingRepository.findById(id); }
+    public Optional<Opening> get(@NonNull UUID id) { return openingRepository.findById(id); }
 
     @Transactional
     public Application apply(UUID openingId, String name, String email, String phone, String resumeUrl, UUID submittedByUserId) {
@@ -61,7 +66,7 @@ public class OpeningService {
     }
 
     @Transactional
-    public Optional<Application> setApplicationStatus(UUID applicationId, ApplicationStatus status) {
+    public Optional<Application> setApplicationStatus(@NonNull UUID applicationId, ApplicationStatus status) {
         return applicationRepository.findById(applicationId).map(a -> {
             a.setStatus(status);
             return applicationRepository.save(a);

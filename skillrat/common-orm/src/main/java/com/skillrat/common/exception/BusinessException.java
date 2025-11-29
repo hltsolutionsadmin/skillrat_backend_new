@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
  * Base exception for business-related errors.
  * This results in an HTTP 400 Bad Request response when not handled.
  */
+@SuppressWarnings("serial")
 @ResponseStatus(HttpStatus.BAD_REQUEST)
 public class BusinessException extends RuntimeException {
 

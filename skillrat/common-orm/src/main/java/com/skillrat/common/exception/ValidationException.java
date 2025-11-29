@@ -10,6 +10,7 @@ import java.util.List;
  * Exception thrown when validation fails.
  * This results in an HTTP 422 Unprocessable Entity response when not handled.
  */
+@SuppressWarnings("serial")
 @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
 public class ValidationException extends BusinessException {
     

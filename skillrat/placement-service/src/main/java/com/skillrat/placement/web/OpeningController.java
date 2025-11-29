@@ -1,21 +1,31 @@
 package com.skillrat.placement.web;
 
-import com.skillrat.placement.domain.*;
-import com.skillrat.placement.service.OpeningService;
-import com.skillrat.placement.service.UserLookupClient;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.NonNull;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import com.skillrat.placement.domain.Application;
+import com.skillrat.placement.domain.ApplicationStatus;
+import com.skillrat.placement.domain.Opening;
+import com.skillrat.placement.domain.OpeningType;
+import com.skillrat.placement.service.OpeningService;
+import com.skillrat.placement.service.UserLookupClient;
+
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 @RestController
 @RequestMapping("/api/openings")
@@ -49,7 +59,7 @@ public class OpeningController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Opening> get(@PathVariable("id") UUID id) {
+    public ResponseEntity<Opening> get(@PathVariable("id") @NonNull UUID id) {
         return openingService.get(id)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
@@ -70,7 +80,7 @@ public class OpeningController {
 
     @PostMapping("/applications/{id}/status")
     @PreAuthorize("hasAnyRole('HR_HEAD','HR_RECRUITER','HR_MANAGER','ADMIN')")
-    public ResponseEntity<?> setStatus(@PathVariable("id") UUID applicationId, @RequestBody Map<String, String> body) {
+    public ResponseEntity<?> setStatus(@PathVariable("id") @NonNull UUID applicationId, @RequestBody Map<String, String> body) {
         String status = body.getOrDefault("status", "");
         ApplicationStatus st;
         try {

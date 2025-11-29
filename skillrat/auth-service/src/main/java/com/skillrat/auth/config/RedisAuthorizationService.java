@@ -1,6 +1,7 @@
 package com.skillrat.auth.config;
 
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.lang.Nullable;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
@@ -22,7 +23,8 @@ public class RedisAuthorizationService implements OAuth2AuthorizationService {
         return "tenant:" + "global" + ":oauth2:auth:" + token; // tenant prefix adaptable later
     }
 
-    @Override
+    @SuppressWarnings("null")
+	@Override
     public void save(OAuth2Authorization authorization) {
         Assert.notNull(authorization, "authorization cannot be null");
         if (authorization.getAccessToken() != null) {
@@ -35,7 +37,8 @@ public class RedisAuthorizationService implements OAuth2AuthorizationService {
         }
     }
 
-    @Override
+    @SuppressWarnings("null")
+	@Override
     public void remove(OAuth2Authorization authorization) {
         if (authorization == null) return;
         if (authorization.getAccessToken() != null) {
@@ -53,8 +56,9 @@ public class RedisAuthorizationService implements OAuth2AuthorizationService {
         return null; // not used in this scaffold
     }
 
-    @Override
-    public OAuth2Authorization findByToken(String token, OAuth2TokenType tokenType) {
+    @SuppressWarnings("null")
+	@Override
+    public OAuth2Authorization findByToken(String token, @Nullable OAuth2TokenType tokenType) {
         Object obj = redisTemplate.opsForValue().get(key(token));
         if (obj instanceof OAuth2Authorization auth) {
             return auth;

@@ -8,6 +8,8 @@ import com.skillrat.user.repo.BusinessUserRoleRepository;
 import com.skillrat.user.repo.RoleRepository;
 import com.skillrat.user.repo.UserRepository;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.slf4j.Logger;
@@ -27,13 +29,12 @@ public class BusinessRoleService {
     private final BusinessUserRoleRepository businessUserRoleRepository;
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
-    private final RoleService roleService;
     
     /**
      * Assign a role to a user in a specific business
      */
     @Transactional
-    public BusinessUserRole assignRoleToUser(UUID userId, UUID businessId, String roleName, String assignedBy) {
+    public BusinessUserRole assignRoleToUser(@NonNull UUID userId, UUID businessId, String roleName, String assignedBy) {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
             
@@ -58,7 +59,7 @@ public class BusinessRoleService {
      * Remove a role from a user in a specific business
      */
     @Transactional
-    public void removeRoleFromUser(UUID userId, UUID businessId, String roleName) {
+    public void removeRoleFromUser(@NonNull UUID userId, UUID businessId, String roleName) {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
             
@@ -129,7 +130,7 @@ public class BusinessRoleService {
      * Remove all role assignments for a user in a business
      */
     @Transactional
-    public void removeAllRolesFromUserInBusiness(UUID userId, UUID businessId) {
+    public void removeAllRolesFromUserInBusiness(@NonNull UUID userId, UUID businessId) {
         businessUserRoleRepository.deleteByUserAndBusinessId(
             userRepository.getReferenceById(userId), 
             businessId
@@ -148,7 +149,7 @@ public class BusinessRoleService {
      * Update a user's roles in a business (replaces all existing roles)
      */
     @Transactional
-    public void updateUserRolesInBusiness(UUID userId, UUID businessId, List<String> roleNames, String assignedBy) {
+    public void updateUserRolesInBusiness(@NonNull UUID userId, UUID businessId, List<String> roleNames, String assignedBy) {
         // Remove all existing roles
         removeAllRolesFromUserInBusiness(userId, businessId);
         

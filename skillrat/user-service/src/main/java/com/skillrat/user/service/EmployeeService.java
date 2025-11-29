@@ -1,22 +1,30 @@
 package com.skillrat.user.service;
 
-import com.skillrat.common.tenant.TenantContext;
-import com.skillrat.user.domain.*;
-import com.skillrat.user.repo.EmployeeRepository;
-import com.skillrat.user.repo.RoleRepository;
-import com.skillrat.user.repo.UserRepository;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.lang.NonNull;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.temporal.ChronoUnit;
-import java.util.*;
+import com.skillrat.common.tenant.TenantContext;
+import com.skillrat.user.domain.Designation;
+import com.skillrat.user.domain.Employee;
+import com.skillrat.user.domain.EmployeeOrgBand;
+import com.skillrat.user.domain.EmploymentType;
+import com.skillrat.user.domain.User;
+import com.skillrat.user.repo.EmployeeRepository;
+import com.skillrat.user.repo.UserRepository;
 
 @Service
 public class EmployeeService {
@@ -25,19 +33,16 @@ public class EmployeeService {
 
     private final EmployeeRepository employeeRepository;
     private final UserRepository userRepository;
-    private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final MailService mailService;
     private final EmployeeBandService service;
     private final DesignationService designationService;
     public EmployeeService(EmployeeRepository employeeRepository,
                            UserRepository userRepository,
-                           RoleRepository roleRepository,
                            PasswordEncoder passwordEncoder,
                            MailService mailService, EmployeeBandService service, DesignationService designationService) {
         this.employeeRepository = employeeRepository;
         this.userRepository = userRepository;
-        this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
         this.mailService = mailService;
         this.service = service;
@@ -52,7 +57,7 @@ public class EmployeeService {
     }
 
     @Transactional(readOnly = true)
-    public Optional<Employee> getById(UUID id) {
+    public Optional<Employee> getById(@NonNull UUID id) {
         return employeeRepository.findById(id);
     }
 
@@ -61,7 +66,8 @@ public class EmployeeService {
         return employeeRepository.findByB2bUnitId(b2bUnitId);
     }
 
-    @Transactional
+    @SuppressWarnings("null")
+	@Transactional
     public Employee create(UUID b2bUnitId,
                            String firstName,
                            String lastName,
@@ -120,8 +126,9 @@ public class EmployeeService {
         return saved;
     }
 
-    @Transactional
-    public Employee update(UUID id,
+    @SuppressWarnings("null")
+	@Transactional
+    public Employee update(@NonNull UUID id,
                            String firstName,
                            String lastName,
                            String mobile,
@@ -156,7 +163,7 @@ public class EmployeeService {
     }
 
     @Transactional
-    public void deleteUser(UUID userId) {
+    public void deleteUser(@NonNull UUID userId) {
 
         if (!userRepository.existsById(userId)) {
             throw new IllegalArgumentException("User not found with id: " + userId);

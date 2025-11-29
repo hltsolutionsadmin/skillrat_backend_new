@@ -15,6 +15,7 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.init.DataSourceInitializer;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
+import org.springframework.lang.NonNull;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
@@ -116,19 +117,19 @@ public class AuthorizationServerConfig {
     }
 
     @Bean
-    public RegisteredClientRepository registeredClientRepository(DataSource dataSource) {
+    public RegisteredClientRepository registeredClientRepository(@NonNull DataSource dataSource) {
         return new JdbcRegisteredClientRepository(new JdbcTemplate(dataSource));
     }
 
     
 
     @Bean
-    public OAuth2AuthorizationConsentService authorizationConsentService(DataSource dataSource, RegisteredClientRepository clients) {
+    public OAuth2AuthorizationConsentService authorizationConsentService(@NonNull DataSource dataSource, RegisteredClientRepository clients) {
         return new JdbcOAuth2AuthorizationConsentService(new JdbcTemplate(dataSource), clients);
     }
 
     @Bean
-    public DataSourceInitializer authSchema(DataSource dataSource) {
+    public DataSourceInitializer authSchema(@NonNull DataSource dataSource) {
         ResourceDatabasePopulator populator = new ResourceDatabasePopulator();
         populator.setContinueOnError(true);
         populator.addScript(new ClassPathResource("org/springframework/security/oauth2/server/authorization/oauth2-authorization-schema.sql"));
@@ -141,7 +142,7 @@ public class AuthorizationServerConfig {
     }
 
     @Bean
-    public CommandLineRegisteredClientLoader commandLineRegisteredClientLoader(RegisteredClientRepository repo, DataSource dataSource) {
+    public CommandLineRegisteredClientLoader commandLineRegisteredClientLoader(RegisteredClientRepository repo, @NonNull DataSource dataSource) {
         return new CommandLineRegisteredClientLoader(repo, dataSource);
     }
 
@@ -149,7 +150,7 @@ public class AuthorizationServerConfig {
         private final RegisteredClientRepository repo;
         private final JdbcTemplate jdbcTemplate;
 
-        public CommandLineRegisteredClientLoader(RegisteredClientRepository repo, DataSource dataSource) {
+        public CommandLineRegisteredClientLoader(RegisteredClientRepository repo, @NonNull DataSource dataSource) {
             this.repo = repo;
             this.jdbcTemplate = new JdbcTemplate(dataSource);
         }

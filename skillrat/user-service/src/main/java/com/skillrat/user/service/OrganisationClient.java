@@ -11,7 +11,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
-
+import org.springframework.http.HttpMethod;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -27,7 +27,8 @@ public class OrganisationClient {
         this.restTemplate = restTemplate;
     }
 
-    public Object getB2BUnit(UUID b2bUnitId) {
+    @SuppressWarnings("null")
+	public Object getB2BUnit(UUID b2bUnitId) {
         if (b2bUnitId == null) return null;
 
         String tenant = Optional.ofNullable(TenantContext.getTenantId()).orElse("default");
@@ -46,7 +47,7 @@ public class OrganisationClient {
         String url = organisationBaseUrl + "/api/b2b/" + b2bUnitId;
         try {
             HttpEntity<Void> entity = new HttpEntity<>(headers);
-            ResponseEntity<Object> resp = restTemplate.exchange(url, org.springframework.http.HttpMethod.GET, entity, Object.class);
+            ResponseEntity<Object> resp = restTemplate.exchange(url, HttpMethod.GET, entity, Object.class);
             if (resp.getStatusCode().is2xxSuccessful()) {
                 return resp.getBody();
             }

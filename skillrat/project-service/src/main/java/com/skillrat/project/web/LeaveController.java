@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.NonNull;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -39,7 +40,7 @@ public class LeaveController {
     // Approve by reporting manager/HR/PMO/ADMIN
     @PostMapping("/requests/{id}/approve")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<LeaveRequest> approve(@PathVariable("id") UUID id, @RequestBody(required = false) Map<String, String> body) {
+    public ResponseEntity<LeaveRequest> approve(@PathVariable("id") @NonNull UUID id, @RequestBody(required = false) Map<String, String> body) {
         UUID approverId = body != null && body.get("approverId") != null ? UUID.fromString(body.get("approverId")) : null;
         String note = body != null ? body.get("note") : null;
         return ResponseEntity.ok(service.approve(id, approverId, note));
@@ -48,7 +49,7 @@ public class LeaveController {
     // Reject by reporting manager/HR/PMO/ADMIN
     @PostMapping("/requests/{id}/reject")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<LeaveRequest> reject(@PathVariable("id") UUID id, @RequestBody(required = false) Map<String, String> body) {
+    public ResponseEntity<LeaveRequest> reject(@PathVariable("id") @NonNull UUID id, @RequestBody(required = false) Map<String, String> body) {
         UUID approverId = body != null && body.get("approverId") != null ? UUID.fromString(body.get("approverId")) : null;
         String note = body != null ? body.get("note") : null;
         return ResponseEntity.ok(service.reject(id, approverId, note));

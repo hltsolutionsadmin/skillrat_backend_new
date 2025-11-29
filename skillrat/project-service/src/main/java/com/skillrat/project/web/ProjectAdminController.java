@@ -12,6 +12,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.NonNull;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -63,7 +64,7 @@ public class ProjectAdminController {
     // Create WBS under a project
     @PostMapping("/{projectId}/wbs")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<WBSElement> createWbs(@PathVariable("projectId") UUID projectId,
+    public ResponseEntity<WBSElement> createWbs(@PathVariable("projectId") @NonNull UUID projectId,
                                                 @RequestBody @Valid CreateWbsRequest req) {
         WBSElement w = service.createWbs(projectId, req.name, req.code, req.category, req.startDate, req.endDate);
         return ResponseEntity.ok(w);
@@ -72,7 +73,7 @@ public class ProjectAdminController {
     // Update Project - Only organization admin can update projects
     @PutMapping("/{projectId}")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Project> updateProject(@PathVariable("projectId") UUID projectId,
+    public ResponseEntity<Project> updateProject(@PathVariable("projectId") @NonNull UUID projectId,
                                                  @RequestBody @Valid UpdateProjectRequest req) {
         String userId = getCurrentUserId();
         Project p = service.updateProject(
@@ -98,7 +99,7 @@ public class ProjectAdminController {
     // Add or update project member (with project role and reporting manager)
     @PutMapping("/{projectId}/members")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<ProjectMember> upsertMember(@PathVariable("projectId") UUID projectId,
+    public ResponseEntity<ProjectMember> upsertMember(@PathVariable("projectId") @NonNull UUID projectId,
                                                       @RequestBody @Valid UpsertMemberRequest req) {
         ProjectMember m = service.addOrUpdateMember(projectId, req.employeeId, req.role, req.reportingManagerId,
                 req.startDate, req.endDate, req.active != null ? req.active : true);
@@ -106,7 +107,8 @@ public class ProjectAdminController {
     }
 
     // Allocate member to a WBS (assignment that controls time entry eligibility)
-    @PostMapping("/members/{projectId}/allocations/{userId}")
+    @SuppressWarnings("null")
+	@PostMapping("/members/{projectId}/allocations/{userId}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<WBSAllocation> allocate(@PathVariable("projectId") UUID projectId,
                                                   @PathVariable("userId") UUID userId,
@@ -117,14 +119,14 @@ public class ProjectAdminController {
 
 
     @GetMapping("/{projectId}")
-    public ResponseEntity<Project> getProject(@PathVariable("projectId") UUID projectId) {
+    public ResponseEntity<Project> getProject(@PathVariable("projectId") @NonNull UUID projectId) {
         Project p = service.getProject(projectId);
         return ResponseEntity.ok(p);
     }
 
     // Get WBS element by ID
     @GetMapping("/wbs/{wbsId}")
-    public ResponseEntity<WBSElement> getWbs(@PathVariable("wbsId") UUID wbsId) {
+    public ResponseEntity<WBSElement> getWbs(@PathVariable("wbsId") @NonNull UUID wbsId) {
         WBSElement w = service.getWbs(wbsId);
         return ResponseEntity.ok(w);
     }
@@ -187,7 +189,7 @@ public class ProjectAdminController {
     }
     @PutMapping("/wbs/{wbsId}")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<WBSElement> updateWbs(@PathVariable UUID wbsId, @RequestBody @Valid UpdateWbsRequest req) {
+    public ResponseEntity<WBSElement> updateWbs(@PathVariable @NonNull UUID wbsId, @RequestBody @Valid UpdateWbsRequest req) {
         WBSElement w = service.updateWbs(wbsId, req.name, req.code, req.category, req.startDate, req.endDate,req.projectId,req.disabled);
         return ResponseEntity.ok(w);
     }

@@ -53,28 +53,28 @@ public class HolidayController {
 
     @PutMapping("/calendars/{id}")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<HolidayCalendar> updateCalendar(@PathVariable("id") UUID id,
+    public ResponseEntity<HolidayCalendar> updateCalendar(@PathVariable("id") @NonNull UUID id,
                                                           @RequestBody @Valid UpdateCalReq req) {
         return ResponseEntity.ok(service.updateCalendar(id, req.name, req.code, req.city));
     }
 
     @DeleteMapping("/calendars/{id}")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<?> deleteCalendar(@PathVariable("id") UUID id) {
+    public ResponseEntity<?> deleteCalendar(@PathVariable("id") @NonNull UUID id) {
         service.deleteCalendar(id);
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/calendars/{calendarId}/days")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<HolidayDay> addHoliday(@PathVariable("calendarId") UUID calendarId,
+    public ResponseEntity<HolidayDay> addHoliday(@PathVariable("calendarId") @NonNull UUID calendarId,
                                                  @RequestBody @Valid AddHolidayReq req) {
         return ResponseEntity.ok(service.addHoliday(calendarId, req.date, req.name, req.optional));
     }
 
     @PutMapping("/projects/{projectId}/calendar/{calendarId}")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<?> assignToProject(@PathVariable UUID projectId, @PathVariable UUID calendarId) {
+    public ResponseEntity<?> assignToProject(@PathVariable @NonNull UUID projectId, @PathVariable @NonNull UUID calendarId) {
         return ResponseEntity.ok(service.assignCalendarToProject(projectId, calendarId));
     }
 

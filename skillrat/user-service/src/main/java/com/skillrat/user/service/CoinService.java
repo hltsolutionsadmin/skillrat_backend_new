@@ -1,5 +1,10 @@
 package com.skillrat.user.service;
 
+import java.util.UUID;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.skillrat.user.config.SkillratCoinsProperties;
 import com.skillrat.user.domain.CoinCategory;
 import com.skillrat.user.domain.UserCoinCategoryProgress;
@@ -8,11 +13,6 @@ import com.skillrat.user.domain.UserCoins;
 import com.skillrat.user.repo.UserCoinCategoryProgressRepository;
 import com.skillrat.user.repo.UserCoinLedgerRepository;
 import com.skillrat.user.repo.UserCoinsRepository;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Optional;
-import java.util.UUID;
 
 @Service
 public class CoinService {
