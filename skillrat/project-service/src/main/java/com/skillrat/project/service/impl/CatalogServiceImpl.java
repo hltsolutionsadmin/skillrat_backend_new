@@ -119,7 +119,8 @@ public class CatalogServiceImpl implements CatalogService {
         return categoryRepo.findAllByTenantIdAndOrganisationId(tenantId, organisationId, pageable).map(CatalogServiceImpl::toDTO);
     }
 
-    @Override
+    @SuppressWarnings("null")
+	@Override
     public void deleteCategory(UUID id) {
         String tenantId = TenantContext.getTenantId();
         IncidentCategoryEntity e = categoryRepo.findByIdAndTenantId(id, tenantId)
@@ -185,7 +186,8 @@ public class CatalogServiceImpl implements CatalogService {
                 .map(CatalogServiceImpl::toDTO);
     }
 
-    @Override
+    @SuppressWarnings("null")
+	@Override
     public void deleteSubCategory(UUID id) {
         String tenantId = TenantContext.getTenantId();
         var e = subCategoryRepo.findByIdAndTenantId(id, tenantId)

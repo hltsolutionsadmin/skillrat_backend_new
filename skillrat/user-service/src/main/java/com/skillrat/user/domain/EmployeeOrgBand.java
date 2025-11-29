@@ -1,5 +1,6 @@
 package com.skillrat.user.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.skillrat.user.organisation.domain.B2BUnit;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -13,6 +14,7 @@ import java.util.UUID;
 @Getter
 @Setter
 @NoArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class EmployeeOrgBand {
 
     @Id
@@ -31,7 +33,8 @@ public class EmployeeOrgBand {
     @Column
     private Double salary;
 
-    @OneToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "b2b_unit_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "employeeBands"})
     private B2BUnit b2bUnit;
 }

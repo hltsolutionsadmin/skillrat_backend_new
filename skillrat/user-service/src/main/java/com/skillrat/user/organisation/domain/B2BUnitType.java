@@ -4,5 +4,6 @@ public enum B2BUnitType {
     COLLEGE,
     SCHOOL,
     COMPANY,
+    ORGANIZATION,
     OTHER
 }

@@ -1,13 +1,20 @@
 package com.skillrat.project.domain;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
+import java.time.LocalDate;
+
 import com.skillrat.common.orm.BaseEntity;
-import jakarta.persistence.*;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import java.time.LocalDate;
 @Entity
 @Table(
         name = "wbs_element",

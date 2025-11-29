@@ -1,14 +1,17 @@
 package com.skillrat.project.service.impl;
 
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.lang.NonNull;
+import org.springframework.stereotype.Service;
+
 import com.skillrat.project.domain.MediaModel;
 import com.skillrat.project.repo.MediaRepository;
 import com.skillrat.project.service.MediaService;
+
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.UUID;
 
 /**
  * Implementation of the MediaService interface.
@@ -20,14 +23,16 @@ public class MediaServiceImpl implements MediaService {
 
     private final MediaRepository mediaRepository;
 
-    @Override
+    @SuppressWarnings("null")
+	@Override
     @Transactional
-    public MediaModel saveMedia(MediaModel mediaModel) {
+    public MediaModel saveMedia(@NonNull MediaModel mediaModel) {
         return mediaRepository.save(mediaModel);
     }
 
-    @Override
-    public MediaModel findById(Long id) {
+    @SuppressWarnings("null")
+	@Override
+    public MediaModel findById(@NonNull Long id) {
         return mediaRepository.findById(id).orElse(null);
     }
 
@@ -51,9 +56,10 @@ public class MediaServiceImpl implements MediaService {
         return mediaRepository.findByIncidentId(incidentId);
     }
 
-    @Override
+    @SuppressWarnings("null")
+	@Override
     @Transactional
-    public void deleteMedia(Long id) {
+    public void deleteMedia(@NonNull Long id) {
         mediaRepository.deleteById(id);
     }
 

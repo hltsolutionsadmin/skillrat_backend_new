@@ -11,6 +11,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.NonNull;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -46,7 +47,7 @@ public class HolidayController {
 
     @GetMapping("/calendars/{id}")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<HolidayCalendar> getCalendar(@PathVariable("id") UUID id) {
+    public ResponseEntity<HolidayCalendar> getCalendar(@PathVariable("id") @NonNull UUID id) {
         return ResponseEntity.ok(service.getCalendar(id));
     }
 

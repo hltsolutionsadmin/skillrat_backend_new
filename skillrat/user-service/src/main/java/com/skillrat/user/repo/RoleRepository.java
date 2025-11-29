@@ -13,7 +13,13 @@ import java.util.UUID;
 @Repository
 public interface RoleRepository extends JpaRepository<Role, UUID> {
     
-    Optional<Role> findByName(String name);
+    /**
+     * Find a role by name (case-insensitive)
+     * @param name the name of the role to find
+     * @return an Optional containing the role if found, empty otherwise
+     */
+    @Query("SELECT r FROM Role r WHERE LOWER(r.name) = LOWER(:name)")
+    Optional<Role> findByName(@Param("name") String name);
     List<Role> findAllByName(String name);
     
     Optional<Role> findByNameAndB2bUnitId(String name, UUID b2bUnitId);

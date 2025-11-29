@@ -13,6 +13,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -33,6 +35,9 @@ public class SalaryComponent extends BaseEntity {
     private ComponentType type;
 
     private String description;
+
+    @Column(precision = 15, scale = 2)
+    private BigDecimal amount;
 
     public enum ComponentType { EARNING, DEDUCTION }
 }

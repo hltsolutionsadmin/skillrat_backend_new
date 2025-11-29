@@ -1,11 +1,14 @@
 package com.skillrat.user.organisation.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.skillrat.common.orm.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.EnumType;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.Index;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.time.Instant;
 import lombok.Getter;
@@ -19,6 +22,8 @@ import jakarta.persistence.ManyToMany;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.UniqueConstraint;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.skillrat.user.domain.EmployeeOrgBand;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -71,7 +76,20 @@ public class B2BUnit extends BaseEntity {
             inverseJoinColumns = @JoinColumn(name = "department_id"),
             uniqueConstraints = @UniqueConstraint(columnNames = {"b2b_unit_id", "department_id"})
     )
+    @JsonIgnoreProperties("b2bUnits")
     private Set<Department> departments = new HashSet<>();
+
+    // Helper method to add Department
+    public void addDepartment(Department department) {
+        this.departments.add(department);
+        department.getB2bUnits().add(this);
+    }
+
+    // Helper method to remove Department
+    public void removeDepartment(Department department) {
+        this.departments.remove(department);
+        department.getB2bUnits().remove(this);
+    }
 
     @OneToOne
     @JoinColumn(name = "onboarded_by_user_id")
@@ -82,4 +100,8 @@ public class B2BUnit extends BaseEntity {
     private com.skillrat.user.domain.User approvedBy;
 
     private Instant approvedAt;
+
+    @OneToMany(mappedBy = "b2bUnit", fetch = FetchType.LAZY)
+    @JsonIgnore
+    private Set<EmployeeOrgBand> employeeBands = new HashSet<>();
 }

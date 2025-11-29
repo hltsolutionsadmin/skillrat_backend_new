@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -60,7 +61,7 @@ public class IncidentService {
     }
 
     @Transactional
-    public Incident create(UUID projectId,
+    public Incident create(@NonNull UUID projectId,
                            String title,
                            String shortDescription,
                            IncidentUrgency urgency,
@@ -166,7 +167,7 @@ public class IncidentService {
             UUID categoryId,
             IncidentStatus status,
             String search,
-            Pageable pageable
+            @NonNull Pageable pageable
     ) {
         Specification<Incident> spec = (root, query, cb) -> {
             var predicates = new java.util.ArrayList<jakarta.persistence.criteria.Predicate>();
@@ -195,7 +196,7 @@ public class IncidentService {
     }
 
     @Transactional
-    public Incident assignAssignee(UUID incidentId, UUID assigneeId) throws Exception {
+    public Incident assignAssignee(@NonNull UUID incidentId, UUID assigneeId) throws Exception {
         Incident incident = incidentRepository.findById(incidentId)
                 .orElseThrow(() -> new IllegalArgumentException("Incident not found"));
         UUID oldAssignee = incident.getAssigneeId();
@@ -224,7 +225,7 @@ public class IncidentService {
     }
 
     @Transactional
-    public Incident assignReporter(UUID incidentId, UUID reporterId) throws Exception {
+    public Incident assignReporter(@NonNull UUID incidentId, UUID reporterId) throws Exception {
         Incident incident = incidentRepository.findById(incidentId)
                 .orElseThrow(() -> new IllegalArgumentException("Incident not found"));
         UUID oldReporter = incident.getReporterId();
@@ -254,7 +255,7 @@ public class IncidentService {
     }
 
     @Transactional
-    public Incident updateStatus(UUID incidentId, IncidentStatus status, @NotBlank(message = "Title is required") String discription, @NotNull(message = "Urgency is required") IncidentUrgency urgency, @NotNull(message = "Impact is required") IncidentImpact impact, List<MultipartFile> mediaFiles, List<String> mediaUrls) {
+    public Incident updateStatus(@NonNull UUID incidentId, IncidentStatus status, @NotBlank(message = "Title is required") String discription, @NotNull(message = "Urgency is required") IncidentUrgency urgency, @NotNull(message = "Impact is required") IncidentImpact impact, List<MultipartFile> mediaFiles, List<String> mediaUrls) {
         Incident incident = incidentRepository.findById(incidentId)
                 .orElseThrow(() -> new IllegalArgumentException("Incident not found"));
 
@@ -336,7 +337,7 @@ public class IncidentService {
     }
 
     @Transactional(readOnly = true)
-    public Incident getById(UUID incidentId) {
+    public Incident getById(@NonNull UUID incidentId) {
         return incidentRepository.findById(incidentId)
                 .orElseThrow(() -> new IllegalArgumentException("Incident not found"));
     }
@@ -347,7 +348,7 @@ public class IncidentService {
     }
 
     @Transactional(readOnly = true)
-    public Page<Incident> listByReporter(UUID projectId, Pageable pageable) {
+    public Page<Incident> listByReporter(UUID projectId, @NonNull Pageable pageable) {
 
         Map<String, Object> me = userClient.me();
         if (me == null || me.get("id") == null) {
@@ -365,7 +366,7 @@ public class IncidentService {
     }
 
     @Transactional(readOnly = true)
-    public Page<Incident> listByProjectAndLoggedInUser(UUID projectId, Pageable pageable) {
+    public Page<Incident> listByProjectAndLoggedInUser(UUID projectId, @NonNull Pageable pageable) {
 
         Map<String, Object> me = userClient.me();
         if (me == null || me.get("id") == null) {

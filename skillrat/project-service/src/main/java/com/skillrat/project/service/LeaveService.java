@@ -1,11 +1,5 @@
 package com.skillrat.project.service;
 
-import com.skillrat.common.tenant.TenantContext;
-import com.skillrat.project.domain.*;
-import com.skillrat.project.repo.*;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -13,13 +7,36 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.lang.NonNull;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.skillrat.common.tenant.TenantContext;
+import com.skillrat.project.domain.LeaveBalance;
+import com.skillrat.project.domain.LeaveRequest;
+import com.skillrat.project.domain.LeaveStatus;
+import com.skillrat.project.domain.LeaveType;
+import com.skillrat.project.domain.Project;
+import com.skillrat.project.domain.ProjectMember;
+import com.skillrat.project.domain.TimeEntry;
+import com.skillrat.project.domain.TimeEntryStatus;
+import com.skillrat.project.domain.TimeEntryType;
+import com.skillrat.project.domain.WBSAllocation;
+import com.skillrat.project.domain.WBSCategory;
+import com.skillrat.project.domain.WBSElement;
+import com.skillrat.project.repo.LeaveBalanceRepository;
+import com.skillrat.project.repo.LeaveRequestRepository;
+import com.skillrat.project.repo.ProjectMemberRepository;
+import com.skillrat.project.repo.TimeEntryRepository;
+import com.skillrat.project.repo.WBSAllocationRepository;
+import com.skillrat.project.repo.WBSElementRepository;
+
 @Service
 public class LeaveService {
 
     private final LeaveRequestRepository requestRepository;
     private final LeaveBalanceRepository balanceRepository;
     private final ProjectMemberRepository memberRepository;
-    private final ProjectRepository projectRepository;
     private final WBSElementRepository wbsRepository;
     private final WBSAllocationRepository allocationRepository;
     private final TimeEntryRepository timeEntryRepository;
@@ -28,7 +45,6 @@ public class LeaveService {
     public LeaveService(LeaveRequestRepository requestRepository,
                         LeaveBalanceRepository balanceRepository,
                         ProjectMemberRepository memberRepository,
-                        ProjectRepository projectRepository,
                         WBSElementRepository wbsRepository,
                         WBSAllocationRepository allocationRepository,
                         TimeEntryRepository timeEntryRepository,
@@ -36,7 +52,6 @@ public class LeaveService {
         this.requestRepository = requestRepository;
         this.balanceRepository = balanceRepository;
         this.memberRepository = memberRepository;
-        this.projectRepository = projectRepository;
         this.wbsRepository = wbsRepository;
         this.allocationRepository = allocationRepository;
         this.timeEntryRepository = timeEntryRepository;
@@ -59,7 +74,7 @@ public class LeaveService {
     }
 
     @Transactional
-    public LeaveRequest approve(UUID requestId, UUID approverId, String note) {
+    public LeaveRequest approve(@NonNull UUID requestId, UUID approverId, String note) {
         LeaveRequest lr = requestRepository.findById(requestId).orElseThrow(() -> new IllegalArgumentException("Leave request not found"));
         if (lr.getStatus() == LeaveStatus.APPROVED) return lr;
         if (lr.getStatus() == LeaveStatus.REJECTED) throw new IllegalStateException("Cannot approve a rejected leave");
@@ -133,7 +148,7 @@ public class LeaveService {
     }
 
     @Transactional
-    public LeaveRequest reject(UUID requestId, UUID approverId, String note) {
+    public LeaveRequest reject(@NonNull UUID requestId, UUID approverId, String note) {
         LeaveRequest lr = requestRepository.findById(requestId).orElseThrow(() -> new IllegalArgumentException("Leave request not found"));
         lr.setStatus(LeaveStatus.REJECTED);
         lr.setApproverId(approverId);

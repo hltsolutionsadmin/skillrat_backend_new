@@ -7,6 +7,7 @@ import com.skillrat.project.domain.*;
 import com.skillrat.project.repo.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.lang.NonNull;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -99,7 +100,7 @@ public class ProjectService {
     }
 
     @Transactional
-    public Project updateProject(UUID projectId,
+    public Project updateProject(@NonNull UUID projectId,
                                  String name,
                                  String code,
                                  String description,
@@ -182,7 +183,7 @@ public class ProjectService {
     }
 
     @Transactional
-    public WBSElement createWbs(UUID projectId, String name, String code, WBSCategory category, LocalDate start, LocalDate end) {
+    public WBSElement createWbs(@NonNull UUID projectId, String name, String code, WBSCategory category, LocalDate start, LocalDate end) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new IllegalArgumentException("Project not found"));
         String tenant = TenantContext.getTenantId();
@@ -207,8 +208,9 @@ public class ProjectService {
         return wbsRepository.save(wbs);
     }
 
-    @Transactional
-    public WBSElement updateWbs(UUID wbsId, String name, String code, WBSCategory category, LocalDate start, LocalDate end, UUID projectId, boolean disabled) {
+    @SuppressWarnings("null")
+	@Transactional
+    public WBSElement updateWbs(@NonNull UUID wbsId, String name, String code, WBSCategory category, LocalDate start, LocalDate end, UUID projectId, boolean disabled) {
         WBSElement wbs = wbsRepository.findById(wbsId)
                 .orElseThrow(() -> new IllegalArgumentException("WBS not found"));
         String tenant = TenantContext.getTenantId();
@@ -235,7 +237,7 @@ public class ProjectService {
     }
 
     @Transactional
-    public ProjectMember addOrUpdateMember(UUID projectId, UUID employeeId, ProjectRole role, UUID reportingManagerId,
+    public ProjectMember addOrUpdateMember(@NonNull UUID projectId, UUID employeeId, ProjectRole role, UUID reportingManagerId,
                                            LocalDate start, LocalDate end, boolean active) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new IllegalArgumentException("Project not found"));
@@ -258,7 +260,7 @@ public class ProjectService {
     }
 
     @Transactional
-    public WBSAllocation allocateMemberToWbs(UUID projectId,UUID userId, UUID wbsId, LocalDate start, LocalDate end) {
+    public WBSAllocation allocateMemberToWbs(UUID projectId,UUID userId, @NonNull UUID wbsId, LocalDate start, LocalDate end) {
         Optional<ProjectMember> projectMember = memberRepository.findByProject_IdAndEmployeeId(projectId, userId);
         if (projectMember.isEmpty()) {
             throw new IllegalArgumentException("Member not found");
@@ -289,13 +291,13 @@ public class ProjectService {
     }
 
     @Transactional(readOnly = true)
-    public Project getProject(UUID id) {
+    public Project getProject(@NonNull UUID id) {
         return projectRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Project not found"));
     }
 
     @Transactional(readOnly = true)
-    public WBSElement getWbs(UUID id) {
+    public WBSElement getWbs(@NonNull UUID id) {
         return wbsRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("WBS not found"));
     }
@@ -336,7 +338,8 @@ public class ProjectService {
         memberRepository.delete(member);
     }
 
-    @Transactional(readOnly = true)
+    @SuppressWarnings("null")
+	@Transactional(readOnly = true)
     public Page<Project> listProjectsForUser(String email, Pageable pageable) {
         UUID userId = null;
         try {
@@ -357,7 +360,8 @@ public class ProjectService {
         return projectRepository.findByMembers_EmployeeId(userId, pageable);
     }
 
-    @Transactional(readOnly = true)
+    @SuppressWarnings("null")
+	@Transactional(readOnly = true)
     public Page<Project> listProjectsForAdmin(Pageable pageable) {
         // Determine current user email from JWT
         String email = getCurrentUserEmail();

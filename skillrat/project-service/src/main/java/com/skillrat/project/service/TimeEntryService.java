@@ -3,6 +3,8 @@ package com.skillrat.project.service;
 import com.skillrat.common.tenant.TenantContext;
 import com.skillrat.project.domain.*;
 import com.skillrat.project.repo.*;
+
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,7 +39,7 @@ public class TimeEntryService {
     }
 
     @Transactional
-    public TimeEntry createDraft(UUID projectId, UUID wbsId, UUID memberId, UUID employeeId,
+    public TimeEntry createDraft(@NonNull UUID projectId, @NonNull UUID wbsId, @NonNull UUID memberId, UUID employeeId,
                                  LocalDate workDate, BigDecimal hours, String notes) {
         ProjectMember member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new IllegalArgumentException("Project member not found"));
@@ -71,7 +73,7 @@ public class TimeEntryService {
     }
 
     @Transactional
-    public TimeEntry submit(UUID timeEntryId) {
+    public TimeEntry submit(@NonNull UUID timeEntryId) {
         TimeEntry te = timeEntryRepository.findById(timeEntryId)
                 .orElseThrow(() -> new IllegalArgumentException("Time entry not found"));
         ensureActiveAllocationOnDate(te.getMember().getId(), te.getWbsElement().getId(), te.getWorkDate());
@@ -80,7 +82,7 @@ public class TimeEntryService {
     }
 
     @Transactional
-    public TimeEntry approve(UUID timeEntryId, UUID approverId, String note) {
+    public TimeEntry approve(@NonNull UUID timeEntryId, UUID approverId, String note) {
         TimeEntry te = timeEntryRepository.findById(timeEntryId)
                 .orElseThrow(() -> new IllegalArgumentException("Time entry not found"));
         if (te.getStatus() == TimeEntryStatus.REJECTED) {
@@ -99,7 +101,7 @@ public class TimeEntryService {
     }
 
     @Transactional
-    public TimeEntry reject(UUID timeEntryId, UUID approverId, String note) {
+    public TimeEntry reject(@NonNull UUID timeEntryId, UUID approverId, String note) {
         TimeEntry te = timeEntryRepository.findById(timeEntryId)
                 .orElseThrow(() -> new IllegalArgumentException("Time entry not found"));
         te.setStatus(TimeEntryStatus.REJECTED);

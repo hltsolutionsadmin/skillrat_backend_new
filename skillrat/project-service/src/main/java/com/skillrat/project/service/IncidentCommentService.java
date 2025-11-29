@@ -1,22 +1,23 @@
 package com.skillrat.project.service;
 
-import com.skillrat.project.client.UserClient;
-import com.skillrat.project.domain.Incident;
-import com.skillrat.project.domain.IncidentComment;
-import com.skillrat.project.repo.IncidentCommentRepository;
-import com.skillrat.project.repo.IncidentRepository;
+import java.time.Instant;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.lang.NonNull;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
+import com.skillrat.project.client.UserClient;
+import com.skillrat.project.domain.Incident;
+import com.skillrat.project.domain.IncidentComment;
+import com.skillrat.project.repo.IncidentCommentRepository;
+import com.skillrat.project.repo.IncidentRepository;
 
 @Service
 public class IncidentCommentService {
@@ -39,13 +40,13 @@ public class IncidentCommentService {
     }
 
     @Transactional(readOnly = true)
-    public Page<IncidentComment> list(UUID incidentId, Pageable pageable) {
+    public Page<IncidentComment> list(@NonNull UUID incidentId, Pageable pageable) {
         ensureIncidentExists(incidentId);
         return commentRepository.findByIncident_Id(incidentId, pageable);
     }
 
     @Transactional
-    public IncidentComment add(UUID incidentId, String body) {
+    public IncidentComment add(@NonNull UUID incidentId, String body) {
         if (body == null || body.isBlank()) throw new IllegalArgumentException("Comment body is required");
         Incident incident = ensureIncidentExists(incidentId);
         IncidentComment c = new IncidentComment();
@@ -71,8 +72,9 @@ public class IncidentCommentService {
         return commentRepository.save(c);
     }
 
-    @Transactional
-    public IncidentComment update(UUID incidentId, UUID commentId, String body) {
+    @SuppressWarnings("null")
+	@Transactional
+    public IncidentComment update(@NonNull UUID incidentId, @NonNull UUID commentId, String body) {
         if (body == null || body.isBlank()) throw new IllegalArgumentException("Comment body is required");
         ensureIncidentExists(incidentId);
         IncidentComment c = commentRepository.findById(commentId)
@@ -102,7 +104,7 @@ public class IncidentCommentService {
     }
 
     @Transactional
-    public void delete(UUID incidentId, UUID commentId) {
+    public void delete(@NonNull UUID incidentId, @NonNull UUID commentId) {
         ensureIncidentExists(incidentId);
         IncidentComment c = commentRepository.findById(commentId)
                 .orElseThrow(() -> new IllegalArgumentException("Comment not found"));
@@ -114,13 +116,13 @@ public class IncidentCommentService {
     }
 
     @Transactional(readOnly = true)
-    public Optional<IncidentComment> get(UUID incidentId, UUID commentId) {
+    public Optional<IncidentComment> get(@NonNull UUID incidentId, @NonNull UUID commentId) {
         ensureIncidentExists(incidentId);
         return commentRepository.findById(commentId)
                 .filter(c -> c.getIncident() != null && incidentId.equals(c.getIncident().getId()));
     }
 
-    private Incident ensureIncidentExists(UUID incidentId) {
+    private Incident ensureIncidentExists(@NonNull UUID incidentId) {
         return incidentRepository.findById(incidentId)
                 .orElseThrow(() -> new IllegalArgumentException("Incident not found"));
     }

@@ -6,6 +6,8 @@ import com.skillrat.project.domain.UserGroupMember;
 import com.skillrat.project.domain.UserGroupRole;
 import com.skillrat.project.repo.UserGroupMemberRepository;
 import com.skillrat.project.repo.UserGroupRepository;
+
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -69,7 +71,7 @@ public class UserGroupService {
     }
 
     @Transactional
-    public UserGroupMember addMember(UUID groupId, UUID userId, UserGroupRole role) {
+    public UserGroupMember addMember(@NonNull UUID groupId, UUID userId, UserGroupRole role) {
         UserGroup group = groupRepo.findById(groupId).orElseThrow(() -> new IllegalArgumentException("Group not found"));
         if (memberRepo.existsByGroup_IdAndUserIdAndActiveTrue(groupId, userId)) {
             return memberRepo.findByGroup_Id(groupId).stream()

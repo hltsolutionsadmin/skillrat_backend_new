@@ -3,6 +3,7 @@ package com.skillrat.project.web;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.NonNull;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -47,7 +48,7 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error", req.getRequestURI());
     }
 
-    private ResponseEntity<Map<String, Object>> build(HttpStatus status, String message, String path) {
+    private ResponseEntity<Map<String, Object>> build(@NonNull HttpStatus status, String message, String path) {
         Map<String, Object> body = base(status, message, path);
         return new ResponseEntity<>(body, status);
     }

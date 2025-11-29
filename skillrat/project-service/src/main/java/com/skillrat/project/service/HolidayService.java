@@ -10,6 +10,7 @@ import com.skillrat.project.repo.HolidayDayRepository;
 import com.skillrat.project.repo.ProjectRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -53,7 +54,7 @@ public class HolidayService {
     }
 
     @Transactional
-    public HolidayDay addHoliday(UUID calendarId, LocalDate date, String name, boolean optional) {
+    public HolidayDay addHoliday(@NonNull UUID calendarId, LocalDate date, String name, boolean optional) {
         HolidayCalendar cal = calendarRepository.findById(calendarId)
                 .orElseThrow(() -> new IllegalArgumentException("Calendar not found"));
         if (date == null) throw new IllegalArgumentException("date is required");
@@ -71,7 +72,7 @@ public class HolidayService {
     }
 
     @Transactional
-    public Project assignCalendarToProject(UUID projectId, UUID calendarId) {
+    public Project assignCalendarToProject(@NonNull UUID projectId, @NonNull UUID calendarId) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new IllegalArgumentException("Project not found"));
         if (!calendarRepository.existsById(calendarId)) {
@@ -95,12 +96,13 @@ public class HolidayService {
         return calendarRepository.searchCalendars(tenant, query, city, pageable);
     }
 
-    public HolidayCalendar getCalendar(UUID id) {
+    public HolidayCalendar getCalendar(@NonNull UUID id) {
         return calendarRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Calendar not found"));
     }
 
-    @Transactional
-    public HolidayCalendar updateCalendar(UUID id, String name, String code, IndiaCity city) {
+    @SuppressWarnings("null")
+	@Transactional
+    public HolidayCalendar updateCalendar(@NonNull UUID id, String name, String code, IndiaCity city) {
         HolidayCalendar cal = calendarRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Calendar not found"));
         if (name != null && !name.isBlank()) cal.setName(name.trim());
@@ -118,7 +120,7 @@ public class HolidayService {
     }
 
     @Transactional
-    public void deleteCalendar(UUID id) {
+    public void deleteCalendar(@NonNull UUID id) {
         // It is allowed if not referenced by any project
         boolean inUse = projectRepository.findAll().stream().anyMatch(p -> id.equals(p.getHolidayCalendarId()));
         if (inUse) throw new IllegalStateException("Calendar is assigned to a project and cannot be deleted");

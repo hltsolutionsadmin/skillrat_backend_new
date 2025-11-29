@@ -2,6 +2,8 @@ package com.skillrat.user.organisation.web;
 
 import com.skillrat.user.organisation.domain.Department;
 import com.skillrat.user.organisation.service.DepartmentService;
+import com.skillrat.user.organisation.web.dto.DepartmentDTO;
+import com.skillrat.user.organisation.web.mapper.DepartmentMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -20,17 +22,21 @@ import java.util.UUID;
 public class DepartmentController {
 
     private final DepartmentService departmentService;
+    private static final DepartmentMapper departmentMapper = DepartmentMapper.INSTANCE;
 
     @GetMapping
-    public ResponseEntity<Page<Department>> getAllDepartments(
-            @RequestParam UUID b2bUnitId,
+    public ResponseEntity<Page<DepartmentDTO>> getAllDepartments(
+            @RequestParam @NonNull UUID b2bUnitId,
             @PageableDefault(sort = "name", size = 10) Pageable pageable) {
-        return ResponseEntity.ok(departmentService.getAllDepartments(b2bUnitId, pageable));
+        return ResponseEntity.ok(
+            departmentService.getAllDepartments(b2bUnitId, pageable)
+                .map(departmentMapper::toDto)
+        );
     }
 
     @GetMapping("/search")
-    public ResponseEntity<Page<Department>> searchDepartments(
-            @RequestParam UUID b2bUnitId,
+    public ResponseEntity<Page<DepartmentDTO>> searchDepartments(
+            @RequestParam @NonNull UUID b2bUnitId,
             @RequestParam String query,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -41,38 +47,49 @@ public class DepartmentController {
                         ? org.springframework.data.domain.Sort.by(sortBy).descending()
                         : org.springframework.data.domain.Sort.by(sortBy).ascending();
         org.springframework.data.domain.PageRequest pr = org.springframework.data.domain.PageRequest.of(page, size, sort);
-        return ResponseEntity.ok(departmentService.searchDepartments(b2bUnitId, query, pr));
+        return ResponseEntity.ok(
+            departmentService.searchDepartments(b2bUnitId, query, pr)
+                .map(departmentMapper::toDto)
+        );
     }
 
     @GetMapping("/active")
-    public ResponseEntity<Page<Department>> getActiveDepartments(
+    public ResponseEntity<Page<DepartmentDTO>> getActiveDepartments(
             @RequestParam UUID b2bUnitId,
             @PageableDefault(sort = "name", size = 10) Pageable pageable) {
-        return ResponseEntity.ok(departmentService.getActiveDepartments(b2bUnitId, pageable));
+        return ResponseEntity.ok(
+            departmentService.getActiveDepartments(b2bUnitId, pageable)
+                .map(departmentMapper::toDto)
+        );
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Department> getDepartmentById(@PathVariable @NonNull UUID id) {
-        return ResponseEntity.ok(departmentService.getDepartmentById(id));
+    public ResponseEntity<DepartmentDTO> getDepartmentById(@PathVariable @NonNull UUID id) {
+        Department department = departmentService.getDepartmentById(id);
+        return ResponseEntity.ok(departmentMapper.toDto(department));
     }
 
     @PostMapping
-    public ResponseEntity<Department> createDepartment(@RequestBody Department department) {
-        Department created = departmentService.createDepartment(department);
+    public ResponseEntity<DepartmentDTO> createDepartment(@RequestBody DepartmentDTO departmentDTO) {
+        Department created = departmentService.createDepartment(departmentDTO);
+        DepartmentDTO createdDTO = departmentMapper.toDto(created);
+        
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
                 .path("/{id}")
                 .buildAndExpand(created.getId())
                 .toUri();
-        return ResponseEntity.created(location).body(created);
+                
+        return ResponseEntity.created(location).body(createdDTO);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Department> updateDepartment(
+    public ResponseEntity<DepartmentDTO> updateDepartment(
             @PathVariable @NonNull UUID id,
-            @RequestBody Department department) {
-        department.setId(id);
-        return ResponseEntity.ok(departmentService.updateDepartment(id, department));
+            @RequestBody DepartmentDTO departmentDTO) {
+        departmentDTO.setId(id);
+        Department updated = departmentService.updateDepartment(id, departmentDTO);
+        return ResponseEntity.ok(departmentMapper.toDto(updated));
     }
 
     @DeleteMapping("/{id}")
