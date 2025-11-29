@@ -142,20 +142,26 @@ public class UserController {
 
     @PostMapping("/signup")
     public ResponseEntity<User> signup(@RequestBody SignupRequest req) {
-        User u = userService.signup(req.firstName, req.lastName, req.email, req.mobile, req.password);
+        User u = userService.signup(req.firstName, req.lastName, req.email, req.mobile, req.password, req.type);
         return ResponseEntity.ok(u);
     }
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest req) {
         return userService.authenticate(req.emailOrMobile, req.password)
-                .<ResponseEntity<?>>map(u -> ResponseEntity.ok(Map.of(
-                        "id", u.getId(),
-                        "username", u.getUsername(),
-                        "email", u.getEmail(),
-                        "mobile", u.getMobile(),
-                        "roles", (u.getRoles() == null ? java.util.List.of() : u.getRoles().stream().map(r -> r.getName()).toList())
-                )))
+                .<ResponseEntity<?>>map(u -> {
+                    Map<String, Object> resp = new java.util.HashMap<>();
+                    resp.put("id", u.getId());
+                    resp.put("username", u.getUsername());
+                    resp.put("email", u.getEmail());
+                    resp.put("mobile", u.getMobile());
+                    java.util.List<String> roles = (u.getRoles() == null ? java.util.List.of() : u.getRoles().stream().map(r -> r.getName()).toList());
+                    resp.put("roles", roles);
+                    if (u.hasRole("STUDENT")) {
+                        resp.put("type", "student");
+                    }
+                    return ResponseEntity.ok(resp);
+                })
                 .orElseGet(() -> ResponseEntity.status(401).body(Map.of("error", "Invalid credentials")));
     }
 
@@ -244,6 +250,7 @@ public class UserController {
         @NotBlank @Email public String email;
         public String mobile;
         @NotBlank public String password;
+        public String type; // e.g., "student"
     }
 
     public static class LoginRequest {

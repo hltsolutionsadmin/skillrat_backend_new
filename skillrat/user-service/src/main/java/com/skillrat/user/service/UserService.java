@@ -42,7 +42,7 @@ public class UserService {
     }
 
     @Transactional
-    public User signup(String firstName, String lastName, String email, String mobile, String rawPassword) {
+    public User signup(String firstName, String lastName, String email, String mobile, String rawPassword, String type) {
         if (email == null || email.isBlank()) {
             throw new IllegalArgumentException("Email is required");
         }
@@ -73,7 +73,16 @@ public class UserService {
         
         // Assign default ROLE_USER
         Role userRole = getOrCreateRole("ROLE_USER", "Default role for all users", null);
-        user.setRoles(Set.of(userRole));
+        Set<Role> roles = new HashSet<>();
+        roles.add(userRole);
+        // If a specific type provided, attach corresponding role
+        if (type != null && !type.isBlank()) {
+            if (type.equalsIgnoreCase("student")) {
+                Role studentRole = getOrCreateRole("STUDENT", "Student role", null);
+                roles.add(studentRole);
+            }
+        }
+        user.setRoles(roles);
         
         User saved = userRepository.save(user);
         log.info("User signup successful id={}, email={}, tenantId={}", saved.getId(), saved.getEmail(), tenantId);
