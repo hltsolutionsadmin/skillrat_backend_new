@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -23,6 +24,8 @@ import java.util.stream.Collectors;
 public class RoleService {
     private static final Logger log = LoggerFactory.getLogger(RoleService.class);
     private final RoleRepository roleRepository;
+    @Value("${app.roles.init.enabled:true}")
+    private boolean initRolesEnabled;
     
     // Default system roles
     public static final List<String> DEFAULT_ROLES = Arrays.asList(
@@ -39,6 +42,10 @@ public class RoleService {
      */
     @Transactional
     public void initializeDefaultRoles() {
+        if (!initRolesEnabled) {
+            log.info("Default role initialization is disabled via property 'app.roles.init.enabled=false'. Skipping.");
+            return;
+        }
         String tenantId = getCurrentTenantId();
         
         for (String roleName : DEFAULT_ROLES) {

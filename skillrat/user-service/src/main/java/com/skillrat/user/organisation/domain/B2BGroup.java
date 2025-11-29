@@ -24,7 +24,10 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 public class B2BGroup extends BaseEntity {
-
+	
+	@Column(nullable = false, length = 40)
+	private String code;
+	
     @Column(nullable = false, length = 200)
     private String name;
 
