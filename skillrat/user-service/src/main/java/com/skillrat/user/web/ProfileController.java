@@ -2,10 +2,10 @@ package com.skillrat.user.web;
 
 import com.skillrat.user.domain.*;
 import com.skillrat.user.service.ProfileService;
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.NonNull;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
@@ -43,7 +43,7 @@ public class ProfileController {
 
     @PostMapping("/experiences/{id}/request-verification")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<?> requestVerification(@PathVariable("id") UUID id, @RequestBody Map<String, String> body, Authentication auth) {
+    public ResponseEntity<?> requestVerification(@PathVariable("id") @NonNull UUID id, @RequestBody Map<String, String> body, Authentication auth) {
         UUID verifierB2b = body.get("verifierB2bUnitId") != null ? UUID.fromString(body.get("verifierB2bUnitId")) : null;
         return profileService.requestVerification(id, verifierB2b, auth.getName())
                 .<ResponseEntity<?>>map(ResponseEntity::ok)
@@ -52,7 +52,7 @@ public class ProfileController {
 
     @PostMapping("/experiences/{id}/verify")
     @PreAuthorize("hasAnyRole('HR_HEAD','HR_RECRUITER','HR_MANAGER','ADMIN')")
-    public ResponseEntity<?> verifyExperience(@PathVariable("id") UUID id, @RequestParam("approve") boolean approve, Authentication auth) {
+    public ResponseEntity<?> verifyExperience(@PathVariable("id") @NonNull UUID id, @RequestParam("approve") boolean approve, Authentication auth) {
         return profileService.verifyExperience(id, approve, auth.getName())
                 .<ResponseEntity<?>>map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
@@ -71,7 +71,7 @@ public class ProfileController {
 
     @DeleteMapping("/skills/{id}")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<?> deleteSkill(@PathVariable("id") UUID id, Authentication auth) {
+    public ResponseEntity<?> deleteSkill(@PathVariable("id") @NonNull UUID id, Authentication auth) {
         profileService.deleteSkill(auth.getName(), id);
         return ResponseEntity.noContent().build();
     }

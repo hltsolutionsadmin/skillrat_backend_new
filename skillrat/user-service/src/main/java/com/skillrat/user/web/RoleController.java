@@ -1,24 +1,33 @@
 package com.skillrat.user.web;
 
-import com.skillrat.common.exception.ResourceNotFoundException;
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.lang.NonNull;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.skillrat.user.domain.Role;
 import com.skillrat.user.security.RequiresBusinessOrHrAdmin;
 import com.skillrat.user.service.BusinessRoleService;
 import com.skillrat.user.service.ProjectRoleService;
 import com.skillrat.user.service.RoleService;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-import java.util.UUID;
 
 /**
  * REST controller for managing roles and role assignments.
@@ -53,14 +62,14 @@ public class RoleController {
 
     @GetMapping("/{roleId}")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Role> getRoleById(@PathVariable UUID roleId) {
+    public ResponseEntity<Role> getRoleById(@PathVariable @NonNull UUID roleId) {
         return ResponseEntity.ok(roleService.getRoleById(roleId));
     }
 
     @PutMapping("/{roleId}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Role> updateRole(
-            @PathVariable UUID roleId,
+            @PathVariable @NonNull UUID roleId,
             @Valid @RequestBody UpdateRoleRequest request) {
         
         Role updatedRole = roleService.updateRole(roleId, request.getName(), request.getDescription());
@@ -69,7 +78,7 @@ public class RoleController {
 
     @DeleteMapping("/{roleId}")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Void> deleteRole(@PathVariable UUID roleId) {
+    public ResponseEntity<Void> deleteRole(@PathVariable @NonNull UUID roleId) {
         roleService.deleteRole(roleId);
         return ResponseEntity.noContent().build();
     }
@@ -88,7 +97,8 @@ public class RoleController {
 
     // ========== Business Role Assignments ==========
 
-    @PostMapping("/business/assign")
+    @SuppressWarnings("null")
+	@PostMapping("/business/assign")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> assignBusinessRole(
             @Valid @RequestBody AssignBusinessRoleRequest request,
@@ -105,7 +115,8 @@ public class RoleController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    @PostMapping("/business/remove")
+    @SuppressWarnings("null")
+	@PostMapping("/business/remove")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> removeBusinessRole(@Valid @RequestBody RemoveBusinessRoleRequest request) {
         businessRoleService.removeRoleFromUser(
@@ -128,7 +139,8 @@ public class RoleController {
 
     // ========== Project Role Assignments ==========
 
-    @PostMapping("/project/assign")
+    @SuppressWarnings("null")
+	@PostMapping("/project/assign")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> assignProjectRole(
             @Valid @RequestBody AssignProjectRoleRequest request,
@@ -145,7 +157,8 @@ public class RoleController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    @PostMapping("/project/remove")
+    @SuppressWarnings("null")
+	@PostMapping("/project/remove")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> removeProjectRole(@Valid @RequestBody RemoveProjectRoleRequest request) {
         projectRoleService.removeRoleFromUser(

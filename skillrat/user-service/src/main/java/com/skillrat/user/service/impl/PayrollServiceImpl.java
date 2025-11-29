@@ -57,7 +57,8 @@ public class PayrollServiceImpl implements PayrollService {
         this.userRepository = userRepository;
     }
 
-    @Override
+    @SuppressWarnings("null")
+	@Override
     public PayslipDTO generate(PayslipDTO req) {
         int month = req.getMonth();
         int year = req.getYear();
@@ -159,7 +160,6 @@ public class PayrollServiceImpl implements PayrollService {
         leaveDeductionDao.save(eld);
 
         // 8) Store components
-        UUID pid = payslip.getId();
         for (EmployeePayslipComponent pc : payslipComponents) {
             pc.setPayslip(payslip);
             payslipComponentDao.save(pc);

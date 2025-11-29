@@ -1,29 +1,39 @@
 package com.skillrat.user.web;
 
+import java.time.LocalDate;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
+import org.springframework.lang.NonNull;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.skillrat.user.domain.Employee;
-import com.skillrat.user.domain.EmployeeBand;
 import com.skillrat.user.domain.EmployeeOrgBand;
 import com.skillrat.user.domain.EmploymentType;
-import org.springframework.security.access.prepost.PreAuthorize;
-import com.skillrat.user.security.B2BUnitAccessValidator;
-import com.skillrat.user.service.EmployeeService;
 import com.skillrat.user.dto.EmployeeSummaryDto;
 import com.skillrat.user.dto.PageResponse;
 import com.skillrat.user.dto.UserBriefDto;
+import com.skillrat.user.security.B2BUnitAccessValidator;
+import com.skillrat.user.service.EmployeeService;
+
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
-
-import java.time.LocalDate;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/admin/employees")
@@ -59,7 +69,7 @@ public class AdminEmployeeController {
     // Employee details
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Employee> get(@PathVariable("id") UUID id) {
+    public ResponseEntity<Employee> get(@PathVariable("id") @NonNull UUID id) {
         return employeeService.getById(id)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
@@ -96,7 +106,7 @@ public class AdminEmployeeController {
     // Update employee
     @PutMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Employee> update(@PathVariable("id") UUID id, @RequestBody UpdateEmployeeRequest req) {
+    public ResponseEntity<Employee> update(@PathVariable("id") @NonNull UUID id, @RequestBody UpdateEmployeeRequest req) {
         Employee e = employeeService.update(
                 id,
                 req.firstName,
@@ -113,7 +123,7 @@ public class AdminEmployeeController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteUser(@PathVariable UUID id) {
+    public ResponseEntity<String> deleteUser(@PathVariable @NonNull UUID id) {
         employeeService.deleteUser(id);
         return ResponseEntity.ok("User deleted successfully");
     }

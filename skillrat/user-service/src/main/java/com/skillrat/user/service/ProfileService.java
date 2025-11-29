@@ -2,6 +2,8 @@ package com.skillrat.user.service;
 
 import com.skillrat.user.domain.*;
 import com.skillrat.user.repo.*;
+
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -83,7 +85,7 @@ public class ProfileService {
     }
 
     @Transactional
-    public Optional<ProfileExperience> requestVerification(UUID expId, UUID verifierB2bUnitId, String email) {
+    public Optional<ProfileExperience> requestVerification(@NonNull UUID expId, UUID verifierB2bUnitId, String email) {
         UUID userId = currentUserIdByEmail(email);
         return experienceRepository.findById(expId).map(e -> {
             if (e.getUser() == null || !e.getUser().getId().equals(userId)) throw new IllegalArgumentException("Cannot request verification for other user's experience");
@@ -96,7 +98,7 @@ public class ProfileService {
     }
 
     @Transactional
-    public Optional<ProfileExperience> verifyExperience(UUID expId, boolean approve, String verifierEmail) {
+    public Optional<ProfileExperience> verifyExperience(@NonNull UUID expId, boolean approve, String verifierEmail) {
         UUID callerB2B = currentUserB2BUnitIdByEmail(verifierEmail);
         return experienceRepository.findById(expId).map(e -> {
             UUID verifierUnitId = e.getVerifierB2bUnit() != null ? e.getVerifierB2bUnit().getId() : null;
@@ -113,7 +115,8 @@ public class ProfileService {
     }
 
     // Skills
-    @Transactional
+    @SuppressWarnings("null")
+	@Transactional
     public UserSkill addSkill(String email, String name, String level) {
         UUID userId = currentUserIdByEmail(email);
         UserSkill s = new UserSkill();
@@ -136,7 +139,7 @@ public class ProfileService {
     }
 
     @Transactional
-    public void deleteSkill(String email, UUID skillId) {
+    public void deleteSkill(String email, @NonNull UUID skillId) {
         UUID userId = currentUserIdByEmail(email);
         skillRepository.findById(skillId).ifPresent(s -> {
             if (!s.getUserId().equals(userId)) throw new IllegalArgumentException("Cannot delete others' skill");
@@ -145,7 +148,8 @@ public class ProfileService {
     }
 
     // Education
-    @Transactional
+    @SuppressWarnings("null")
+	@Transactional
     public Education addEducation(String email, String institution, String degree, String fieldOfStudy, java.time.LocalDate start, java.time.LocalDate end) {
         UUID userId = currentUserIdByEmail(email);
         Education ed = new Education();
@@ -171,7 +175,8 @@ public class ProfileService {
     }
 
     // Titles
-    @Transactional
+    @SuppressWarnings("null")
+	@Transactional
     public TitleRecord addTitle(String email, String title, java.time.LocalDate start, java.time.LocalDate end) {
         UUID userId = currentUserIdByEmail(email);
         TitleRecord t = new TitleRecord();

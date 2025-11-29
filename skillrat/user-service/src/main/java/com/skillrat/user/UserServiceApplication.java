@@ -1,33 +1,27 @@
 package com.skillrat.user;
 
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
-import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.cloud.openfeign.EnableFeignClients;
+import org.springframework.context.annotation.Bean;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.scheduling.annotation.EnableAsync;
 
-import com.skillrat.user.domain.User;
-import com.skillrat.user.domain.Employee;
-import com.skillrat.user.domain.Role;
-import com.skillrat.user.domain.ProfileExperience;
 import com.skillrat.user.domain.Education;
-import com.skillrat.user.domain.UserSkill;
+import com.skillrat.user.domain.Employee;
+import com.skillrat.user.domain.ProfileExperience;
+import com.skillrat.user.domain.Role;
 import com.skillrat.user.domain.TitleRecord;
+import com.skillrat.user.domain.User;
+import com.skillrat.user.domain.UserSkill;
 import com.skillrat.user.organisation.domain.B2BUnit;
 import com.skillrat.user.organisation.domain.B2BUnitStatus;
 import com.skillrat.user.organisation.domain.B2BUnitType;
 import com.skillrat.user.organisation.repo.B2BUnitRepository;
-import com.skillrat.user.repo.UserRepository;
-import com.skillrat.user.repo.RoleRepository;
-import com.skillrat.user.repo.ProfileExperienceRepository;
-import com.skillrat.user.repo.UserSkillRepository;
-import com.skillrat.user.repo.EducationRepository;
-import com.skillrat.user.repo.TitleRecordRepository;
-import org.springframework.boot.CommandLineRunner;
-import org.springframework.context.annotation.Bean;
 
 @EnableDiscoveryClient
 @EnableFeignClients(basePackages = "com.skillrat.user.client")

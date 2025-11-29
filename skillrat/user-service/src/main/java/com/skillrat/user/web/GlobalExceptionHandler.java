@@ -17,7 +17,8 @@ import java.util.stream.Collectors;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(MethodArgumentNotValidException.class)
+    @SuppressWarnings("null")
+	@ExceptionHandler(MethodArgumentNotValidException.class)
     public ProblemDetail handleValidation(MethodArgumentNotValidException ex) {
         ProblemDetail pd = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
         pd.setTitle("Validation failed");
@@ -30,7 +31,8 @@ public class GlobalExceptionHandler {
         return pd;
     }
 
-    @ExceptionHandler(ConstraintViolationException.class)
+    @SuppressWarnings("null")
+	@ExceptionHandler(ConstraintViolationException.class)
     public ProblemDetail handleConstraint(ConstraintViolationException ex) {
         ProblemDetail pd = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
         pd.setTitle("Constraint violation");
@@ -40,7 +42,8 @@ public class GlobalExceptionHandler {
         return pd;
     }
 
-    @ExceptionHandler(IllegalArgumentException.class)
+    @SuppressWarnings("null")
+	@ExceptionHandler(IllegalArgumentException.class)
     public ProblemDetail handleIllegalArgument(IllegalArgumentException ex) {
         ProblemDetail pd = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
         pd.setTitle("Bad request");
@@ -50,7 +53,8 @@ public class GlobalExceptionHandler {
         return pd;
     }
 
-    @ExceptionHandler(EntityNotFoundException.class)
+    @SuppressWarnings("null")
+	@ExceptionHandler(EntityNotFoundException.class)
     public ProblemDetail handleNotFound(EntityNotFoundException ex) {
         ProblemDetail pd = ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
         pd.setTitle("Not found");
@@ -60,7 +64,8 @@ public class GlobalExceptionHandler {
         return pd;
     }
 
-    @ExceptionHandler(AccessDeniedException.class)
+    @SuppressWarnings("null")
+	@ExceptionHandler(AccessDeniedException.class)
     public ProblemDetail handleAccessDenied(AccessDeniedException ex) {
         ProblemDetail pd = ProblemDetail.forStatus(HttpStatus.FORBIDDEN);
         pd.setTitle("Forbidden");
@@ -70,7 +75,8 @@ public class GlobalExceptionHandler {
         return pd;
     }
 
-    @ExceptionHandler(OAuth2AuthenticationException.class)
+    @SuppressWarnings("null")
+	@ExceptionHandler(OAuth2AuthenticationException.class)
     public ProblemDetail handleOAuth2(OAuth2AuthenticationException ex) {
         ProblemDetail pd = ProblemDetail.forStatus(HttpStatus.UNAUTHORIZED);
         pd.setTitle("Unauthorized");
@@ -80,7 +86,8 @@ public class GlobalExceptionHandler {
         return pd;
     }
 
-    @ExceptionHandler(Exception.class)
+    @SuppressWarnings("null")
+	@ExceptionHandler(Exception.class)
     public ProblemDetail handleGeneric(Exception ex) {
         ProblemDetail pd = ProblemDetail.forStatus(HttpStatus.INTERNAL_SERVER_ERROR);
         pd.setTitle("Internal error");

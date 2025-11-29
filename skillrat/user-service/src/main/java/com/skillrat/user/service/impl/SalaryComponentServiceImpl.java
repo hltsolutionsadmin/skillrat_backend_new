@@ -4,6 +4,8 @@ import com.skillrat.user.repo.SalaryComponentDao;
 import com.skillrat.user.dto.SalaryComponentDto;
 import com.skillrat.user.domain.SalaryComponent;
 import com.skillrat.user.service.SalaryComponentService;
+
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,7 +23,8 @@ public class SalaryComponentServiceImpl implements SalaryComponentService {
         this.dao = dao;
     }
 
-    @Override
+    @SuppressWarnings("null")
+	@Override
     public SalaryComponentDto create(SalaryComponentDto dto) {
         dao.findByCodeIgnoreCase(dto.getCode()).ifPresent(x -> { throw new IllegalArgumentException("Component code already exists"); });
         SalaryComponent sc = SalaryComponent.builder()
@@ -49,8 +52,9 @@ public class SalaryComponentServiceImpl implements SalaryComponentService {
                 .build()).collect(Collectors.toList());
     }
 
-    @Override
-    public SalaryComponentDto update(UUID id, SalaryComponentDto dto) {
+    @SuppressWarnings("null")
+	@Override
+    public SalaryComponentDto update(@NonNull UUID id, SalaryComponentDto dto) {
         SalaryComponent sc = dao.findById(id).orElseThrow(() -> new IllegalArgumentException("Salary component not found"));
 if (dto.getName() != null) sc.setName(dto.getName());
         if (dto.getCode() != null) sc.setCode(dto.getCode());
@@ -68,8 +72,9 @@ if (dto.getName() != null) sc.setName(dto.getName());
                 .build();
     }
 
-    @Override
-    public void delete(UUID id) {
+    @SuppressWarnings("null")
+	@Override
+    public void delete(@NonNull UUID id) {
         dao.deleteById(id);
     }
 }

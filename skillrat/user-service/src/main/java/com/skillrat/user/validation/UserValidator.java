@@ -1,11 +1,12 @@
 package com.skillrat.user.validation;
 
-import com.skillrat.user.repo.UserRepository;
-import lombok.RequiredArgsConstructor;
+import java.util.UUID;
+
 import org.springframework.stereotype.Component;
 
-import java.util.Optional;
-import java.util.UUID;
+import com.skillrat.user.repo.UserRepository;
+
+import lombok.RequiredArgsConstructor;
 
 @Component
 @RequiredArgsConstructor

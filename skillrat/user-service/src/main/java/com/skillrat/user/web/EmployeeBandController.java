@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.NonNull;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,19 +45,19 @@ public class EmployeeBandController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<EmployeeOrgBand> getBand(@PathVariable UUID id) {
+    public ResponseEntity<EmployeeOrgBand> getBand(@PathVariable @NonNull UUID id) {
         return ResponseEntity.ok(service.getBand(id));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<EmployeeOrgBand> updateBand(
-            @PathVariable UUID id,
+            @PathVariable @NonNull UUID id,
             @RequestBody EmployeeOrgBand orgBand) {
         return ResponseEntity.ok(service.updateBand(id, orgBand));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteBand(@PathVariable UUID id) {
+    public ResponseEntity<Void> deleteBand(@PathVariable @NonNull UUID id) {
         service.deleteBand(id);
         return ResponseEntity.noContent().build();
     }

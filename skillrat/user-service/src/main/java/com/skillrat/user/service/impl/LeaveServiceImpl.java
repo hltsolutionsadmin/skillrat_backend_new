@@ -1,17 +1,19 @@
 package com.skillrat.user.service.impl;
 
-import com.skillrat.user.domain.LeaveStatus;
-import com.skillrat.user.dto.LeaveDTO;
-import com.skillrat.user.repo.EmployeeLeaveDao;
-import com.skillrat.user.domain.EmployeeLeave;
-import com.skillrat.user.service.LeaveService;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
+import org.springframework.lang.NonNull;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.skillrat.user.domain.EmployeeLeave;
+import com.skillrat.user.domain.LeaveStatus;
+import com.skillrat.user.dto.LeaveDTO;
+import com.skillrat.user.repo.EmployeeLeaveDao;
+import com.skillrat.user.service.LeaveService;
 
 @Service
 @Transactional
@@ -23,7 +25,8 @@ public class LeaveServiceImpl implements LeaveService {
         this.leaveDao = leaveDao;
     }
 
-    @Override
+    @SuppressWarnings("null")
+	@Override
     public LeaveDTO apply(LeaveDTO req) {
         if (req.getStartDate().isAfter(req.getEndDate())) {
             throw new IllegalArgumentException("startDate must be on/before endDate");
@@ -41,8 +44,9 @@ public class LeaveServiceImpl implements LeaveService {
         return toResp(el);
     }
 
-    @Override
-    public LeaveDTO approve(UUID id) {
+    @SuppressWarnings("null")
+	@Override
+    public LeaveDTO approve(@NonNull UUID id) {
         EmployeeLeave el = leaveDao.findById(id).orElseThrow(() -> new IllegalArgumentException("Leave not found"));
         if (el.getStatus() == LeaveStatus.REJECTED) {
             throw new IllegalStateException("Cannot approve a rejected leave");
@@ -52,8 +56,9 @@ public class LeaveServiceImpl implements LeaveService {
         return toResp(el);
     }
 
-    @Override
-    public LeaveDTO reject(UUID id) {
+    @SuppressWarnings("null")
+	@Override
+    public LeaveDTO reject(@NonNull UUID id) {
         EmployeeLeave el = leaveDao.findById(id).orElseThrow(() -> new IllegalArgumentException("Leave not found"));
         if (el.getStatus() == LeaveStatus.APPROVED) {
             throw new IllegalStateException("Cannot reject an approved leave");

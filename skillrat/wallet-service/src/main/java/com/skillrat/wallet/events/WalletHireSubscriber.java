@@ -1,92 +1,89 @@
 package com.skillrat.wallet.events;
 
+import java.time.Duration;
+
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.connection.MessageListener;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
-
-import org.springframework.data.redis.listener.ChannelTopic;
-
-import org.springframework.data.redis.listener.PatternTopic;
-
-import org.springframework.data.redis.listener.RedisMessageListenerContainer;
-
 import org.springframework.data.redis.core.StringRedisTemplate;
-
+import org.springframework.data.redis.listener.PatternTopic;
+import org.springframework.data.redis.listener.RedisMessageListenerContainer;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
-
-import java.time.Duration;
 
 @Configuration
 class WalletRedisConfig {
 
-    @Bean
+	@Bean
 
-    @ConditionalOnProperty(prefix = "wallet.events.redis", name = "enabled", havingValue = "true", matchIfMissing = false)
-    RedisMessageListenerContainer listenerContainer(RedisConnectionFactory connectionFactory, MessageListener walletListener) {
+	@ConditionalOnProperty(prefix = "wallet.events.redis", name = "enabled", havingValue = "true", matchIfMissing = false)
+	RedisMessageListenerContainer listenerContainer(@NonNull RedisConnectionFactory connectionFactory,
+			@NonNull MessageListener walletListener) {
 
-        RedisMessageListenerContainer container = new RedisMessageListenerContainer();
+		RedisMessageListenerContainer container = new RedisMessageListenerContainer();
 
-        container.setConnectionFactory(connectionFactory);
+		container.setConnectionFactory(connectionFactory);
 
-        container.addMessageListener(walletListener, new PatternTopic("tenant:*:events:placement:hire"));
+		container.addMessageListener(walletListener, new PatternTopic("tenant:*:events:placement:hire"));
 
-        return container;
+		return container;
 
-    }
+	}
 
 }
 
 @Component
 class WalletHireListener implements MessageListener {
 
-    private final StringRedisTemplate redisTemplate;
+	private final StringRedisTemplate redisTemplate;
 
-    public WalletHireListener(StringRedisTemplate redisTemplate) {
+	public WalletHireListener(StringRedisTemplate redisTemplate) {
 
-        this.redisTemplate = redisTemplate;
+		this.redisTemplate = redisTemplate;
 
-    }
+	}
 
-    @Override
+	@SuppressWarnings("null")
+	@Override
 
-    public void onMessage(Message message, byte[] pattern) {
+	public void onMessage(Message message, byte[] pattern) {
 
-        String payload = message.toString();
+		String payload = message.toString();
 
-        String[] parts = payload.split(",");
+		String[] parts = payload.split(",");
 
-        if (parts.length < 3) return;
+		if (parts.length < 3)
+			return;
 
-        String placementId = parts[0];
+		String placementId = parts[0];
 
-        String userId = parts[1];
+		String userId = parts[1];
 
-        String amount = parts[2];
+		String amount = parts[2];
 
-        String lockKey = "lock:wallet:credit:" + userId + ":" + placementId;
+		String lockKey = "lock:wallet:credit:" + userId + ":" + placementId;
 
-        Boolean acquired = redisTemplate.opsForValue().setIfAbsent(lockKey, "1", Duration.ofSeconds(30));
+		Boolean acquired = redisTemplate.opsForValue().setIfAbsent(lockKey, "1", Duration.ofSeconds(30));
 
-        if (Boolean.TRUE.equals(acquired)) {
+		if (Boolean.TRUE.equals(acquired)) {
 
-            try {
+			try {
 
-                // credit wallet - scaffold placeholder
+				// credit wallet - scaffold placeholder
 
-                redisTemplate.opsForValue().increment("wallet:balance:" + userId, Long.parseLong(amount));
+				redisTemplate.opsForValue().increment("wallet:balance:" + userId, Long.parseLong(amount));
 
-            } finally {
+			} finally {
 
-                redisTemplate.delete(lockKey);
+				redisTemplate.delete(lockKey);
 
-            }
+			}
 
-        }
+		}
 
-    }
+	}
 
 }
-

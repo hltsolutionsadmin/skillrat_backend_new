@@ -1,21 +1,30 @@
 package com.skillrat.user.web;
 
-import com.skillrat.user.domain.Employee;
-import com.skillrat.user.domain.User;
-import com.skillrat.user.security.B2BUnitAccessValidator;
-import com.skillrat.user.service.UserService;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
+import java.util.List;
+import java.util.UUID;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.NonNull;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-import java.util.UUID;
+import com.skillrat.user.domain.User;
+import com.skillrat.user.security.B2BUnitAccessValidator;
+import com.skillrat.user.service.UserService;
+
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 
 @RestController
 @RequestMapping("/api/admin/users")
@@ -41,7 +50,7 @@ public class AdminUserController {
 
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<User> get(@PathVariable("id") UUID id) {
+    public ResponseEntity<User> get(@PathVariable("id") @NonNull UUID id) {
         return userService.getById(id)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());

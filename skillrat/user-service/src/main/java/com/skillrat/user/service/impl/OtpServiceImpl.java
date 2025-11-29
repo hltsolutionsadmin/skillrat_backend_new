@@ -22,7 +22,6 @@ public class OtpServiceImpl implements OtpService {
     // In-memory storage for OTPs with expiration (in a production environment, consider using Redis)
     private final Map<String, OtpData> otpStorage = new ConcurrentHashMap<>();
     private static final long OTP_VALID_DURATION = 5; // 5 minutes
-    private static final int OTP_LENGTH = 6;
     private final Random random = new Random();
 
     @Override

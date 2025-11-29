@@ -32,7 +32,8 @@ public class SalaryStructureServiceImpl implements SalaryStructureService {
         this.componentDao = componentDao;
     }
 
-    @Override
+    @SuppressWarnings("null")
+	@Override
     public SalaryStructureDtos.StructureResponse upsert(SalaryStructureDtos.UpsertRequest req) {
         // Create new structure version
         com.skillrat.user.domain.Employee empRef = new com.skillrat.user.domain.Employee();

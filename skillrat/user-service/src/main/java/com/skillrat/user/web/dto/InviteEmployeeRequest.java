@@ -1,16 +1,17 @@
 package com.skillrat.user.web.dto;
 
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
-
 import java.util.List;
 import java.util.UUID;
 
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
 public class InviteEmployeeRequest {
-    @NotBlank public String firstName;
-    @NotBlank public String lastName;
-    @NotBlank @Email public String email;
-    public String mobile;
-    @NotEmpty public List<UUID> roleIds;
+    private String firstName;
+    private String lastName;
+    private String email;
+    private String mobile;
+    private List<UUID> roleIds;
 }

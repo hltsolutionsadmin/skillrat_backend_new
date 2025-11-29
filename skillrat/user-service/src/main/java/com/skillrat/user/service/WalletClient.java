@@ -1,6 +1,9 @@
 package com.skillrat.user.service;
 
-import com.skillrat.common.tenant.TenantContext;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -8,11 +11,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
 
 @Component
 public class WalletClient {
@@ -25,7 +23,8 @@ public class WalletClient {
         this.restTemplate = restTemplate;
     }
 
-    public int award(UUID userId, String tenantId, String category, String reason, UUID relatedId) {
+    @SuppressWarnings({ "null", "rawtypes" })
+	public int award(UUID userId, String tenantId, String category, String reason, UUID relatedId) {
         try {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);

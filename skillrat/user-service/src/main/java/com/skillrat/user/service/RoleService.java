@@ -6,12 +6,12 @@ import com.skillrat.user.domain.Permission;
 import com.skillrat.user.domain.Role;
 import com.skillrat.user.repo.RoleRepository;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.lang.NonNull;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -100,7 +100,7 @@ public class RoleService {
      * Get role by ID
      */
     @Transactional(readOnly = true)
-    public Role getRoleById(UUID roleId) {
+    public Role getRoleById(@NonNull UUID roleId) {
         return roleRepository.findById(roleId)
             .orElseThrow(() -> new ResourceNotFoundException("Role not found with id: " + roleId));
     }
@@ -151,7 +151,7 @@ public class RoleService {
      * Update an existing role
      */
     @Transactional
-    public Role updateRole(UUID roleId, String name, String description) {
+    public Role updateRole(@NonNull UUID roleId, String name, String description) {
         Role role = getRoleById(roleId);
         
         if (DEFAULT_ROLES.contains(role.getName())) {
@@ -168,7 +168,7 @@ public class RoleService {
      * Delete a role
      */
     @Transactional
-    public void deleteRole(UUID roleId) {
+    public void deleteRole(@NonNull UUID roleId) {
         Role role = getRoleById(roleId);
         
         if (DEFAULT_ROLES.contains(role.getName())) {

@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -12,13 +13,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.lang.NonNull;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import com.skillrat.user.web.dto.InviteEmployeeRequest;
 import com.skillrat.common.dto.UserDTO;
 import com.skillrat.common.tenant.TenantContext;
 import com.skillrat.user.domain.Employee;
@@ -235,7 +238,7 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
-    public Optional<User> getById(UUID id) {
+    public Optional<User> getById(@NonNull UUID id) {
         Optional<User> userOpt = userRepository.findById(id);
         userOpt.ifPresentOrElse(
             user -> log.debug("Found user by id: {}", id),
@@ -247,7 +250,6 @@ public class UserService {
     @Transactional(readOnly = true)
     public Page<User> searchUsers(UUID b2bUnitId, String q, String role, Pageable pageable) {
         String query = (q == null || q.isBlank()) ? null : q.trim();
-        String roleName = (role == null || role.isBlank() || "All".equalsIgnoreCase(role)) ? null : role.trim();
        return userRepository.search(b2bUnitId, query, "BUSINESS_ADMIN", pageable);
     }
 
@@ -328,22 +330,23 @@ public class UserService {
         return saved;
     }
 
-    @Transactional
-    public Employee inviteEmployee(UUID b2bUnitId, com.skillrat.user.web.dto.InviteEmployeeRequest req) {
+    @SuppressWarnings("null")
+	@Transactional
+    public Employee inviteEmployee(UUID b2bUnitId, InviteEmployeeRequest req) {
         String tenantId = Optional.ofNullable(TenantContext.getTenantId()).orElse("default");
         
         // Check if email already exists
-        userRepository.findByEmailIgnoreCase(req.email).ifPresent(u -> { 
+        userRepository.findByEmailIgnoreCase(req.getEmail()).ifPresent(u -> { 
             throw new IllegalArgumentException("Email already in use"); 
         });
         
         // Create new employee
         Employee emp = new Employee();
-        emp.setFirstName(req.firstName);
-        emp.setLastName(req.lastName);
-        emp.setUsername(req.email.toLowerCase());
-        emp.setEmail(req.email.toLowerCase());
-        emp.setMobile(req.mobile);
+        emp.setFirstName(req.getFirstName());
+        emp.setLastName(req.getLastName());
+        emp.setUsername(req.getEmail().toLowerCase());
+        emp.setEmail(req.getEmail().toLowerCase());
+        emp.setMobile(req.getMobile());
         emp.setEmployeeCode("EMP-" + UUID.randomUUID().toString().substring(0, 8));
         emp.setPasswordHash(passwordEncoder.encode(UUID.randomUUID().toString()));
         emp.setActive(true);
@@ -357,8 +360,8 @@ public class UserService {
         Set<Role> roles = new HashSet<>();
         
         // Add specified roles if any
-        if (req.roleIds != null && !req.roleIds.isEmpty()) {
-            Set<Role> specifiedRoles = new HashSet<>(roleRepository.findAllById(req.roleIds));
+        if (Objects.nonNull(req.getRoleIds())) {
+            Set<Role> specifiedRoles = new HashSet<>(roleRepository.findAllById(req.getRoleIds()));
             roles.addAll(specifiedRoles);
         }
         
@@ -382,8 +385,7 @@ public class UserService {
         if (auth != null) {
             String actor = auth.getName();
             Object principal = auth.getPrincipal();
-            if (principal instanceof Jwt) {
-                Jwt jwt = (Jwt) principal;
+            if (principal instanceof Jwt jwt) {
                 String emailClaim = jwt.getClaimAsString("email");
                 if (emailClaim != null && !emailClaim.isBlank()) {
                     actor = emailClaim;
@@ -404,8 +406,6 @@ public class UserService {
             savedEmployee.getEmployeeCode(),
             b2bUnitId, 
             tenantId);
-            
-        // TODO: Send invitation email with setup token
         
         return savedEmployee;
     }
@@ -419,28 +419,6 @@ public class UserService {
                 Role role = new Role(roleName, description, b2bUnitId);
                 return roleRepository.save(role);
             });
-    }
-    
-    /**
-     * Get default roles for a business unit
-     */
-    private Set<Role> getDefaultRoles(UUID b2bUnitId) {
-        Set<Role> roles = new HashSet<>();
-        
-        // Get or create ROLE_EMPLOYEE for the specific business unit
-        Role employeeRole = roleRepository.findByNameAndB2bUnitId("ROLE_EMPLOYEE", b2bUnitId)
-            .orElseGet(() -> {
-                Role role = new Role("ROLE_EMPLOYEE", "Employee role with basic access", b2bUnitId);
-                return roleRepository.save(role);
-            });
-        roles.add(employeeRole);
-        
-        // Get global ROLE_USER (must be pre-seeded by initializer)
-        Role userRole = roleRepository.findByName("ROLE_USER")
-            .orElseThrow(() -> new IllegalStateException("Required role ROLE_USER is not initialized"));
-        roles.add(userRole);
-        
-        return roles;
     }
 
     @Transactional
@@ -487,17 +465,15 @@ public class UserService {
         log.info("Password setup completed successfully for user id={}, email={}", 
             user.getId(), user.getEmail());
             
-        // TODO: Send confirmation email to the user
-        
         return true;
     }
 
     @Transactional(readOnly = true)
-    public UserDTO getUserById(UUID userId) throws Exception {
+    public UserDTO getUserById(@NonNull UUID userId) throws UsernameNotFoundException {
         UserDTO userDTO=new UserDTO();
         Optional<User> user=userRepository.findById(userId);
         if(!user.isPresent()){
-          throw new Exception("User not found with id: " + userId);  
+          throw new UsernameNotFoundException("User not found with id: " + userId);  
         }
         populateUser(userDTO,user.get());
         return userDTO;

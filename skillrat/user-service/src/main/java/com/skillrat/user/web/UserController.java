@@ -1,35 +1,43 @@
 package com.skillrat.user.web;
 
-import com.skillrat.common.dto.UserDTO;
-import com.skillrat.user.domain.User;
-import com.skillrat.user.domain.Employee;
-import com.skillrat.user.service.UserService;
-import com.skillrat.user.service.OrganisationClient;
-import com.skillrat.user.service.OtpService;
-import com.skillrat.user.web.dto.OtpRequest;
-import com.skillrat.user.web.dto.OtpVerificationRequest;
-import com.skillrat.user.web.dto.SignupRequest;
-import com.skillrat.user.web.dto.LoginRequest;
-import com.skillrat.user.web.dto.CreateBusinessAdminRequest;
-import com.skillrat.user.web.dto.AssignBusinessAdminRequest;
-import com.skillrat.user.web.dto.InviteEmployeeRequest;
-import com.skillrat.user.web.dto.SetupPasswordRequest;
-import com.skillrat.user.web.dto.IdsRequest;
-import com.skillrat.user.validation.UserValidator;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
-import lombok.extern.slf4j.Slf4j;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.UUID;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.lang.NonNull;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
-import com.skillrat.user.security.RequiresBusinessOrHrAdmin;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.*;
+import com.skillrat.common.dto.UserDTO;
+import com.skillrat.user.domain.Employee;
+import com.skillrat.user.domain.User;
+import com.skillrat.user.security.RequiresBusinessOrHrAdmin;
+import com.skillrat.user.service.OrganisationClient;
+import com.skillrat.user.service.OtpService;
+import com.skillrat.user.service.UserService;
+import com.skillrat.user.validation.UserValidator;
+import com.skillrat.user.web.dto.IdsRequest;
+import com.skillrat.user.web.dto.InviteEmployeeRequest;
+import com.skillrat.user.web.dto.LoginRequest;
+import com.skillrat.user.web.dto.OtpRequest;
+import com.skillrat.user.web.dto.OtpVerificationRequest;
+import com.skillrat.user.web.dto.SetupPasswordRequest;
+import com.skillrat.user.web.dto.SignupRequest;
+
+import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @RequestMapping("/api/users")
@@ -223,7 +231,7 @@ public class UserController {
     @RequiresBusinessOrHrAdmin
     public ResponseEntity<UserDTO> inviteEmployee(@PathVariable("b2bUnitId") UUID b2bUnitId,
                                                   @RequestBody InviteEmployeeRequest req) {
-        userValidator.validateInviteEmployee(req.email);
+        userValidator.validateInviteEmployee(req.getEmail());
         Employee e = userService.inviteEmployee(b2bUnitId, req);
         UserDTO dto = new UserDTO();
         dto.setId(e.getId());
@@ -255,7 +263,7 @@ public class UserController {
 
     @GetMapping("/{userId}")
     @PreAuthorize("isAuthenticated()")
-    public UserDTO getUserById(@PathVariable("userId") UUID userId) throws Exception {
+    public UserDTO getUserById(@PathVariable("userId") @NonNull UUID userId) throws Exception {
         return userService.getUserById(userId);
     }
 

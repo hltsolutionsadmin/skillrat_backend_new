@@ -8,6 +8,8 @@ import com.skillrat.user.repo.ProjectUserRoleRepository;
 import com.skillrat.user.repo.RoleRepository;
 import com.skillrat.user.repo.UserRepository;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.slf4j.Logger;
@@ -33,7 +35,7 @@ public class ProjectRoleService {
      * Assign a role to a user in a specific project
      */
     @Transactional
-    public ProjectUserRole assignRoleToUser(UUID userId, UUID projectId, String roleName, String assignedBy) {
+    public ProjectUserRole assignRoleToUser(@NonNull UUID userId, UUID projectId, String roleName, String assignedBy) {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
             
@@ -58,7 +60,7 @@ public class ProjectRoleService {
      * Remove a role from a user in a specific project
      */
     @Transactional
-    public void removeRoleFromUser(UUID userId, UUID projectId, String roleName) {
+    public void removeRoleFromUser(@NonNull UUID userId, UUID projectId, String roleName) {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
             
@@ -129,7 +131,7 @@ public class ProjectRoleService {
      * Remove all role assignments for a user in a project
      */
     @Transactional
-    public void removeAllRolesFromUserInProject(UUID userId, UUID projectId) {
+    public void removeAllRolesFromUserInProject(@NonNull UUID userId, UUID projectId) {
         projectUserRoleRepository.deleteByUserAndProjectId(
             userRepository.getReferenceById(userId), 
             projectId
@@ -148,7 +150,7 @@ public class ProjectRoleService {
      * Update a user's roles in a project (replaces all existing roles)
      */
     @Transactional
-    public void updateUserRolesInProject(UUID userId, UUID projectId, List<String> roleNames, String assignedBy) {
+    public void updateUserRolesInProject(@NonNull UUID userId, UUID projectId, List<String> roleNames, String assignedBy) {
         // Remove all existing roles
         removeAllRolesFromUserInProject(userId, projectId);
         
