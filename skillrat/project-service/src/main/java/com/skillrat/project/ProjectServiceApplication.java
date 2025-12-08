@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
 @SpringBootApplication
 @EnableDiscoveryClient
-@EnableJpaAuditing(auditorAwareRef = "auditorAware")
+@EnableJpaAuditing
 @EnableFeignClients(basePackages = "com.skillrat.project.client")
 public class ProjectServiceApplication {
     public static void main(String[] args) {
