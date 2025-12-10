@@ -34,22 +34,4 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable());
         return http.build();
     }
-
-    @Bean
-    public OpaqueTokenIntrospector introspector() {
-        NimbusOpaqueTokenIntrospector delegate = new NimbusOpaqueTokenIntrospector(introspectionUri, clientId, clientSecret);
-        return token -> {
-            OAuth2AuthenticatedPrincipal principal = delegate.introspect(token);
-            Collection<GrantedAuthority> authorities = new ArrayList<>(principal.getAuthorities());
-            List<String> roles = principal.getAttribute("roles");
-            if (roles != null) {
-                for (String r : roles) {
-                    if (r != null && !r.isBlank()) {
-                        authorities.add(new SimpleGrantedAuthority("ROLE_" + r));
-                    }
-                }
-            }
-            return new OAuth2IntrospectionAuthenticatedPrincipal(principal.getName(), principal.getAttributes(), authorities);
-        };
-    }
 }

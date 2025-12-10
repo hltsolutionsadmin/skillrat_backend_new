@@ -33,27 +33,8 @@ public class SecurityConfig {
         http.authorizeHttpRequests(auth -> auth
                         .requestMatchers("/actuator/**").permitAll()
                         .requestMatchers("/api/openings/*/apply", "/api/openings/public/**", "/api/openings/*").permitAll()
-                        .anyRequest().authenticated())
-                .oauth2ResourceServer(oauth -> oauth.opaqueToken(opaque -> opaque.introspector(introspector())))
+                        .anyRequest().permitAll())
                 .csrf(csrf -> csrf.disable());
         return http.build();
-    }
-
-    @Bean
-    public OpaqueTokenIntrospector introspector() {
-        NimbusOpaqueTokenIntrospector delegate = new NimbusOpaqueTokenIntrospector(introspectionUri, clientId, clientSecret);
-        return token -> {
-            OAuth2AuthenticatedPrincipal principal = delegate.introspect(token);
-            Collection<GrantedAuthority> authorities = new ArrayList<>(principal.getAuthorities());
-            List<String> roles = principal.getAttribute("roles");
-            if (roles != null) {
-                for (String r : roles) {
-                    if (r != null && !r.isBlank()) {
-                        authorities.add(new SimpleGrantedAuthority("ROLE_" + r));
-                    }
-                }
-            }
-            return new OAuth2IntrospectionAuthenticatedPrincipal(principal.getName(), principal.getAttributes(), authorities);
-        };
     }
 }

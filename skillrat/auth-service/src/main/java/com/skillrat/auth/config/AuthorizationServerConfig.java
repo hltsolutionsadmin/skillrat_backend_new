@@ -110,9 +110,10 @@ public class AuthorizationServerConfig {
             .authorizeHttpRequests(auth -> auth
                     .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/actuator/**", "/oauth/check_token", "/oauth/dev/**").permitAll()
+                .requestMatchers("/.well-known/**", "/oauth2/**").permitAll()
                 .anyRequest().authenticated())
-            .csrf(csrf -> csrf.ignoringRequestMatchers("/oauth/check_token", "/oauth/dev/**"))
-            .formLogin(Customizer.withDefaults());
+            .csrf(csrf -> csrf.ignoringRequestMatchers("/oauth/check_token", "/oauth/dev/**", "/.well-known/**", "/oauth2/**"))
+            .formLogin(form -> form.disable());
         return http.build();
     }
 

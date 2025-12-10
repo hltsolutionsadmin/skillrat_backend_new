@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -31,37 +32,13 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/actuator/**").permitAll()
-                        .anyRequest().authenticated())
-                .oauth2ResourceServer(oauth -> oauth
-                        .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthConverter())))
+                        .anyRequest().permitAll())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .csrf(csrf -> csrf.disable());
+                .csrf(AbstractHttpConfigurer::disable);
         return http.build();
     }
 
-    @Bean
-    public JwtAuthenticationConverter jwtAuthConverter() {
-        JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
-        JwtGrantedAuthoritiesConverter scopes = new JwtGrantedAuthoritiesConverter();
-        converter.setJwtGrantedAuthoritiesConverter(jwt -> {
-            Collection<GrantedAuthority> scopeAuth = scopes.convert(jwt);
-            Collection<GrantedAuthority> roleAuth = rolesFromClaim(jwt, "roles");
-            java.util.ArrayList<GrantedAuthority> all = new java.util.ArrayList<>();
-            if (scopeAuth != null) all.addAll(scopeAuth);
-            if (roleAuth != null) all.addAll(roleAuth);
-            return all;
-        });
-        return converter;
-    }
-
-    private Collection<GrantedAuthority> rolesFromClaim(Jwt jwt, String claim) {
-        List<String> roles = jwt.getClaim(claim);
-        if (roles == null) return java.util.List.of();
-        return roles.stream()
-                .filter(r -> r != null && !r.isBlank())
-                .map(r -> new SimpleGrantedAuthority("ROLE_" + r))
-                .collect(Collectors.toList());
-    }
+    
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
