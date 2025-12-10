@@ -1,0 +1,5 @@
+spring:
+  profiles: local
+logging:
+  level:
+    root: INFO
