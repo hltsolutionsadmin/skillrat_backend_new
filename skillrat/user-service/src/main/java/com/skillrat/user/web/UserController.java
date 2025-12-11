@@ -118,7 +118,6 @@ public class UserController {
     }
 
     @GetMapping("/me")
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> me(Authentication auth) {
         return userService.findByEmail(auth.getName())
                 .<ResponseEntity<?>>map(u -> ResponseEntity.ok(Map.of(

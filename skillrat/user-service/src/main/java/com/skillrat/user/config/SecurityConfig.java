@@ -48,9 +48,27 @@ public class SecurityConfig {
             // Configure session management to be stateless
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             
+            // Configure OAuth2 resource server for JWT validation
+            .oauth2ResourceServer(oauth2 -> oauth2
+                .jwt(jwt -> jwt.jwkSetUri(jwkSetUri))
+            )
+            
             // Configure authorization rules
             .authorizeHttpRequests(auth -> auth
-                .anyRequest().permitAll()
+                // Public endpoints
+                .requestMatchers(
+                    "/api/users/signup",
+                    "/api/users/login",
+                    "/api/users/otp/**",
+                    "/api/users/password/reset/**",
+                    "/swagger-ui/**",
+                    "/v3/api-docs/**",
+                    "/swagger-resources/**",
+                    "/webjars/**"
+                ).permitAll()
+                
+                // All other endpoints require authentication
+                .anyRequest().authenticated()
             );
             
         return http.build();

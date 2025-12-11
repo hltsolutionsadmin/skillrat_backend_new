@@ -484,6 +484,16 @@ public class UserService {
         userDTO.setFirstName(user.getFirstName());
         userDTO.setLastName(user.getLastName());
         userDTO.setEmail(user.getEmail());
+
+
+        // Set the role, default to ROLE_USER if no role is assigned
+        if (user.getRoles() != null && !user.getRoles().isEmpty()) {
+            // Get the first role name (assuming a user has at least one role)
+            String roleName = user.getRoles().iterator().next().getName();
+            userDTO.setRole(roleName);
+        } else {
+            userDTO.setRole("ROLE_USER"); // Default role for normal users
+        }
     }
 
     @Transactional(readOnly = true)
