@@ -29,6 +29,7 @@ import jakarta.validation.constraints.NotEmpty;
 @RestController
 @RequestMapping("/api/admin/users")
 @Validated
+
 public class AdminUserController {
 
     private final UserService userService;
